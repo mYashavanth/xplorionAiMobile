@@ -357,7 +357,7 @@ class _SelectDateRangeState extends State<SelectDateRange> {
                     modalSetState(() {});
                   },
                   child: Container(
-                    height: MediaQuery.of(context).size.height * 0.077,
+                    height: MediaQuery.of(context).size.height * 0.07,
                     decoration: ShapeDecoration(
                       shape: RoundedRectangleBorder(
                         side: const BorderSide(

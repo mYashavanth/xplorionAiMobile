@@ -11,6 +11,8 @@ import 'package:xplorion_ai/lib_assets/input_decoration.dart';
 import 'package:http/http.dart' as http;
 import 'urlconfig.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class LogIn extends StatefulWidget {
   const LogIn({super.key});
@@ -30,6 +32,99 @@ class _LogInState extends State<LogIn> {
   bool obscureTextPassword = true;
   bool visibleBoolPassword = false;
   bool wrongPassword = false;
+
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
+
+  Future<void> _signInWithGoogle() async {
+    try {
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) return;
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
+      final OAuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      final UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithCredential(credential);
+      final User? user = userCredential.user;
+
+      if (user != null) {
+        final String? email = user.email;
+        if (email != null) {
+          print("User email: $email");
+          await _sendLoginDataToBackend(email, 'Test@123');
+        } else {
+          print("Failed to retrieve user email");
+        }
+      }
+    } catch (e) {
+      print("Error during Google Sign-In: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to sign in with Google: $e'),
+          showCloseIcon: true,
+        ),
+      );
+    }
+  }
+
+  Future<void> _sendLoginDataToBackend(String email, String password) async {
+    try {
+      final map = <String, dynamic>{};
+      map['email'] = email;
+      map['password'] = password;
+      final response = await http.post(
+        Uri.parse('$baseurl/app/users/login'),
+        body: map,
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        print("Backend response: $responseData");
+
+        if (responseData['errFlag'] == 0) {
+          await storage.write(key: 'userToken', value: responseData['token']);
+          await storage.write(key: 'username', value: responseData['username']);
+
+          if (responseData['showInterestsPage'] == 0) {
+            Navigator.of(context).pushNamed('/home_page');
+          } else {
+            Navigator.of(context).pushNamed('/choose_your_interests');
+          }
+        } else {
+          final errorMessage = responseData['message'];
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              showCloseIcon: true,
+            ),
+          );
+        }
+      } else {
+        print("Backend error: ${response.statusCode}");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Backend error: ${response.statusCode}'),
+            showCloseIcon: true,
+          ),
+        );
+      }
+    } catch (e) {
+      print("Error sending login data to backend: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to send login data to backend: $e'),
+          showCloseIcon: true,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -79,7 +174,6 @@ class _LogInState extends State<LogIn> {
               height: 8,
             ),
             Container(
-              
               margin: const EdgeInsets.only(bottom: 20),
               // padding: const EdgeInsets.only(left: 20),
               height: 54,
@@ -321,58 +415,43 @@ class _LogInState extends State<LogIn> {
               height: 20,
             ),
 
-            //google sign in
-            Container(
-              width: double.maxFinite,
-              height: 56,
-              padding: const EdgeInsets.all(16),
-              // decoration: ShapeDecoration(
-              //   color: Colors.white,
-              //   shape: RoundedRectangleBorder(
-              //       borderRadius: BorderRadius.circular(8)),
-              //   shadows: const [
-              //     BoxShadow(
-              //       color: Color(0x14000000),
-              //       blurRadius: 3,
-              //       offset: Offset(0, 0),
-              //       spreadRadius: 0,
-              //     ),
-              //     BoxShadow(
-              //       color: Color(0x2B000000),
-              //       blurRadius: 3,
-              //       offset: Offset(0, 2),
-              //       spreadRadius: 0,
-              //     )
-              //   ],
-              // ),
-              decoration: ShapeDecoration(
-                color: Colors.white,
-                shape: RoundedRectangleBorder(
-                  side: const BorderSide(width: 1, color: Color(0xFF888888)),
-                  borderRadius: BorderRadius.circular(32),
+            // Google Sign-In Button
+            GestureDetector(
+              onTap: _signInWithGoogle,
+              child: Container(
+                width: double.maxFinite,
+                height: 56,
+                padding: const EdgeInsets.all(16),
+                decoration: ShapeDecoration(
+                  color: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    side: const BorderSide(width: 1, color: Color(0xFF888888)),
+                    borderRadius: BorderRadius.circular(32),
+                  ),
                 ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  SizedBox(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    SizedBox(
                       width: 24,
                       height: 24,
-                      child: SvgPicture.asset('assets/icons/GoogleLogo.svg')),
-                  const SizedBox(width: 12),
-                  const Text(
-                    'Continue with Google',
-                    style: TextStyle(
-                      color: Color(0xFF1F1F1F),
-                      fontSize: 16,
-                      fontFamily: themeFontFamily,
-                      fontWeight: FontWeight.w500,
-                      height: 0,
+                      child: SvgPicture.asset('assets/icons/GoogleLogo.svg'),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Continue with Google',
+                      style: TextStyle(
+                        color: Color(0xFF1F1F1F),
+                        fontSize: 16,
+                        fontFamily: themeFontFamily,
+                        fontWeight: FontWeight.w500,
+                        height: 0,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
 
@@ -573,10 +652,8 @@ class _LogInState extends State<LogIn> {
       body: map,
     );
 
-    if(context.mounted)
-    {
+    if (context.mounted) {
       if (response.statusCode == 200) {
-
         var jsonData = jsonDecode(response.body);
 
         if (jsonData['errFlag'] == 1) {
@@ -588,31 +665,18 @@ class _LogInState extends State<LogIn> {
           return;
         }
 
-        if(jsonData['errFlag'] == 0)
-        {
-          await storage.write(
-              key: 'userToken',
-              value: jsonData['token']
-          );
+        if (jsonData['errFlag'] == 0) {
+          await storage.write(key: 'userToken', value: jsonData['token']);
 
-          await storage.write(
-              key: 'username',
-              value: jsonData['username']
-          );
+          await storage.write(key: 'username', value: jsonData['username']);
         }
 
-        if(jsonData['showInterestsPage'] == 0)
-        {
-            Navigator.of(context).pushNamed('/home_page');
+        if (jsonData['showInterestsPage'] == 0) {
+          Navigator.of(context).pushNamed('/home_page');
+        } else {
+          Navigator.of(context).pushNamed('/choose_your_interests');
         }
-        else
-        {
-            Navigator.of(context).pushNamed('/choose_your_interests');
-        }
-
-      }
-      else
-      {
+      } else {
         const snackBar = SnackBar(
           content: Text('Couldnot Login, Try after sometime'),
           showCloseIcon: true,

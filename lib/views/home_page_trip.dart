@@ -25,7 +25,6 @@ class HomePageTrip extends StatefulWidget {
 class _HomePageTripState extends State<HomePageTrip> {
   final storage = const FlutterSecureStorage();
 
-
   //  'Day 1',
   //  'Day 2',
   //  'Day 3',
@@ -56,7 +55,8 @@ class _HomePageTripState extends State<HomePageTrip> {
   String placeDescription = '';
   String localityInPlace = '';
   String resIterneryId = '';
-  String mainPlaceImage = 'https://loading.io/assets/mod/spinner/spinner/lg.gif';
+  String mainPlaceImage =
+      'https://loading.io/assets/mod/spinner/spinner/lg.gif';
   String weatherInfo = '';
   List weatherInfoData = [];
   var daysDataDisplay;
@@ -67,7 +67,6 @@ class _HomePageTripState extends State<HomePageTrip> {
   late final responseDataS;
 
   Future<void> generateItinerary() async {
-
     String? userToken = await storage.read(key: 'userToken');
     String? travelCompanion = await storage.read(key: 'travelCompanion');
     String? budgetTier = await storage.read(key: 'budgetTier');
@@ -75,158 +74,152 @@ class _HomePageTripState extends State<HomePageTrip> {
     String? endDate = await storage.read(key: 'endDate');
     String? selectedPlace = await storage.read(key: 'selectedPlace');
     //String? itinerarySaved = await storage.read(key: 'itinerarySavedFlag');
-    final receivedArgs = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    final receivedArgs =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     String? itinerarySaved = receivedArgs?['itinerarySavedFlag'].toString();
 
     //final url = Uri.parse('$baseurl/app/generate-itenary/itinerary/671a86310999b3b00a8acf25/$userToken');
 
     // Data to be sent in the POST request
     final Map<String, dynamic> requestBody = {
-      'cityPlace': selectedPlace,        // Replace with your value
-      'fromDate': startDate,       // Replace with your value
-      'toDate': endDate,         // Replace with your value
-      'travelCompanion': travelCompanion,    // Replace with your value
-      'budgetType': budgetTier,         // Replace with your value
-      'token': userToken,     // Replace with your token
+      'cityPlace': selectedPlace, // Replace with your value
+      'fromDate': startDate, // Replace with your value
+      'toDate': endDate, // Replace with your value
+      'travelCompanion': travelCompanion, // Replace with your value
+      'budgetType': budgetTier, // Replace with your value
+      'token': userToken, // Replace with your token
     };
 
-    if(itinerarySaved!='1')
-    {
-        final url = Uri.parse('$baseurl/app/generate-itenary');
+    if (itinerarySaved != '1') {
+      final url = Uri.parse('$baseurl/app/generate-itenary');
 
-        try {
-          // Send HTTP POST request
-          final response = await http.post(url,
-            body: requestBody,
-          );
-          // Handle response
-          if (response.statusCode == 200) {
-            final responseData = json.decode(response.body);
-
-            var daysData =  responseData['itinerary']['days'];
-            var place = responseData['place'];
-            var budgetType = responseData['budget_type'];
-            resIterneryId = responseData['itineraryId'];
-            int noOfDays = daysData.length;
-            int r = 0;
-            daysDataDisplay = daysData;
-
-            setState(() {
-                for(int d = noOfDays;d >= 1;d--)
-                {
-                    menuItemNames.insert(0, "Day $d");
-
-                    if(d == 1)
-                    {
-                        menuBoolList.insert(0, true);
-                    }
-                    else
-                    {
-                        menuBoolList.insert(0, false);
-                    }
-
-                    weatherInfoData.add(daysData[r]['weather_info']);
-                    r++;
-                }
-
-                menuItemNames.insert(noOfDays,"Tips");
-                menuBoolList.insert(noOfDays, false); // Tips
-
-                menuItemNames.insert((noOfDays + 1),"Best Time To Visit");
-                menuBoolList.insert((noOfDays + 1), false);  // Best Time To Visit
-
-                menuItemNames.insert((noOfDays + 2),"Holidays");
-                menuBoolList.insert((noOfDays + 2), false);  // Holidays
-
-                menuItemNames.insert((noOfDays + 3),"Food and Drinks");
-                menuBoolList.insert((noOfDays + 3), false);  // Food and Drinks
-
-                iterneryTitle = "$place $noOfDays Days - $budgetType";
-                noOfDaysDisplay = "$noOfDays Days";
-                placeDescription = responseData['about_place'];
-                localityInPlace = responseData['locality_in_place'];
-                mainPlaceImage = responseData['image_for_main_place'] ?? 'https://coffective.com/wp-content/uploads/2018/06/default-featured-image.png.jpg';
-                isLoading = false;
-                hasError = false;
-            });
-
-            print('Itinerary generated successfully: $responseData');
-          } else {
-            setState(() {
-              hasError = true;
-              isLoading = false;
-            });
-            print('Failed to generate itinerary. Status code: ${response.statusCode}');
-          }
-        } catch (e) {
-          print('Error occurred while generating itinerary: $e');
-        }
-    }
-
-    if(itinerarySaved == '1')
-    {
-        String? itineraryId = receivedArgs?['itineraryId']; //await storage.read(key: 'itineraryId');
-        resIterneryId = itineraryId!;
-
-        //print(" |||||||| ");
-        //print(resIterneryId);
-        //print(" ||||||||| ");
-
-        final responseS = await http.get(
-            Uri.parse('$baseurl/itinerary/$itineraryId/$userToken')
+      try {
+        // Send HTTP POST request
+        final response = await http.post(
+          url,
+          body: requestBody,
         );
+        // Handle response
+        if (response.statusCode == 200) {
+          final responseData = json.decode(response.body);
 
-        if (responseS.statusCode == 200) {
+          var daysData = responseData['itinerary']['days'];
+          var place = responseData['place'];
+          var budgetType = responseData['budget_type'];
+          resIterneryId = responseData['itineraryId'];
+          int noOfDays = daysData.length;
+          int r = 0;
+          daysDataDisplay = daysData;
 
-            responseDataS = json.decode(responseS.body);
-            var daysData =  responseDataS[0]['itinerary']['itinerary']['days'];
-            var place = responseDataS[0]['itinerary']['place'];
-            var budgetType = responseDataS[0]['itinerary']['budget_type'];
+          setState(() {
+            for (int d = noOfDays; d >= 1; d--) {
+              menuItemNames.insert(0, "Day $d");
 
-            int noOfDays = daysData.length;
-            int r = 0;
-            daysDataDisplay = daysData;
-
-            setState(() {
-              for(int d = noOfDays;d >= 1;d--)
-              {
-                menuItemNames.insert(0, "Day $d");
-
-                if(d == 1)
-                {
-                  menuBoolList.insert(0, true);
-                }
-                else
-                {
-                  menuBoolList.insert(0, false);
-                }
-
-                weatherInfoData.add(daysData[r]['weather_info']);
-                r++;
+              if (d == 1) {
+                menuBoolList.insert(0, true);
+              } else {
+                menuBoolList.insert(0, false);
               }
 
-              menuItemNames.insert(noOfDays,"Tips");
-              menuBoolList.insert(noOfDays, false); // Tips
+              weatherInfoData.add(daysData[r]['weather_info']);
+              r++;
+            }
 
-              menuItemNames.insert((noOfDays + 1),"Best Time To Visit");
-              menuBoolList.insert((noOfDays + 1), false);  // Best Time To Visit
+            menuItemNames.insert(noOfDays, "Tips");
+            menuBoolList.insert(noOfDays, false); // Tips
 
-              menuItemNames.insert((noOfDays + 2),"Holidays");
-              menuBoolList.insert((noOfDays + 2), false);  // Holidays
+            menuItemNames.insert((noOfDays + 1), "Best Time To Visit");
+            menuBoolList.insert((noOfDays + 1), false); // Best Time To Visit
 
-              menuItemNames.insert((noOfDays + 3),"Food and Drinks");
-              menuBoolList.insert((noOfDays + 3), false);  // Food and Drinks
+            menuItemNames.insert((noOfDays + 2), "Holidays");
+            menuBoolList.insert((noOfDays + 2), false); // Holidays
 
-              iterneryTitle = "$place $noOfDays Days - $budgetType";
-              noOfDaysDisplay = "$noOfDays Days";
-              placeDescription = responseDataS[0]['itinerary']['about_place'];
-              localityInPlace = responseDataS[0]['itinerary']['locality_in_place'];
-              mainPlaceImage = responseDataS[0]['itinerary']['image_for_main_place'] ?? 'https://coffective.com/wp-content/uploads/2018/06/default-featured-image.png.jpg';
-              isLoading = false;
-            });
+            menuItemNames.insert((noOfDays + 3), "Food and Drinks");
+            menuBoolList.insert((noOfDays + 3), false); // Food and Drinks
+
+            iterneryTitle = "$place $noOfDays Days - $budgetType";
+            noOfDaysDisplay = "$noOfDays Days";
+            placeDescription = responseData['about_place'];
+            localityInPlace = responseData['locality_in_place'];
+            mainPlaceImage = responseData['image_for_main_place'] ??
+                'https://coffective.com/wp-content/uploads/2018/06/default-featured-image.png.jpg';
+            isLoading = false;
+            hasError = false;
+          });
+
+          print('Itinerary generated successfully: $responseData');
+        } else {
+          setState(() {
+            hasError = true;
+            isLoading = false;
+          });
+          print(
+              'Failed to generate itinerary. Status code: ${response.statusCode}');
         }
+      } catch (e) {
+        print('Error occurred while generating itinerary: $e');
+      }
     }
 
+    if (itinerarySaved == '1') {
+      String? itineraryId = receivedArgs?[
+          'itineraryId']; //await storage.read(key: 'itineraryId');
+      resIterneryId = itineraryId!;
+
+      //print(" |||||||| ");
+      //print(resIterneryId);
+      //print(" ||||||||| ");
+
+      final responseS = await http
+          .get(Uri.parse('$baseurl/itinerary/$itineraryId/$userToken'));
+
+      if (responseS.statusCode == 200) {
+        responseDataS = json.decode(responseS.body);
+        var daysData = responseDataS[0]['itinerary']['itinerary']['days'];
+        var place = responseDataS[0]['itinerary']['place'];
+        var budgetType = responseDataS[0]['itinerary']['budget_type'];
+
+        int noOfDays = daysData.length;
+        int r = 0;
+        daysDataDisplay = daysData;
+
+        setState(() {
+          for (int d = noOfDays; d >= 1; d--) {
+            menuItemNames.insert(0, "Day $d");
+
+            if (d == 1) {
+              menuBoolList.insert(0, true);
+            } else {
+              menuBoolList.insert(0, false);
+            }
+
+            weatherInfoData.add(daysData[r]['weather_info']);
+            r++;
+          }
+
+          menuItemNames.insert(noOfDays, "Tips");
+          menuBoolList.insert(noOfDays, false); // Tips
+
+          menuItemNames.insert((noOfDays + 1), "Best Time To Visit");
+          menuBoolList.insert((noOfDays + 1), false); // Best Time To Visit
+
+          menuItemNames.insert((noOfDays + 2), "Holidays");
+          menuBoolList.insert((noOfDays + 2), false); // Holidays
+
+          menuItemNames.insert((noOfDays + 3), "Food and Drinks");
+          menuBoolList.insert((noOfDays + 3), false); // Food and Drinks
+
+          iterneryTitle = "$place $noOfDays Days - $budgetType";
+          noOfDaysDisplay = "$noOfDays Days";
+          placeDescription = responseDataS[0]['itinerary']['about_place'];
+          localityInPlace = responseDataS[0]['itinerary']['locality_in_place'];
+          mainPlaceImage = responseDataS[0]['itinerary']
+                  ['image_for_main_place'] ??
+              'https://coffective.com/wp-content/uploads/2018/06/default-featured-image.png.jpg';
+          isLoading = false;
+        });
+      }
+    }
   }
 
   MenuController menuController = MenuController();
@@ -246,8 +239,6 @@ class _HomePageTripState extends State<HomePageTrip> {
     'list.svg'
   ];
 
-
-
   List<Widget> doseImageSliders = [];
   List<Widget> secondImageSliders = [];
   List<Widget> thirdImageSliders = [];
@@ -263,9 +254,59 @@ class _HomePageTripState extends State<HomePageTrip> {
   List<bool> importantInfoShowCardBool = [false, true, true, false, false];
   List<bool> packingListShowCardBool = [false, true, true, false, false];
   List<bool> transpotationModeBool = [true, false, false];
-  List<bool> savedItineraryCollectionBool = [false, false, false, false, false, false];
+  List<bool> savedItineraryCollectionBool = [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+  ];
 
   Map dayActivityDataArray = {};
+  final PageController _pageController = PageController();
+  int _currentIndex = 0;
+  final List<String> loadingTexts = [
+    "Pack your bags and your patience – we're crafting your dream trip!",
+    "Our AI is busy mapping out your adventure... because getting lost is overrated!",
+    "Good things take time, and great itineraries take a few seconds",
+    "Hold on tight! We're adding a sprinkle of wanderlust to your plans.",
+    "Your itinerary is baking in our travel oven – almost ready to serve!",
+  ];
+
+  // void startAutoCarousel() {
+  //   Timer.periodic(Duration(seconds: 2), (timer) {
+  //     if (_pageController.hasClients) {
+  //       setState(() {
+  //         _currentIndex = (_currentIndex + 1) % loadingTexts.length;
+  //       });
+  //       _pageController.animateToPage(
+  //         _currentIndex,
+  //         duration: Duration(milliseconds: 1000),
+  //         curve: Curves.easeInOut,
+  //       );
+  //     }
+  //   });
+  // }
+  void startAutoCarousel() {
+    Timer.periodic(Duration(seconds: 2), (timer) {
+      if (_pageController.hasClients) {
+        if (_currentIndex < loadingTexts.length - 1) {
+          // Normal transition to next item
+          _currentIndex++;
+          _pageController.animateToPage(
+            _currentIndex,
+            duration: Duration(milliseconds: 800),
+            curve: Curves.easeInOut,
+          );
+        } else {
+          // Instantly reset to the first item
+          _currentIndex = 0;
+          _pageController.jumpToPage(_currentIndex);
+        }
+      }
+    });
+  }
 
   @override
   void initState() {
@@ -273,6 +314,7 @@ class _HomePageTripState extends State<HomePageTrip> {
     super.initState();
     _getData();
     generateItinerary();
+    startAutoCarousel();
   }
 
   void _getData() {
@@ -409,35 +451,136 @@ class _HomePageTripState extends State<HomePageTrip> {
   }
 
   @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     tripItineraryWidget = changeTripItineraryMenuView();
 
     if (isLoading) {
-      return Center(child: Image.asset(
-        'assets/images/iternery_loading.gif',
-        fit: BoxFit.cover,
-      ));
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // GIF Image
+              Image.asset(
+                'assets/images/iternery_loading.gif',
+                width: MediaQuery.of(context).size.width,
+                fit: BoxFit.fitWidth,
+              ),
+              const SizedBox(height: 10),
+
+              // Indeterminate Progress Bar
+              SizedBox(
+                width: MediaQuery.of(context).size.width * 0.8,
+                child: const LinearProgressIndicator(),
+              ),
+              const SizedBox(height: 160),
+
+              // Auto-scrolling Carousel Text
+              SizedBox(
+                height: 60,
+                child: PageView.builder(
+                  controller: _pageController,
+                  itemCount: loadingTexts.length,
+                  physics:
+                      const NeverScrollableScrollPhysics(), // Prevent manual scrolling
+                  itemBuilder: (context, index) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      width: MediaQuery.of(context).size.width * 0.8,
+                      child: Text(
+                        loadingTexts[index],
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        softWrap: true, // Enables multi-line text wrapping
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
     }
 
     //CircularProgressIndicator()
 
     if (hasError) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  isLoading = true;
-                  hasError = false;
-                });
-                generateItinerary();
-              },
-              child: const Text('Reload'),
+      return Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+                horizontal: 20), // Adds padding on both sides
+            child: Column(
+              mainAxisSize: MainAxisSize.min, // Centers content vertically
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SvgPicture.asset(
+                  'assets/icons/itinerary_failure.svg',
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Your Itinerary is stuck in traffic 🚦',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'Don’t worry, we’ve called for backup!\nReload to clear the road',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Color(0xFF888888),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity, // Makes button full width
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF0099FF), Color(0xFF54AB6A)],
+                      ),
+                      borderRadius: BorderRadius.circular(50), // Fully rounded
+                    ),
+                    child: TextButton(
+                      onPressed: () {
+                        setState(() {
+                          isLoading = true;
+                          hasError = false;
+                        });
+                        generateItinerary();
+                      },
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        foregroundColor: Colors.white, // Text color
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(50), // Fully rounded
+                        ),
+                        backgroundColor: Colors.transparent, // To show gradient
+                      ),
+                      child: const Text('Reload',
+                          style: TextStyle(fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       );
     }
@@ -455,12 +598,13 @@ class _HomePageTripState extends State<HomePageTrip> {
                     height: MediaQuery.of(context).size.height * 0.65,
                     child: Stack(
                       children: [
-                          Image.network(
-                            mainPlaceImage,
-                            width: double.maxFinite,
-                            height: double.maxFinite,
-                            fit: BoxFit.cover,
-                            loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+                        Image.network(
+                          mainPlaceImage,
+                          width: double.maxFinite,
+                          height: double.maxFinite,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (BuildContext context, Widget child,
+                              ImageChunkEvent? loadingProgress) {
                             if (loadingProgress == null) {
                               return child;
                             } else {
@@ -539,7 +683,8 @@ class _HomePageTripState extends State<HomePageTrip> {
                                                 savedItineraryCollectionBool,
                                                 modalSetState,
                                                 context,
-                                                collectionNameController,resIterneryId);
+                                                collectionNameController,
+                                                resIterneryId);
                                           },
                                         );
                                       },
@@ -568,14 +713,15 @@ class _HomePageTripState extends State<HomePageTrip> {
 
                                 InkWell(
                                   onTap: () {
-
                                     print(" /////////// ");
                                     print(responseDataS);
                                     print(" //////////// ");
 
-                                    Navigator.of(context).pushNamed('/explore_road_map',arguments: {
-                                      'itineraryDataMaps': responseDataS
-                                    });
+                                    Navigator.of(context).pushNamed(
+                                        '/explore_road_map',
+                                        arguments: {
+                                          'itineraryDataMaps': responseDataS
+                                        });
                                   },
                                   child: Container(
                                     width: 40,
@@ -964,10 +1110,10 @@ class _HomePageTripState extends State<HomePageTrip> {
   var bestTimeToVisitArr;
   var foodDrinksArr;
   Widget changeTripItineraryMenuView() {
-
     if (daysDataDisplay == null || isLoading) {
       // Display a loading indicator if data is not yet available iternery_loading.gif
-      return Center(child: Image.asset(
+      return Center(
+          child: Image.asset(
         'assets/images/iternery_loading.gif',
         width: 200,
         height: 200,
@@ -987,54 +1133,39 @@ class _HomePageTripState extends State<HomePageTrip> {
     int dataLen = daysDataDisplay.length;
     int day = menuIndex + 1;
 
-    if(day > dataLen)
-    {
-        if(day == (dataLen + 1))
-        {
-          if (tripTipsArr == null || tripTipsArr == '') {
+    if (day > dataLen) {
+      if (day == (dataLen + 1)) {
+        if (tripTipsArr == null || tripTipsArr == '') {
+          tripTipsArr = getTipsData(); // Assign value if null
+        } else {
+          tripTipsArr = tripTipsArr;
+        }
+        return buildTips(tripTipsArr);
+      }
 
-            tripTipsArr = getTipsData(); // Assign value if null
-
-          } else {
-
-            tripTipsArr = tripTipsArr;
-
-          }
-            return buildTips(tripTipsArr);
+      if (day == (dataLen + 2)) {
+        if (bestTimeToVisitArr == null || bestTimeToVisitArr == '') {
+          bestTimeToVisitArr = getBestTimeToVisit();
+        } else {
+          bestTimeToVisitArr = bestTimeToVisitArr;
         }
 
-        if(day == (dataLen + 2))
-        {
-            if(bestTimeToVisitArr == null || bestTimeToVisitArr == '')
-            {
-                bestTimeToVisitArr = getBestTimeToVisit();
-            }
-            else
-            {
-                bestTimeToVisitArr = bestTimeToVisitArr;
-            }
+        return buildBestTimeToVisit(bestTimeToVisitArr);
+      }
 
-            return buildBestTimeToVisit(bestTimeToVisitArr);
+      if (day == (dataLen + 3)) {
+        return buildNationalHolidays(holiday);
+      }
+
+      if (day == (dataLen + 4)) {
+        if (foodDrinksArr == null || foodDrinksArr == '') {
+          foodDrinksArr = getFoodAndDrink();
+        } else {
+          foodDrinksArr = foodDrinksArr;
         }
 
-        if(day == (dataLen + 3))
-        {
-            return buildNationalHolidays(holiday);
-        }
-
-        if(day == (dataLen + 4))
-        {
-            if(foodDrinksArr == null || foodDrinksArr == '')
-            {
-               foodDrinksArr = getFoodAndDrink();
-            }
-            else
-            {
-               foodDrinksArr = foodDrinksArr;
-            }
-
-            return buildLocalFoodAndDrinks(context,foodDrinksArr);
-        }
+        return buildLocalFoodAndDrinks(context, foodDrinksArr);
+      }
     }
 
     weatherInfoToSend = weatherInfoData[menuIndex];
@@ -1043,62 +1174,64 @@ class _HomePageTripState extends State<HomePageTrip> {
     for (int j = 0; j < dataLen; j++) {
       var activitiesData = daysDataDisplay[j]['activities'];
       int activitiesDataLen = activitiesData.length;
-      if(day.toString() == daysDataDisplay[j]['day_no']) {
-
+      if (day.toString() == daysDataDisplay[j]['day_no']) {
         for (int k = 0; k < activitiesDataLen; k++) {
-            // Create a new sublist for each activity inside the inner loop
-            List activitiesSubList = [];
+          // Create a new sublist for each activity inside the inner loop
+          List activitiesSubList = [];
 
-            doseImageSliders.add(
-              Container(
-                height: 200,
-                clipBehavior: Clip.antiAlias,
-                decoration: ShapeDecoration(
-                  image: DecorationImage(
-                    image: NetworkImage(activitiesData[k]['place_image_url'] ?? "https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png"),
-                    fit: BoxFit.cover,
-                  ),
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(8),
-                      topRight: Radius.circular(8),
-                    ),
+          doseImageSliders.add(
+            Container(
+              height: 200,
+              clipBehavior: Clip.antiAlias,
+              decoration: ShapeDecoration(
+                image: DecorationImage(
+                  image: NetworkImage(activitiesData[k]['place_image_url'] ??
+                      "https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png"),
+                  fit: BoxFit.cover,
+                ),
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(8),
+                    topRight: Radius.circular(8),
                   ),
                 ),
               ),
-            );
-            //itineraryImages.add(activitiesData[k]['place_image_url']);
+            ),
+          );
+          //itineraryImages.add(activitiesData[k]['place_image_url']);
 
-            // Add elements to the sublist
-            activitiesSubList.add('car');
-            activitiesSubList.add(activitiesData[k]['time'] + ' : ' +
-                activitiesData[k]['activity']);
-            activitiesSubList.add(doseImageSliders);
-            activitiesSubList.add(j);
-            activitiesSubList.add(
-                activitiesData[k]['locality_area_place_business']);
-            activitiesSubList.add(true);
-            activitiesSubList.add(activitiesData[k]['ratings']);
-            activitiesSubList.add(activitiesData[k]['one_line_description_about_place']);
-            activitiesSubList.add(activitiesData[k]['formatted_address']);
-            activitiesSubList.add(activitiesData[k]['lat']);
-            activitiesSubList.add(activitiesData[k]['long']);
-            activitiesSubList.add(activitiesData[k]['distance_km']);
-            activitiesSubList.add(activitiesData[k]['duration_min']);
-            activitiesSubList.add(activitiesData[k]['two_locations_cordinates']);
-            activitiesSubList.add(activitiesData[k]['price_level_description']);
-            activitiesSubList.add(activitiesData[k]['currently_open']);
+          // Add elements to the sublist
+          activitiesSubList.add('car');
+          activitiesSubList.add(activitiesData[k]['time'] +
+              ' : ' +
+              activitiesData[k]['activity']);
+          activitiesSubList.add(doseImageSliders);
+          activitiesSubList.add(j);
+          activitiesSubList
+              .add(activitiesData[k]['locality_area_place_business']);
+          activitiesSubList.add(true);
+          activitiesSubList.add(activitiesData[k]['ratings']);
+          activitiesSubList
+              .add(activitiesData[k]['one_line_description_about_place']);
+          activitiesSubList.add(activitiesData[k]['formatted_address']);
+          activitiesSubList.add(activitiesData[k]['lat']);
+          activitiesSubList.add(activitiesData[k]['long']);
+          activitiesSubList.add(activitiesData[k]['distance_km']);
+          activitiesSubList.add(activitiesData[k]['duration_min']);
+          activitiesSubList.add(activitiesData[k]['two_locations_cordinates']);
+          activitiesSubList.add(activitiesData[k]['price_level_description']);
+          activitiesSubList.add(activitiesData[k]['currently_open']);
 
-            // Add the sublist to the main activities list
-            activities.add(activitiesSubList);
+          // Add the sublist to the main activities list
+          activities.add(activitiesSubList);
 
-            doseImageSliders = [];
+          doseImageSliders = [];
         }
       }
     }
 
     Map iterneryData = {
-        'data': activities,
+      'data': activities,
       'sliderPos': day1SliderCurrentPos,
       'showActivity': day1SliderShowActivity
     };
@@ -1106,8 +1239,14 @@ class _HomePageTripState extends State<HomePageTrip> {
     menuIndex = menuIndex + 1;
     fetchNationalHolidays();
 
-    return dayItineraryView('thunder_cloud.svg', '$menuIndex', setState, iterneryData, context, transpotationModeBool,weatherInfoToSend); // dayActivityDataArray
-
+    return dayItineraryView(
+        'thunder_cloud.svg',
+        '$menuIndex',
+        setState,
+        iterneryData,
+        context,
+        transpotationModeBool,
+        weatherInfoToSend); // dayActivityDataArray
 
     /*switch (menuIndex) {
       /*case 0:
@@ -1164,7 +1303,8 @@ class _HomePageTripState extends State<HomePageTrip> {
       }
 
       // Perform GET request
-      final response = await http.get(Uri.parse('$baseurl/tips-for-place/$selectedPlace/$userToken'));
+      final response = await http
+          .get(Uri.parse('$baseurl/tips-for-place/$selectedPlace/$userToken'));
 
       // Check if response is successful
       if (response.statusCode == 200) {
@@ -1206,7 +1346,8 @@ class _HomePageTripState extends State<HomePageTrip> {
       }
 
       // Perform GET request
-      final response = await http.get(Uri.parse('$baseurl/best-time-to-visit-place/$selectedPlace/$userToken'));
+      final response = await http.get(Uri.parse(
+          '$baseurl/best-time-to-visit-place/$selectedPlace/$userToken'));
 
       // Check if response is successful
       if (response.statusCode == 200) {
@@ -1230,38 +1371,35 @@ class _HomePageTripState extends State<HomePageTrip> {
   }
 
   // National Holidays
-   fetchNationalHolidays() async {
+  fetchNationalHolidays() async {
+    if (holiday.isEmpty) {
+      // Read the user token and selected place from secure storage
+      String? userToken = await storage.read(key: 'userToken');
+      String? selectedPlace = await storage.read(key: 'selectedPlace');
+      final url =
+          Uri.parse('$baseurl/national-holidays/$selectedPlace/$userToken');
 
-    if(holiday.isEmpty)
-    {
-        // Read the user token and selected place from secure storage
-        String? userToken = await storage.read(key: 'userToken');
-        String? selectedPlace = await storage.read(key: 'selectedPlace');
-        final url = Uri.parse('$baseurl/national-holidays/$selectedPlace/$userToken');
+      // Perform the GET request
+      final response = await http.get(url);
 
-        // Perform the GET request
-        final response = await http.get(url);
+      // Check the response status
+      if (response.statusCode == 200) {
+        // Decode and return the JSON response as a list of maps
+        var nationalHolidaysData = json.decode(response.body);
+        var nationalHolidaysDataLen = nationalHolidaysData.length;
 
-        // Check the response status
-        if (response.statusCode == 200) {
-          // Decode and return the JSON response as a list of maps
-          var nationalHolidaysData = json.decode(response.body);
-          var nationalHolidaysDataLen = nationalHolidaysData.length;
-
-          for(int i = 0;i < nationalHolidaysDataLen;i++)
-          {
-              holiday.add(nationalHolidaysData[i]);
-          }
-
-          return 1;
-
-        } else {
-          // Handle errors (throw exception or return an empty list)
-          throw Exception('Failed to load national holidays: ${response.statusCode}');
+        for (int i = 0; i < nationalHolidaysDataLen; i++) {
+          holiday.add(nationalHolidaysData[i]);
         }
-    }
-   // return 1;
 
+        return 1;
+      } else {
+        // Handle errors (throw exception or return an empty list)
+        throw Exception(
+            'Failed to load national holidays: ${response.statusCode}');
+      }
+    }
+    // return 1;
   }
 
   // Food and Drinks
@@ -1281,7 +1419,8 @@ class _HomePageTripState extends State<HomePageTrip> {
       }
 
       // Perform GET request
-      final response = await http.get(Uri.parse('$baseurl/food-drinks/$selectedPlace/$userToken'));
+      final response = await http
+          .get(Uri.parse('$baseurl/food-drinks/$selectedPlace/$userToken'));
 
       // Check if response is successful
       if (response.statusCode == 200) {
@@ -1289,22 +1428,21 @@ class _HomePageTripState extends State<HomePageTrip> {
         List<dynamic> FoodAndDrinksArray = json.decode(response.body);
 
         List<Widget> foodDrinksArr = FoodAndDrinksArray.map((item) {
-          String foodDrinkDescription = item["food_drink_description"] as String;
+          String foodDrinkDescription =
+              item["food_drink_description"] as String;
           String foodDrinkName = item["food_drink_name"] as String;
           String foodDrinkImage = item["food_drink_image"] as String;
           String foodType = item["food_drink_type"] as String;
 
           String foodTypeString = "";
-          if(foodType == "Veg")
-          {
-              foodTypeString = 'veg';
-          }
-          else
-          {
-              foodTypeString = 'non-veg';
+          if (foodType == "Veg") {
+            foodTypeString = 'veg';
+          } else {
+            foodTypeString = 'non-veg';
           }
 
-          return buildLocalFoodAndDrinksCard(foodDrinkImage,foodTypeString,foodDrinkName,foodDrinkDescription,context);
+          return buildLocalFoodAndDrinksCard(foodDrinkImage, foodTypeString,
+              foodDrinkName, foodDrinkDescription, context);
         }).toList();
 
         return foodDrinksArr;
@@ -1317,6 +1455,4 @@ class _HomePageTripState extends State<HomePageTrip> {
       return [];
     }
   }
-
-
 }

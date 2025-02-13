@@ -10,6 +10,8 @@ import 'package:xplorion_ai/lib_assets/fonts.dart';
 import 'package:xplorion_ai/lib_assets/input_decoration.dart';
 import 'urlconfig.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class SignUp extends StatefulWidget {
   const SignUp({super.key});
@@ -29,6 +31,105 @@ class _SignUpState extends State<SignUp> {
   bool obscureTextConfirmPassword = true;
   bool visibleBoolPassword = false;
   bool visibleBoolConfirmPassword = false;
+
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
+
+  Future<void> _signInWithGoogle() async {
+    try {
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) return;
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
+      final OAuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      final UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithCredential(credential);
+      final User? user = userCredential.user;
+
+      if (user != null) {
+        final String? email = user.email;
+        final String? displayName = user.displayName;
+
+        if (email != null && displayName != null) {
+          print("User email: $email");
+          print("User display name: $displayName");
+
+          await _sendLoginDataToBackend(email, 'Admin@123', displayName);
+        } else {
+          print("Failed to retrieve user email or display name");
+        }
+      }
+    } catch (e) {
+      print("Error during Google Sign-In: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to sign in with Google: $e'),
+          showCloseIcon: true,
+        ),
+      );
+    }
+  }
+
+  Future<void> _sendLoginDataToBackend(
+      String email, String password, String username) async {
+    try {
+      final map = <String, dynamic>{};
+      map['email'] = email;
+      map['password'] = password;
+      map['username'] = username;
+
+      final response = await http.post(
+        Uri.parse('$baseurl/app/users/register'),
+        body: map,
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        print("Backend response: $responseData");
+
+        if (responseData['errFlag'] == 0) {
+          await storage.write(key: 'userToken', value: responseData['token']);
+          await storage.write(key: 'username', value: responseData['username']);
+
+          if (responseData['showInterestsPage'] == 0) {
+            Navigator.of(context).pushNamed('/home_page');
+          } else {
+            Navigator.of(context).pushNamed('/choose_your_interests');
+          }
+        } else {
+          final errorMessage = responseData['message'];
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              showCloseIcon: true,
+            ),
+          );
+        }
+      } else {
+        print("Backend error: ${response.statusCode}");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Backend error: ${response.statusCode}'),
+            showCloseIcon: true,
+          ),
+        );
+      }
+    } catch (e) {
+      print("Error sending login data to backend: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to send login data to backend: $e'),
+          showCloseIcon: true,
+        ),
+      );
+    }
+  }
 
   bool eligibleForSignup = false;
   @override
@@ -377,39 +478,43 @@ class _SignUpState extends State<SignUp> {
               height: 20,
             ),
 
-            //google sign in
-            Container(
-              width: double.maxFinite,
-              height: 56,
-              padding: const EdgeInsets.all(16),
-              decoration: ShapeDecoration(
-                color: Colors.white,
-                shape: RoundedRectangleBorder(
-                  side: const BorderSide(width: 1, color: Color(0xFF888888)),
-                  borderRadius: BorderRadius.circular(32),
+            // Google Sign-In Button
+            GestureDetector(
+              onTap: _signInWithGoogle,
+              child: Container(
+                width: double.maxFinite,
+                height: 56,
+                padding: const EdgeInsets.all(16),
+                decoration: ShapeDecoration(
+                  color: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    side: const BorderSide(width: 1, color: Color(0xFF888888)),
+                    borderRadius: BorderRadius.circular(32),
+                  ),
                 ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  SizedBox(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    SizedBox(
                       width: 24,
                       height: 24,
-                      child: SvgPicture.asset('assets/icons/GoogleLogo.svg')),
-                  const SizedBox(width: 12),
-                  const Text(
-                    'Continue with Google',
-                    style: TextStyle(
-                      color: Color(0xFF1F1F1F),
-                      fontSize: 16,
-                      fontFamily: themeFontFamily,
-                      fontWeight: FontWeight.w500,
-                      height: 0,
+                      child: SvgPicture.asset('assets/icons/GoogleLogo.svg'),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Continue with Google',
+                      style: TextStyle(
+                        color: Color(0xFF1F1F1F),
+                        fontSize: 16,
+                        fontFamily: themeFontFamily,
+                        fontWeight: FontWeight.w500,
+                        height: 0,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
 
@@ -634,7 +739,7 @@ class _SignUpState extends State<SignUp> {
       return;
     }
     if (password != confirmPassword) {
-       ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           behavior: SnackBarBehavior.floating,
           padding: EdgeInsets.all(10),
@@ -661,43 +766,32 @@ class _SignUpState extends State<SignUp> {
       body: map,
     );
 
-    if(context.mounted)
-    {
-        if (response.statusCode == 200) {
+    if (context.mounted) {
+      if (response.statusCode == 200) {
+        var jsonData = jsonDecode(response.body);
 
-          var jsonData = jsonDecode(response.body);
-
-          if (jsonData['errFlag'] == 1) {
-            var errorMessage = jsonData['message'];
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text(errorMessage),
-              showCloseIcon: true,
-            ));
-            return;
-          }
-
-          if(jsonData['errFlag'] == 0)
-          {
-              await storage.write(
-                  key: 'userToken',
-                  value: jsonData['token']
-              );
-
-              await storage.write(
-                  key: 'username',
-                  value: name
-              );
-          }
-        }
-        else
-        {
-          const snackBar = SnackBar(
-            content: Text('Couldnot be registered, Try after sometime'),
+        if (jsonData['errFlag'] == 1) {
+          var errorMessage = jsonData['message'];
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(errorMessage),
             showCloseIcon: true,
-          );
-          ScaffoldMessenger.of(context).showSnackBar(snackBar);
+          ));
           return;
         }
+
+        if (jsonData['errFlag'] == 0) {
+          await storage.write(key: 'userToken', value: jsonData['token']);
+
+          await storage.write(key: 'username', value: name);
+        }
+      } else {
+        const snackBar = SnackBar(
+          content: Text('Couldnot be registered, Try after sometime'),
+          showCloseIcon: true,
+        );
+        ScaffoldMessenger.of(context).showSnackBar(snackBar);
+        return;
+      }
     }
 
     Navigator.of(context).pushNamed('/choose_your_interests');
