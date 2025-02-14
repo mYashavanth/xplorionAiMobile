@@ -308,6 +308,48 @@ class _HomePageTripState extends State<HomePageTrip> {
     });
   }
 
+  Future<void> redoItinerary(dayNo) async {
+    String? userToken = await storage.read(key: 'userToken');
+
+    // Define the API endpoint
+    final String apiUrl =
+        '$baseurl/day-redo-itinerary/$dayNo/$resIterneryId/$userToken';
+
+    try {
+      // Make the Get request
+      final response = await http.get(Uri.parse(apiUrl));
+      var data = json.decode(response.body);
+
+      if (data != null && data is Map<String, dynamic>) {
+        print(
+            '+++++++++++++++++++++++++++++++++++++redoItinerary++++++++++++++++++++++++++++++++++++++++++++++++++');
+        print(data);
+        print(
+            '+++++++++++++++++++++++++++++++++++++redoItinerary++++++++++++++++++++++++++++++++++++++++++++++++++');
+        setState(() {
+          // Find the index of the matching day_no
+          int index = daysDataDisplay
+              .indexWhere((day) => day["day_no"] == data["day_no"]);
+
+          if (index != -1) {
+            // Replace the existing object with the new data
+            daysDataDisplay[index] = data;
+          }
+          // else {
+          //   // If day_no is not found, add the new data
+          //   daysDataDisplay.add(data);
+          // }
+        });
+      }
+    } catch (e) {
+      print('Error occurred: $e');
+      // show a snackbar
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error Loading Data Please Try Again')),
+      );
+    }
+  }
+
   @override
   void initState() {
     // TODO: implement initState
@@ -1239,14 +1281,15 @@ class _HomePageTripState extends State<HomePageTrip> {
     menuIndex = menuIndex + 1;
     fetchNationalHolidays();
 
-    return dayItineraryView(
-        'thunder_cloud.svg',
-        '$menuIndex',
-        setState,
-        iterneryData,
-        context,
-        transpotationModeBool,
-        weatherInfoToSend); // dayActivityDataArray
+    return DayItineraryView(
+        weatherSvg: 'thunder_cloud.svg',
+        dayNum: '$menuIndex',
+        setState: setState,
+        dayActivityDataArray: iterneryData,
+        contextP: context,
+        transpotationModeBool: transpotationModeBool,
+        weatherText: weatherInfoToSend,
+        redoItinerary: redoItinerary); // dayActivityDataArray
 
     /*switch (menuIndex) {
       /*case 0:

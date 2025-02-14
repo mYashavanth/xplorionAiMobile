@@ -16,8 +16,10 @@ import 'package:xplorion_ai/views/urlconfig.dart';
 import 'package:http/http.dart' as http;
 
 Future<void> _openMap(double latitude, double longitude) async {
-  String googleMapsUrl = 'geo:$latitude,$longitude?q=$latitude,$longitude';  // Launch Google Maps on Android with geo: scheme
-  String appleMapsUrl = 'http://maps.apple.com/?q=$latitude,$longitude';    // Launch Apple Maps on iOS with maps: scheme
+  String googleMapsUrl =
+      'geo:$latitude,$longitude?q=$latitude,$longitude'; // Launch Google Maps on Android with geo: scheme
+  String appleMapsUrl =
+      'http://maps.apple.com/?q=$latitude,$longitude'; // Launch Apple Maps on iOS with maps: scheme
 
   if (Platform.isAndroid) {
     // Android - Open Google Maps
@@ -38,13 +40,9 @@ Future<void> _openMap(double latitude, double longitude) async {
   }
 }
 
-
-
 Future<void> addCollection(String collectionName, String token) async {
-
-  if(collectionName.isEmpty || token.isEmpty)
-  {
-     print(" Collection Name and Token Is emprty ");
+  if (collectionName.isEmpty || token.isEmpty) {
+    print(" Collection Name and Token Is emprty ");
   }
 
   // Define the API endpoint
@@ -66,17 +64,17 @@ Future<void> addCollection(String collectionName, String token) async {
     if (response.statusCode == 200) {
       print('Collection added successfully: ${response.body}');
     } else {
-      print('Failed to add collection: ${response.statusCode}, ${response.body}');
+      print(
+          'Failed to add collection: ${response.statusCode}, ${response.body}');
     }
   } catch (e) {
     print('Error occurred: $e');
   }
 }
 
-Future<void> addIterneryToCollection(String collectionId,String iterneryId,String token) async {
-
-  if(collectionId.isEmpty || iterneryId.isEmpty || token.isEmpty)
-  {
+Future<void> addIterneryToCollection(
+    String collectionId, String iterneryId, String token) async {
+  if (collectionId.isEmpty || iterneryId.isEmpty || token.isEmpty) {
     print(" Collection Name and iterneryId Is empty ");
   }
 
@@ -100,7 +98,8 @@ Future<void> addIterneryToCollection(String collectionId,String iterneryId,Strin
     if (response.statusCode == 200) {
       print('Iternery to Collection added successfully: ${response.body}');
     } else {
-      print('Failed to add collection: ${response.statusCode}, ${response.body}');
+      print(
+          'Failed to add collection: ${response.statusCode}, ${response.body}');
     }
   } catch (e) {
     print('Error occurred: $e');
@@ -159,106 +158,144 @@ Widget buildMenuItemsCard(index, title, menuBoolList, StateSetter setState) {
   );
 }
 
-Widget dayItineraryView(
-  weatherSvg,
-  dayNum,
-  setState,
-  Map dayActivityDataArray,
-  contextP,
-  transpotationModeBool,
-    weatherText
-) {
-  List data = dayActivityDataArray['data'];
-  List<bool> day1SliderShowActivity = dayActivityDataArray['showActivity'];
-  List<int> day1SliderCurrentPos = dayActivityDataArray['sliderPos'];
-  return Column(
-    children: [
-      Container(
-        height: 90,
-        padding: const EdgeInsets.all(12),
-        decoration: ShapeDecoration(
-          color: const Color(0xFFF6F9FF),
-          shape: RoundedRectangleBorder(
-            side: const BorderSide(
-              width: 0.50,
-              color: Color(0xFFB9CDF5),
+class DayItineraryView extends StatefulWidget {
+  final String weatherSvg;
+  final String dayNum;
+  final Function setState;
+  final Map dayActivityDataArray;
+  final BuildContext contextP;
+  final List<bool> transpotationModeBool;
+  final String weatherText;
+  final Future<void> Function(String) redoItinerary;
+
+  const DayItineraryView({
+    Key? key,
+    required this.weatherSvg,
+    required this.dayNum,
+    required this.setState,
+    required this.dayActivityDataArray,
+    required this.contextP,
+    required this.transpotationModeBool,
+    required this.weatherText,
+    required this.redoItinerary,
+  }) : super(key: key);
+
+  @override
+  _DayItineraryViewState createState() => _DayItineraryViewState();
+}
+
+class _DayItineraryViewState extends State<DayItineraryView> {
+  bool isLoading = false;
+
+  Future<void> handleRedo() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    await widget.redoItinerary(widget.dayNum); // Call the API
+
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    List data = widget.dayActivityDataArray['data'];
+    List<bool> day1SliderShowActivity =
+        widget.dayActivityDataArray['showActivity'];
+    List<int> day1SliderCurrentPos = widget.dayActivityDataArray['sliderPos'];
+
+    return Column(
+      children: [
+        Container(
+          height: 90,
+          padding: const EdgeInsets.all(12),
+          decoration: ShapeDecoration(
+            color: const Color(0xFFF6F9FF),
+            shape: RoundedRectangleBorder(
+              side: const BorderSide(width: 0.50, color: Color(0xFFB9CDF5)),
+              borderRadius: BorderRadius.circular(12),
             ),
-            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              SvgPicture.asset('assets/icons/${widget.weatherSvg}'),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  widget.weatherText,
+                  style: const TextStyle(
+                    color: Color(0xFF005CE7),
+                    fontSize: 14,
+                    fontFamily: themeFontFamily2,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-        child: Row(
+        const SizedBox(height: 20),
+        Row(
           children: [
-            SvgPicture.asset('assets/icons/$weatherSvg'),
-            const SizedBox(
-              width: 10,
+            SvgPicture.asset('assets/icons/board_flight.svg'),
+            const SizedBox(width: 20),
+            Text(
+              'Day ${widget.dayNum} Itinerary',
+              style: const TextStyle(
+                color: Color(0xFF030917),
+                fontSize: 20,
+                fontFamily: themeFontFamily,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-            Expanded(
-              child: Text(
-                weatherText,
-                style: const TextStyle(
-                  color: Color(0xFF005CE7),
-                  fontSize: 14,
-                  fontFamily: themeFontFamily2,
-                  fontWeight: FontWeight.w400,
-                  // height: 0.11,
+            const Spacer(),
+            GestureDetector(
+              onTap: isLoading ? null : handleRedo, // Disable tap when loading
+              child: Container(
+                height: 32,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: ShapeDecoration(
+                  color: const Color(0xFFEFEFEF),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(32),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    isLoading
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.black),
+                            ),
+                          )
+                        : SvgPicture.asset('assets/icons/redo.svg'),
+                    const SizedBox(width: 6),
+                    const Text(
+                      'Redo',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 12,
+                        fontFamily: themeFontFamily,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
           ],
         ),
-      ),
-      const SizedBox(
-        height: 20,
-      ),
-      Row(
-        children: [
-          SvgPicture.asset('assets/icons/board_flight.svg'),
-          const SizedBox(
-            width: 20,
-          ),
-          Text(
-            'Day $dayNum Itinerary',
-            style: const TextStyle(
-              color: Color(0xFF030917),
-              fontSize: 20,
-              fontFamily: themeFontFamily,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const Spacer(),
-          Container(
-            height: 32,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: ShapeDecoration(
-              color: const Color(0xFFEFEFEF),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(32),
-              ),
-            ),
-            child: Row(
-              children: [
-                SvgPicture.asset('assets/icons/redo.svg'),
-                const SizedBox(
-                  width: 6,
-                ),
-                const Text(
-                  'Redo',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 12,
-                    fontFamily: themeFontFamily,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-      //const SizedBox(
-      //  height: 20,
-      //),
-      /*Row(
+        //const SizedBox(
+        //  height: 20,
+        //),
+        /*Row(
         children: [
           Container(
             height: 27,
@@ -312,21 +349,23 @@ Widget dayItineraryView(
           ),
         ],
       ), */
-      const SizedBox(
-        height: 20,
-      ),
-
-      Column(
-        children: buildMultipleDayActivity(setState, data, day1SliderCurrentPos,
-            day1SliderShowActivity, contextP, transpotationModeBool),
-      ),
-      const SizedBox(
-        height: 20,
-      )
-      // buildDayActivity(
-      //     setState, data[0], day1SliderCurrentPos, day1SliderShowActivity, 0),
-    ],
-  );
+        const SizedBox(height: 20),
+        Column(
+          children: buildMultipleDayActivity(
+            widget.setState,
+            data,
+            day1SliderCurrentPos,
+            day1SliderShowActivity,
+            widget.contextP,
+            widget.transpotationModeBool,
+          ),
+        ),
+        const SizedBox(height: 20),
+        // buildDayActivity(
+        //     setState, data[0], day1SliderCurrentPos, day1SliderShowActivity, 0),
+      ],
+    );
+  }
 }
 
 List<Widget> buildMultipleDayActivity(setState, data, day1SliderCurrentPos,
@@ -362,13 +401,10 @@ Widget buildDayActivity(setState, data, List<int> day1SliderCurrentPos,
   String priceDescription = data[14].toString();
   String currentlyOpen = data[15].toString();
 
-  if(currentlyOpen == 'true')
-  {
-      open = true;
-  }
-  else
-  {
-     open = false;
+  if (currentlyOpen == 'true') {
+    open = true;
+  } else {
+    open = false;
   }
 
   Widget visitedWidget = Text('');
@@ -398,7 +434,7 @@ Widget buildDayActivity(setState, data, List<int> day1SliderCurrentPos,
                   ),
                 )
               : const Row(
-                mainAxisSize: MainAxisSize.min,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.done),
                     SizedBox(
@@ -433,115 +469,120 @@ Widget buildDayActivity(setState, data, List<int> day1SliderCurrentPos,
     children: [
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: kms.isNotEmpty ? [
-          vehicleIcon,
-          Text(
-            '$duration Mins • $kms Kms',
-            style: const TextStyle(
-              color: Color(0xFF888888),
-              fontSize: 12,
-              fontFamily: themeFontFamily2,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-          InkWell(
-            onTap: () {
-              showModalBottomSheet(
-                isScrollControlled: true,
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(8),
-                    topRight: Radius.circular(8),
+        children: kms.isNotEmpty
+            ? [
+                vehicleIcon,
+                Text(
+                  '$duration Mins • $kms Kms',
+                  style: const TextStyle(
+                    color: Color(0xFF888888),
+                    fontSize: 12,
+                    fontFamily: themeFontFamily2,
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
-                context: context,
-                builder: (context) {
-                  return StatefulBuilder(
-                    builder: (
-                      context,
-                      StateSetter modalSetState,
-                    ) {
-                      return buildChangeTransportationModeBottomSheet(
-                          transpotationModeBool, modalSetState, context);
-                    },
-                  );
-                  // return Container();
-                },
-              );
-            },
-            child: const Icon(Icons.arrow_drop_down),
-          ),
-          GestureDetector(
-            onTap: () async {
+                InkWell(
+                  onTap: () {
+                    showModalBottomSheet(
+                      isScrollControlled: true,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(8),
+                          topRight: Radius.circular(8),
+                        ),
+                      ),
+                      context: context,
+                      builder: (context) {
+                        return StatefulBuilder(
+                          builder: (
+                            context,
+                            StateSetter modalSetState,
+                          ) {
+                            return buildChangeTransportationModeBottomSheet(
+                                transpotationModeBool, modalSetState, context);
+                          },
+                        );
+                        // return Container();
+                      },
+                    );
+                  },
+                  child: const Icon(Icons.arrow_drop_down),
+                ),
+                GestureDetector(
+                  onTap: () async {
+                    if (originDestination != '') {
+                      // Extract latitudes and longitudes using RegExp
+                      RegExp regExp = RegExp(r'\(([^,]+), ([^)]+)\)');
+                      Iterable<RegExpMatch> matches =
+                          regExp.allMatches(originDestination);
 
-              if(originDestination!= '')
-              {
-                // Extract latitudes and longitudes using RegExp
-                RegExp regExp = RegExp(r'\(([^,]+), ([^)]+)\)');
-                Iterable<RegExpMatch> matches = regExp.allMatches(originDestination);
+                      // Convert matches to list of coordinates
+                      List<List<double>> coordinates = matches.map((match) {
+                        double latitude = double.parse(match.group(1)!);
+                        double longitude = double.parse(match.group(2)!);
+                        return [latitude, longitude];
+                      }).toList();
 
-                // Convert matches to list of coordinates
-                List<List<double>> coordinates = matches.map((match) {
-                  double latitude = double.parse(match.group(1)!);
-                  double longitude = double.parse(match.group(2)!);
-                  return [latitude, longitude];
-                }).toList();
+                      // Assign source and destination
+                      List<double> source = coordinates[0];
+                      List<double> destination = coordinates[1];
 
-                // Assign source and destination
-                List<double> source = coordinates[0];
-                List<double> destination = coordinates[1];
+                      final double sourceLat =
+                          source[0]; //37.7749; Source latitude
+                      final double sourceLng =
+                          source[1]; //-122.4194; Source longitude
+                      final double destLat =
+                          destination[0]; //34.0522; // Destination latitude
+                      final double destLng =
+                          destination[1]; // Destination longitude
 
-                final double sourceLat = source[0]; //37.7749; Source latitude
-                final double sourceLng = source[1]; //-122.4194; Source longitude
-                final double destLat = destination[0]; //34.0522; // Destination latitude
-                final double destLng = destination[1]; // Destination longitude
+                      Uri mapUri;
 
-                Uri mapUri;
+                      if (Platform.isIOS) {
+                        // Use Apple Maps for iOS
+                        mapUri = Uri.parse(
+                          "https://maps.apple.com/?saddr=$sourceLat,$sourceLng&daddr=$destLat,$destLng",
+                        );
+                      } else {
+                        // Use Google Maps for Android
+                        mapUri = Uri.parse(
+                          "https://www.google.com/maps/dir/?api=1&origin=$sourceLat,$sourceLng&destination=$destLat,$destLng&travelmode=driving",
+                        );
+                      }
 
-                if (Platform.isIOS) {
-                  // Use Apple Maps for iOS
-                  mapUri = Uri.parse(
-                    "https://maps.apple.com/?saddr=$sourceLat,$sourceLng&daddr=$destLat,$destLng",
-                  );
-                } else {
-                  // Use Google Maps for Android
-                  mapUri = Uri.parse(
-                    "https://www.google.com/maps/dir/?api=1&origin=$sourceLat,$sourceLng&destination=$destLat,$destLng&travelmode=driving",
-                  );
-                }
-
-                if (await canLaunchUrl(mapUri)) {
-                  await launchUrl(mapUri, mode: LaunchMode.externalApplication);
-                } else {
-                  throw Exception("Could not launch map application");
-                }
-              }
-
-            },
-            child: const Text(
-              'Directions',
-              style: TextStyle(
-                color: Color(0xFF214EB0),
-                fontSize: 12,
-                fontFamily: themeFontFamily2,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Row(
-              children: List.generate(
-                30,
-                (index) => Expanded(
-                  child: Container(
-                    color: index.isOdd ? Colors.grey : Colors.transparent,
-                    height: 1,
+                      if (await canLaunchUrl(mapUri)) {
+                        await launchUrl(mapUri,
+                            mode: LaunchMode.externalApplication);
+                      } else {
+                        throw Exception("Could not launch map application");
+                      }
+                    }
+                  },
+                  child: const Text(
+                    'Directions',
+                    style: TextStyle(
+                      color: Color(0xFF214EB0),
+                      fontSize: 12,
+                      fontFamily: themeFontFamily2,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
-              ),
-            ),
-          ),
-        ] : [],
+                Expanded(
+                  child: Row(
+                    children: List.generate(
+                      30,
+                      (index) => Expanded(
+                        child: Container(
+                          color: index.isOdd ? Colors.grey : Colors.transparent,
+                          height: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ]
+            : [],
       ),
       const SizedBox(
         height: 20,
@@ -1078,29 +1119,28 @@ Widget buildDayActivity(setState, data, List<int> day1SliderCurrentPos,
                               const SizedBox(
                                 width: 5,
                               ),
-                                GestureDetector(
-                                  onTap: () {
-
-                                    _openMap(lat,long); // 12.971599, 77.594566
-
-                                  },
-                                  child: const Text(
-                                    'Directions',
-                                    style: TextStyle(
-                                      color: Color(0xFF214EB0),
-                                      fontSize: 12,
-                                      fontFamily: themeFontFamily2,
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                              GestureDetector(
+                                onTap: () {
+                                  _openMap(lat, long); // 12.971599, 77.594566
+                                },
+                                child: const Text(
+                                  'Directions',
+                                  style: TextStyle(
+                                    color: Color(0xFF214EB0),
+                                    fontSize: 12,
+                                    fontFamily: themeFontFamily2,
+                                    fontWeight: FontWeight.w500,
                                   ),
                                 ),
+                              ),
                             ],
                           ),
                         ),
 
                         InkWell(
-                          onTap: (){
-                            Navigator.of(context).pushNamed('/similar_restuarant');
+                          onTap: () {
+                            Navigator.of(context)
+                                .pushNamed('/similar_restuarant');
                           },
                           child: Container(
                             height: 32,
@@ -1366,7 +1406,6 @@ Widget buildTranspotationWidget(index, transpotationModeBool, modalSetState) {
       padding: const EdgeInsets.all(2),
       decoration: ShapeDecoration(
         gradient: transpotationModeBool[index]
-        
             ? themeGradientColor
             : noneThemeGradientColor,
         shape: RoundedRectangleBorder(
@@ -1422,75 +1461,74 @@ Widget buildTranspotationWidget(index, transpotationModeBool, modalSetState) {
   );
 }
 
-Widget buildLocalFoodAndDrinks(context,Future<List<Widget>> foodDrinkArr) {
-
-  return Column(
-    children: [
-      FutureBuilder<List<Widget>>(
-        future: foodDrinkArr,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            // Show a loading spinner while waiting for the data
-            return const CircularProgressIndicator();
-          } else if (snapshot.hasError) {
-            // Handle any errors that occur during the fetch
-            return Text('Error: ${snapshot.error}');
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            // Handle the case where no data is available
-            return const Text('No Records available');
-          } else {
-            // Build the list of widgets with SizedBox spacing
-            List<Widget> spacedWidgetsFD = [
-              Row(
+Widget buildLocalFoodAndDrinks(context, Future<List<Widget>> foodDrinkArr) {
+  return Column(children: [
+    FutureBuilder<List<Widget>>(
+      future: foodDrinkArr,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          // Show a loading spinner while waiting for the data
+          return const CircularProgressIndicator();
+        } else if (snapshot.hasError) {
+          // Handle any errors that occur during the fetch
+          return Text('Error: ${snapshot.error}');
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          // Handle the case where no data is available
+          return const Text('No Records available');
+        } else {
+          // Build the list of widgets with SizedBox spacing
+          List<Widget> spacedWidgetsFD = [
+            Row(
               children: [
-                  SvgPicture.asset('assets/icons/food_bowl.svg'),
-                  const SizedBox(
-                    width: 10,
-                  ),
-                  const Text(
-                    'Local Food and Drinks',
-                    style: TextStyle(
-                      color: Color(0xFF0A0A0A),
-                      fontSize: 20,
-                      fontFamily: themeFontFamily,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-              ],)
-            ];
-
-            // Group widgets into rows of two cards each
-            List<Widget> rows = [];
-            List<Widget> widgets = snapshot.data!;
-
-            for (int i = 0; i < widgets.length; i += 2) {
-              rows.add(
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 5),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // First card
-                      Expanded(child: widgets[i]),
-                      const SizedBox(width: 10), // Spacing between cards
-
-                      // Second card if available
-                      if (i + 1 < widgets.length)
-                        Expanded(child: widgets[i + 1])
-                      else
-                        const Expanded(child: SizedBox()), // Empty space if odd count
-                    ],
+                SvgPicture.asset('assets/icons/food_bowl.svg'),
+                const SizedBox(
+                  width: 10,
+                ),
+                const Text(
+                  'Local Food and Drinks',
+                  style: TextStyle(
+                    color: Color(0xFF0A0A0A),
+                    fontSize: 20,
+                    fontFamily: themeFontFamily,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-              );
-            }
+              ],
+            )
+          ];
 
-            return Column(children: rows);
+          // Group widgets into rows of two cards each
+          List<Widget> rows = [];
+          List<Widget> widgets = snapshot.data!;
+
+          for (int i = 0; i < widgets.length; i += 2) {
+            rows.add(
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 5),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // First card
+                    Expanded(child: widgets[i]),
+                    const SizedBox(width: 10), // Spacing between cards
+
+                    // Second card if available
+                    if (i + 1 < widgets.length)
+                      Expanded(child: widgets[i + 1])
+                    else
+                      const Expanded(
+                          child: SizedBox()), // Empty space if odd count
+                  ],
+                ),
+              ),
+            );
           }
-        },
-        )
-      ]
-      );
+
+          return Column(children: rows);
+        }
+      },
+    )
+  ]);
 
   /*
   return Column(
@@ -1687,7 +1725,8 @@ Widget buildLocalFoodAndDrinksCard(img, svg, title, desc, context) {
                         ),
                         context: context,
                         builder: (context) {
-                          return showFoodBottomSheet(img, svgIconString, title, desc);
+                          return showFoodBottomSheet(
+                              img, svgIconString, title, desc);
                         });
                   },
                   child: Container(
@@ -2453,7 +2492,6 @@ Widget buildTips(Future<List<Widget>> tripTipsFuture) {
       const SizedBox(
         height: 20,
       ),
-
       FutureBuilder<List<Widget>>(
         future: tripTipsFuture,
         builder: (context, snapshot) {
@@ -2676,10 +2714,8 @@ Widget buildPackingList(packingListShowCardBool, setState) {
   );
 }
 
-
 // HTTP request to fetch collections
 Future<List> fetchCollections() async {
-
   const FlutterSecureStorage storage = FlutterSecureStorage();
   String? userToken = await storage.read(key: 'userToken');
 
@@ -2693,8 +2729,8 @@ Future<List> fetchCollections() async {
   }
 }
 
-Widget buildSavedItineriesBottomSheet(savedItineraryCollectionBool, setState, context, collectionNameController,resIterneryId) {
-
+Widget buildSavedItineriesBottomSheet(savedItineraryCollectionBool, setState,
+    context, collectionNameController, resIterneryId) {
   return FutureBuilder(
     future: fetchCollections(),
     builder: (context, snapshot) {
@@ -2823,21 +2859,22 @@ Widget buildSavedItineriesBottomSheet(savedItineraryCollectionBool, setState, co
                     height: MediaQuery.of(context).size.height * 0.35,
                     child: SingleChildScrollView(
                       child: Column(
-                        children: collections.map((collection) => Column(
-                          children: [
-                            buildItineraryCollections(
-                              collections.indexOf(collection),
-                              'kochi_river.jpeg',
-                              collection['collection_name'],
-                              true,
-                              savedItineraryCollectionBool,
-                              context,
-                              setState,
-                              collection['_id'], resIterneryId
-                            ),
-                            const SizedBox(height: 16),
-                          ],
-                        ))
+                        children: collections
+                            .map((collection) => Column(
+                                  children: [
+                                    buildItineraryCollections(
+                                        collections.indexOf(collection),
+                                        'kochi_river.jpeg',
+                                        collection['collection_name'],
+                                        true,
+                                        savedItineraryCollectionBool,
+                                        context,
+                                        setState,
+                                        collection['_id'],
+                                        resIterneryId),
+                                    const SizedBox(height: 16),
+                                  ],
+                                ))
                             .toList(),
                       ),
                     ),
@@ -2851,7 +2888,6 @@ Widget buildSavedItineriesBottomSheet(savedItineraryCollectionBool, setState, co
     },
   );
 }
-
 
 /*
 Widget buildSavedItineriesBottomSheet(
@@ -3041,8 +3077,16 @@ Widget buildSavedItineriesBottomSheet(
   );
 } */
 
-Widget buildItineraryCollections(index, img, title, private,
-    savedItineraryCollectionBool, context, setState, collectionDbId, cIterneryId) {
+Widget buildItineraryCollections(
+    index,
+    img,
+    title,
+    private,
+    savedItineraryCollectionBool,
+    context,
+    setState,
+    collectionDbId,
+    cIterneryId) {
   Widget privateWidget = const Text(
     'Private',
     style: TextStyle(
@@ -3070,7 +3114,8 @@ Widget buildItineraryCollections(index, img, title, private,
                     height: 28,
                     decoration: const ShapeDecoration(
                       image: DecorationImage(
-                        image: NetworkImage("https://img.freepik.com/free-vector/travel-tourism-label-with-attractions_1284-52995.jpg"), //AssetImage("assets/images/friend_photo.jpeg"),
+                        image: NetworkImage(
+                            "https://img.freepik.com/free-vector/travel-tourism-label-with-attractions_1284-52995.jpg"), //AssetImage("assets/images/friend_photo.jpeg"),
                         fit: BoxFit.fill,
                       ),
                       shape: OvalBorder(
@@ -3121,7 +3166,8 @@ Widget buildItineraryCollections(index, img, title, private,
           clipBehavior: Clip.antiAlias,
           decoration: ShapeDecoration(
             image: const DecorationImage(
-              image: NetworkImage("https://img.freepik.com/free-vector/travel-tourism-label-with-attractions_1284-52995.jpg"),//AssetImage("assets/images/$img"),
+              image: NetworkImage(
+                  "https://img.freepik.com/free-vector/travel-tourism-label-with-attractions_1284-52995.jpg"), //AssetImage("assets/images/$img"),
               fit: BoxFit.fill,
             ),
             shape: RoundedRectangleBorder(
@@ -3175,7 +3221,8 @@ Widget buildItineraryCollections(index, img, title, private,
 
                   const FlutterSecureStorage storage = FlutterSecureStorage();
                   String? userToken = await storage.read(key: 'userToken');
-                  addIterneryToCollection(collectionDbId,cIterneryId,userToken!);
+                  addIterneryToCollection(
+                      collectionDbId, cIterneryId, userToken!);
 
                   setState(() {});
                 },
@@ -3532,36 +3579,44 @@ Widget buildNewCollectionBottomSheet(
                         child: InkWell(
                           onTap: isCreateEnabled
                               ? () async {
-                            //Navigator.pop(context);
-                            String? userToken = await storage.read(key: 'userToken');
+                                  //Navigator.pop(context);
+                                  String? userToken =
+                                      await storage.read(key: 'userToken');
 
-                            addCollection(
-                              collectionNameController.text.trim(),userToken!
-                            );
+                                  addCollection(
+                                      collectionNameController.text.trim(),
+                                      userToken!);
 
-                            if(context.mounted)
-                            {
-                              showModalBottomSheet(
-                                // isScrollControlled: true,
-                                backgroundColor: Colors.white,
-                                context: context,
-                                builder: (context) {
-                                  return StatefulBuilder(
-                                    builder: (context, modalSetState) {
-                                      return buildSavedItineriesBottomSheet(
-                                          [false, false, false, false, false, false, false, false, false],
-                                          modalSetState,
-                                          context,
-                                          collectionNameController,null
-                                      );
-                                    },
-                                  );
-                                },
-                              );
-
-                            }
-
-                          }
+                                  if (context.mounted) {
+                                    showModalBottomSheet(
+                                      // isScrollControlled: true,
+                                      backgroundColor: Colors.white,
+                                      context: context,
+                                      builder: (context) {
+                                        return StatefulBuilder(
+                                          builder: (context, modalSetState) {
+                                            return buildSavedItineriesBottomSheet(
+                                                [
+                                                  false,
+                                                  false,
+                                                  false,
+                                                  false,
+                                                  false,
+                                                  false,
+                                                  false,
+                                                  false,
+                                                  false
+                                                ],
+                                                modalSetState,
+                                                context,
+                                                collectionNameController,
+                                                null);
+                                          },
+                                        );
+                                      },
+                                    );
+                                  }
+                                }
                               : null,
                           child: Container(
                             height: 56,
@@ -3569,11 +3624,11 @@ Widget buildNewCollectionBottomSheet(
                               gradient: isCreateEnabled
                                   ? themeGradientColor
                                   : LinearGradient(
-                                colors: [
-                                  Colors.grey,
-                                  Colors.grey[400]!,
-                                ],
-                              ),
+                                      colors: [
+                                        Colors.grey,
+                                        Colors.grey[400]!,
+                                      ],
+                                    ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(32),
                               ),
@@ -3604,4 +3659,3 @@ Widget buildNewCollectionBottomSheet(
     },
   );
 }
-
