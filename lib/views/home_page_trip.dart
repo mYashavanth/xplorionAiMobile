@@ -350,6 +350,44 @@ class _HomePageTripState extends State<HomePageTrip> {
     }
   }
 
+  Future<void> redoIndividualItinerary(dayNo, index) async {
+    String? userToken = await storage.read(key: 'userToken');
+
+    // Define the API endpoint
+    final String apiUrl =
+        '$baseurl/activity-redo-itinerary/$dayNo/$index/$resIterneryId/$userToken';
+
+    try {
+      // Make the Get request
+      final response = await http.get(Uri.parse(apiUrl));
+      var data = json.decode(response.body);
+
+      print(
+          '+++++++++++++++++++++++++++++++++++++redoIndvidualItinerary++++++++++++++++++++++++++++++++++++++++++++++++++');
+      print(data);
+      print(
+          '+++++++++++++++++++++++++++++++++++++redoIndvidualItinerary++++++++++++++++++++++++++++++++++++++++++++++++++');
+      if (data != null && data is Map<String, dynamic>) {
+        setState(() {
+          // Find the index of the matching day_no
+          int dayIndex =
+              daysDataDisplay.indexWhere((day) => day["day_no"] == dayNo);
+          if (dayIndex != -1) {
+            // print(daysDataDisplay[dayIndex]['activities'][index]);
+            // Replace the existing object with the new data
+            daysDataDisplay[dayIndex]['activities'][index] = data;
+          }
+        });
+      }
+    } catch (e) {
+      print('Error occurred: $e');
+      // show a snackbar
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error Loading Data Please Try Again')),
+      );
+    }
+  }
+
   @override
   void initState() {
     // TODO: implement initState
@@ -1289,7 +1327,9 @@ class _HomePageTripState extends State<HomePageTrip> {
         contextP: context,
         transpotationModeBool: transpotationModeBool,
         weatherText: weatherInfoToSend,
-        redoItinerary: redoItinerary); // dayActivityDataArray
+        redoItinerary: redoItinerary,
+        redoIndividualItinerary:
+            redoIndividualItinerary); // dayActivityDataArray
 
     /*switch (menuIndex) {
       /*case 0:

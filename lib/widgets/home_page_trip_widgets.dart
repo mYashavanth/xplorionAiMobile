@@ -167,6 +167,7 @@ class DayItineraryView extends StatefulWidget {
   final List<bool> transpotationModeBool;
   final String weatherText;
   final Future<void> Function(String) redoItinerary;
+  final Future<void> Function(String, String) redoIndividualItinerary;
 
   const DayItineraryView({
     Key? key,
@@ -178,6 +179,7 @@ class DayItineraryView extends StatefulWidget {
     required this.transpotationModeBool,
     required this.weatherText,
     required this.redoItinerary,
+    required this.redoIndividualItinerary,
   }) : super(key: key);
 
   @override
@@ -358,6 +360,8 @@ class _DayItineraryViewState extends State<DayItineraryView> {
             day1SliderShowActivity,
             widget.contextP,
             widget.transpotationModeBool,
+            widget.redoIndividualItinerary,
+            widget.dayNum,
           ),
         ),
         const SizedBox(height: 20),
@@ -368,21 +372,44 @@ class _DayItineraryViewState extends State<DayItineraryView> {
   }
 }
 
-List<Widget> buildMultipleDayActivity(setState, data, day1SliderCurrentPos,
-    day1SliderShowActivity, contextP, transpotationModeBool) {
+List<Widget> buildMultipleDayActivity(
+    setState,
+    data,
+    day1SliderCurrentPos,
+    day1SliderShowActivity,
+    contextP,
+    transpotationModeBool,
+    redoIndividualItinerary,
+    dayNum) {
   List<Widget> column = [];
   for (var i = 0; i < data.length; i++) {
     column.add(
-      buildDayActivity(setState, data[i], day1SliderCurrentPos,
-          day1SliderShowActivity, i, contextP, transpotationModeBool),
+      buildDayActivity(
+          setState,
+          data[i],
+          day1SliderCurrentPos,
+          day1SliderShowActivity,
+          i,
+          contextP,
+          transpotationModeBool,
+          redoIndividualItinerary,
+          dayNum),
     );
   }
 
   return column;
 }
 
-Widget buildDayActivity(setState, data, List<int> day1SliderCurrentPos,
-    List<bool> day1SliderShowActivity, index, context, transpotationModeBool) {
+Widget buildDayActivity(
+    setState,
+    data,
+    List<int> day1SliderCurrentPos,
+    List<bool> day1SliderShowActivity,
+    index,
+    context,
+    transpotationModeBool,
+    redoIndividualItinerary,
+    dayNum) {
   var currentPos = day1SliderCurrentPos[0];
   List<Widget> imageSliders = data[2];
   String vehicle = data[0];
@@ -813,20 +840,10 @@ Widget buildDayActivity(setState, data, List<int> day1SliderCurrentPos,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        Container(
-                          // width: 32,
-                          height: 25,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 4),
-                          decoration: ShapeDecoration(
-                            color: const Color(0xFFEFEFEF),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(32),
-                            ),
-                          ),
-                          child: Center(
-                            child: SvgPicture.asset('assets/icons/redo.svg'),
-                          ),
+                        RedoButton(
+                          redoIndividualItinerary: redoIndividualItinerary,
+                          dayNum: dayNum,
+                          index: index,
                         ),
                       ],
                     ),
@@ -1238,6 +1255,67 @@ Widget buildDayActivity(setState, data, List<int> day1SliderCurrentPos,
       ),
     ],
   );
+}
+
+class RedoButton extends StatefulWidget {
+  final Function redoIndividualItinerary;
+  final String dayNum;
+  final int index;
+
+  const RedoButton({
+    Key? key,
+    required this.redoIndividualItinerary,
+    required this.dayNum,
+    required this.index,
+  }) : super(key: key);
+
+  @override
+  _RedoButtonState createState() => _RedoButtonState();
+}
+
+class _RedoButtonState extends State<RedoButton> {
+  bool _isLoading = false;
+
+  Future<void> _handleRedo() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    await widget.redoIndividualItinerary(widget.dayNum, widget.index);
+
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _isLoading ? null : _handleRedo,
+      child: Container(
+        height: 25,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        decoration: ShapeDecoration(
+          color: const Color(0xFFEFEFEF),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(32),
+          ),
+        ),
+        child: Center(
+          child: _isLoading
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                  ),
+                )
+              : SvgPicture.asset('assets/icons/redo.svg'),
+        ),
+      ),
+    );
+  }
 }
 
 Widget buildChangeTransportationModeBottomSheet(
