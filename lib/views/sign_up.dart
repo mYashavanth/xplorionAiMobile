@@ -60,7 +60,7 @@ class _SignUpState extends State<SignUp> {
           print("User email: $email");
           print("User display name: $displayName");
 
-          await _sendLoginDataToBackend(email, 'Admin@123', displayName);
+          await _sendLoginDataToBackend(email, 'Test@123', displayName);
         } else {
           print("Failed to retrieve user email or display name");
         }

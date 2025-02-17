@@ -289,7 +289,7 @@ class _HomePageTripState extends State<HomePageTrip> {
   //   });
   // }
   void startAutoCarousel() {
-    Timer.periodic(Duration(seconds: 2), (timer) {
+    Timer.periodic(Duration(seconds: 10), (timer) {
       if (_pageController.hasClients) {
         if (_currentIndex < loadingTexts.length - 1) {
           // Normal transition to next item
