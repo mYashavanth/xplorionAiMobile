@@ -11,6 +11,8 @@ import 'package:xplorion_ai/lib_assets/fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:io';
+import 'package:url_launcher/url_launcher_string.dart';
 
 class ExploreRoadMap extends StatefulWidget {
   const ExploreRoadMap({super.key});
@@ -23,12 +25,13 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
     with TickerProviderStateMixin {
   late TabController mapTabController;
 
-  List<bool> showPopUpWidgetsBool = [true, true, true, true];
+  List<bool> showPopUpWidgetsBool = [true, true, true, true, true];
   List<bool> itineraryDatesRowBool = [true, false, false, false, false];
   int tablength = 2;
 
   @override
   void initState() {
+    super.initState();
     // TODO: implement initState
     mapTabController = TabController(length: tablength, vsync: this);
     mapTabController.addListener(() {
@@ -38,13 +41,36 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
         });
       }
     });
-
-    super.initState();
   }
 
   final List<Tab> topTabs = [];
 
   GoogleMapController? mapController;
+
+  Future<void> _openMap(double latitude, double longitude) async {
+    String googleMapsUrl =
+        'geo:$latitude,$longitude?q=$latitude,$longitude'; // Launch Google Maps on Android with geo: scheme
+    String appleMapsUrl =
+        'http://maps.apple.com/?q=$latitude,$longitude'; // Launch Apple Maps on iOS with maps: scheme
+
+    if (Platform.isAndroid) {
+      // Android - Open Google Maps
+      if (await canLaunchUrlString(googleMapsUrl)) {
+        await launchUrlString(googleMapsUrl);
+      } else {
+        throw 'Could not open Google Maps.';
+      }
+    } else if (Platform.isIOS) {
+      // iOS - Open Apple Maps
+      if (await canLaunchUrlString(appleMapsUrl)) {
+        await launchUrlString(appleMapsUrl);
+      } else {
+        throw 'Could not open Apple Maps.';
+      }
+    } else {
+      throw 'Unsupported platform.';
+    }
+  }
 
   // Define multiple LatLng points
   final List<LatLng> points = [
@@ -84,7 +110,11 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
     final receivedArgs =
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     var itineraryDataForMaps = receivedArgs?['itineraryDataMaps'];
+    print(
+        '++++++++++++++++++++++++dataToDisplay++++++++++++++++++++++++++++++++++++++');
     print(itineraryDataForMaps[0]['itinerary']['itinerary']['days']);
+    print(
+        '++++++++++++++++++++++++dataToDisplay++++++++++++++++++++++++++++++++++++++');
     var mapsDataJson =
         itineraryDataForMaps[0]['itinerary']['itinerary']['days'];
     int dataLen = mapsDataJson.length;
@@ -98,14 +128,22 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
       if (tabIndex == i) {
         exploreLocationCards = [];
         for (int d = 0; d < dayWiseActivityData.length; d++) {
+          // print(
+          //     '+++++++++++++++++++++++++++++++++++++++++++++daywiseData$d++++++++++++++++++++++++++++++++++++++++++++++++++++');
+          // print(dayWiseActivityData[d]);
+          // print(
+          //     "dayWiseActivityData-length ${dayWiseActivityData.length} d $d exploreLocationCards-length ${exploreLocationCards.length}");
+          // print(
+          //     '+++++++++++++++++++++++++++++++++++++++++++++daywiseData$d++++++++++++++++++++++++++++++++++++++++++++++++++++');
           if (dayWiseActivityData[d]['lat'] != null &&
               dayWiseActivityData[d]['long'] != null) {
             points.add(LatLng(
                 dayWiseActivityData[d]['lat'], dayWiseActivityData[d]['long']));
           }
-          // print("+++++++++daywiseActivitydata++++++++++++");
-          // print(dayWiseActivityData[d]);
-          // print("+++++++++daywiseActivitydata++++++++++++");
+          print("+++++++++daywiseActivitydata++++++++++++");
+          print(points);
+          print(dayWiseActivityData[d]);
+          print("+++++++++daywiseActivitydata++++++++++++");
 
           //   creating exploreLocationCards
 
@@ -127,18 +165,29 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
           // two_locations_cordinates: (12.2731672, 76.6707435),(12.3180041, 76.6655541)}
 
           exploreLocationCards.add(popUpExploreWidgets(
-              d,
-              context,
-              showPopUpWidgetsBool,
-              setState,
-              dayWiseActivityData[d]['place_image_url'],
-              dayWiseActivityData[d]['locality_area_place_business'],
-              true,
-              true,
-              2,
-              false,
-              false,
-              false));
+            d,
+            context,
+            setState,
+            dayWiseActivityData[d]['place_image_url'],
+            dayWiseActivityData[d]['locality_area_place_business'],
+            dayWiseActivityData[d]['time'],
+            dayWiseActivityData[d]['one_line_description_about_place'],
+            dayWiseActivityData[d]['lat'],
+            dayWiseActivityData[d]['long'],
+          ));
+          // exploreLocationCards.add(popUpExploreWidgets(
+          //     d,
+          //     context,
+          //     showPopUpWidgetsBool,
+          //     setState,
+          //     dayWiseActivityData[d]['place_image_url'],
+          //     dayWiseActivityData[d]['locality_area_place_business'],
+          //     true,
+          //     true,
+          //     i + 1,
+          //     false,
+          //     false,
+          //     false));
         }
       }
     }
@@ -147,6 +196,17 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
     print('+++++++++++++++++++topTabs++++++++++++++++++++++++++');
     setState(() {
       tablength = topTabs.length;
+      if (mapTabController.length != tablength) {
+        mapTabController.dispose();
+        mapTabController = TabController(length: tablength, vsync: this);
+        mapTabController.addListener(() {
+          if (mapTabController.indexIsChanging) {
+            setState(() {
+              _getShortestRoute(mapTabController.index);
+            });
+          }
+        });
+      }
     });
     final String origin = '${points.first.latitude},${points.first.longitude}';
     final String destination =
@@ -247,12 +307,12 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
             fontWeight: FontWeight.w600,
           ),
         ),
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.add),
-          ),
-        ],
+        // actions: [
+        //   IconButton(
+        //     onPressed: () {},
+        //     icon: const Icon(Icons.add),
+        //   ),
+        // ],
         bottom: TabBar(
           labelColor: Colors.black,
           labelPadding: const EdgeInsets.all(0),
@@ -328,7 +388,7 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
                     return const Center(child: Text("No data available"));
                   } else {
                     return Container(
-                      height: 515,
+                      height: 200,
                       padding: EdgeInsets.all(
                           MediaQuery.of(context).size.width * 0.036),
                       child: ListView(
@@ -348,276 +408,154 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
   }
 
   Widget popUpExploreWidgets(
-      index,
-      context,
-      showPopUpWidgetsBool,
-      setState,
-      img,
-      title,
-      smallChips,
-      locationNumBool,
-      locationInt,
-      locationBool,
-      fullDay,
-      saved) {
-    String save = 'save_outline.svg';
-    if (saved) {
-      save = 'save_fill.svg';
-    }
+    index,
+    context,
+    setState,
+    img,
+    title,
+    time,
+    description,
+    lat,
+    long,
+  ) {
+    // Ensure img has a valid value
+    img ??=
+        'https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png';
 
-    return Visibility(
-      visible: showPopUpWidgetsBool[index],
-      child: Container(
-        // color: Colors.green,
-        // width: MediaQuery.of(context).size.width,
-        margin: const EdgeInsets.only(left: 5, right: 5),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(8),
-              decoration: ShapeDecoration(
-                color: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(50),
-                ),
-              ),
-              child: IconButton(
-                padding: const EdgeInsets.all(0),
-                onPressed: () {
-                  showPopUpWidgetsBool[index] = !showPopUpWidgetsBool[index];
-                  setState(() {});
-                },
-                icon: const Icon(Icons.close),
+    return Container(
+      margin: const EdgeInsets.only(left: 5, right: 5),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Container(
+            width: MediaQuery.of(context).size.width * 0.9,
+            padding: const EdgeInsets.all(10),
+            decoration: ShapeDecoration(
+              color: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
               ),
             ),
-            Container(
-              // height: 350,
-              width: MediaQuery.of(context).size.width * 0.9,
-              padding: const EdgeInsets.all(10),
-              decoration: ShapeDecoration(
-                color: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 10),
-                    height: 120,
-                    clipBehavior: Clip.antiAlias,
-                    decoration: ShapeDecoration(
-                      image: DecorationImage(
-                        image: NetworkImage(img),
-                        fit: BoxFit.fill,
-                      ),
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(12),
-                          topRight: Radius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      Visibility(
-                        visible: locationNumBool,
-                        child: Stack(
-                          children: [
-                            SizedBox(
-                              height: 25,
-                              width: 25,
-                              child: SvgPicture.asset(
-                                  'assets/icons/location_icon_blue.svg'),
-                            ),
-                            SizedBox(
-                              height: 25,
-                              width: 25,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.start,
+            child: Column(
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Stack(
                                 children: [
-                                  Text(
-                                    locationInt.toString(),
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontFamily: themeFontFamily2,
-                                      fontWeight: FontWeight.w600,
+                                  SizedBox(
+                                    height: 22,
+                                    width: 22,
+                                    child: SvgPicture.asset(
+                                        'assets/icons/location_icon_blue.svg'),
+                                  ),
+                                  SizedBox(
+                                    height: 22,
+                                    width: 22,
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          (index + 1).toString(),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12,
+                                            fontFamily: themeFontFamily2,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(
-                        width: 10,
-                      ),
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          color: Colors.black,
-                          fontSize: 14,
-                          fontFamily: themeFontFamily2,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  // const SizedBox(
-                  //   height: 10,
-                  // ),
-                  Visibility(
-                    visible: smallChips,
-                    child: Container(
-                      margin: const EdgeInsets.only(top: 10),
-                      child: Row(
-                        children: [
-                          //
-                          Container(
-                            margin: const EdgeInsets.only(right: 8),
-                            height: 26,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
-                            decoration: ShapeDecoration(
-                              color: const Color(0xFFEFEFEF),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(32),
+                              SizedBox(
+                                width: 190, // Set a fixed width for the title
+                                child: Text(
+                                  title,
+                                  maxLines:
+                                      1, // Prevents text from wrapping to the next line
+                                  overflow: TextOverflow
+                                      .ellipsis, // Shows "..." when text overflows
+                                  style: const TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 14,
+                                    fontFamily: themeFontFamily2,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                               ),
+                            ],
+                          ),
+                          Container(
+                            margin: const EdgeInsets.only(top: 6),
+                            child: Row(
+                              children: [
+                                SvgPicture.asset(
+                                  'assets/icons/timer_clock.svg',
+                                  width: 12,
+                                  height: 12,
+                                ),
+                                // Image(
+                                //   color: Color(0xFF888888),
+                                //   image: AssetImage('assets/images/timer_icon.png'),
+                                // ),
+                                const SizedBox(
+                                  width: 4,
+                                ),
+                                Text(
+                                  'Time to visit: $time',
+                                  style: const TextStyle(
+                                    color: Color(0xFF888888),
+                                    fontSize: 12,
+                                    fontFamily: themeFontFamily2,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
+                              ],
                             ),
-                            child: const Center(
-                              child: Text(
-                                'Farm',
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              SvgPicture.asset(
+                                'assets/icons/star_rating.svg',
+                                width: 12,
+                                height: 12,
+                                colorFilter: const ColorFilter.mode(
+                                  Colors.amberAccent, // Set the color to red
+                                  BlendMode.srcIn, // Apply the color to the SVG
+                                ),
+                              ),
+                              const SizedBox(
+                                width: 4,
+                              ),
+                              const Text(
+                                '4.8 (80224)',
                                 style: TextStyle(
                                   color: Color(0xFF888888),
                                   fontSize: 12,
-                                  fontFamily: themeFontFamily2,
-                                  fontWeight: FontWeight.w500,
+                                  fontFamily: 'IBM Plex Sans',
+                                  fontWeight: FontWeight.w400,
                                 ),
                               ),
-                            ),
+                            ],
                           ),
-                          //
-
-                          //
-                          Container(
-                            margin: const EdgeInsets.only(right: 8),
-                            height: 26,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
-                            decoration: ShapeDecoration(
-                              color: const Color(0xFFEFEFEF),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(32),
-                              ),
-                            ),
-                            child: const Center(
-                              child: Text(
-                                'Nature & Parks',
-                                style: TextStyle(
-                                  color: Color(0xFF888888),
-                                  fontSize: 12,
-                                  fontFamily: themeFontFamily2,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ),
-                          //
-
-                          //
-                          Container(
-                            margin: const EdgeInsets.only(right: 8),
-                            height: 26,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
-                            decoration: ShapeDecoration(
-                              color: const Color(0xFFEFEFEF),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(32),
-                              ),
-                            ),
-                            child: const Center(
-                              child: Text(
-                                'Museum',
-                                style: TextStyle(
-                                  color: Color(0xFF888888),
-                                  fontSize: 12,
-                                  fontFamily: themeFontFamily2,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ),
-                          //
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  const Text(
-                    'Tea gardens in Kochi, Kerala, are scenic plantations known for lush tea cultivation in hilly terrains.',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 12,
-                      fontFamily: themeFontFamily2,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  Row(
-                    children: [
-                      SvgPicture.asset(
-                        'assets/icons/star_rating.svg',
-                      ),
-                      const SizedBox(
-                        width: 10,
-                      ),
-                      const Text(
-                        '4.8 (80224)',
-                        style: TextStyle(
-                          color: Color(0xFF888888),
-                          fontSize: 12,
-                          fontFamily: 'IBM Plex Sans',
-                          fontWeight: FontWeight.w400,
-                          height: 0,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  Visibility(
-                    visible: locationBool,
-                    child: Container(
-                      margin: const EdgeInsets.only(top: 10),
-                      child: Row(
-                        children: [
-                          SvgPicture.asset(
-                            'assets/icons/timer_clock.svg',
-                          ),
-                          // Image(
-                          //   color: Color(0xFF888888),
-                          //   image: AssetImage('assets/images/timer_icon.png'),
-                          // ),
-                          const SizedBox(
-                            width: 10,
-                          ),
-                          const Text(
-                            'People typically spend 60 min here',
-                            style: TextStyle(
-                              color: Color(0xFF888888),
+                          const SizedBox(height: 6),
+                          Text(
+                            description,
+                            style: const TextStyle(
+                              color: Colors.black,
                               fontSize: 12,
                               fontFamily: themeFontFamily2,
                               fontWeight: FontWeight.w400,
@@ -626,213 +564,563 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
                         ],
                       ),
                     ),
-                  ),
-
-                  //
-
-                  //
-                  Visibility(
-                    visible: fullDay,
-                    child: Container(
-                      margin: const EdgeInsets.only(top: 10),
-                      child: Row(
-                        children: [
-                          SvgPicture.asset(
-                            'assets/icons/clock_fill.svg',
-                          ),
-                          const SizedBox(
-                            width: 10,
-                          ),
-                          const Text(
-                            'Friday : Open 24 hours',
-                            style: TextStyle(
-                              color: Color(0xFF888888),
-                              fontSize: 12,
-                              fontFamily: themeFontFamily2,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                        ],
+                    const SizedBox(width: 8),
+                    Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        image: DecorationImage(
+                          image: NetworkImage(img),
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
-                  ),
-                  //
-
-                  //
-                  Visibility(
-                    visible: locationBool,
-                    child: Container(
-                      margin: const EdgeInsets.only(top: 10),
-                      child: Row(
-                        children: [
-                          SvgPicture.asset(
-                            'assets/icons/location.svg',
-                            color: const Color(0xFF888888),
-                          ),
-                          const SizedBox(
-                            width: 10,
-                          ),
-                          const Text(
-                            'KDHP house,NH 49,Nullatanni,Munnar kerala,685612',
-                            style: TextStyle(
-                              color: Color(0xFF888888),
-                              fontSize: 12,
-                              fontFamily: themeFontFamily2,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                        ],
+                  ],
+                ),
+                const SizedBox(height: 10),
+                GestureDetector(
+                  onTap: () {
+                    _openMap(lat, long);
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    height: 32,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: ShapeDecoration(
+                      color: const Color(0xFFECF2FF),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(32),
                       ),
                     ),
-                  ),
-
-                  Container(
-                    margin: const EdgeInsets.only(top: 10),
                     child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        SvgPicture.asset(
-                          'assets/icons/clock_fill.svg',
-                        ),
-                        const SizedBox(
-                          width: 10,
-                        ),
+                        SvgPicture.asset('assets/icons/directions.svg'),
+                        const SizedBox(width: 5),
                         const Text(
-                          'Thursday : 9:30 AM - 10:45 PM',
+                          'Directions',
                           style: TextStyle(
-                            color: Color(0xFF888888),
+                            color: Color(0xFF005CE7),
                             fontSize: 12,
-                            fontFamily: themeFontFamily2,
-                            fontWeight: FontWeight.w400,
+                            fontFamily: themeFontFamily,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  //
-
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  Row(
-                    children: [
-                      InkWell(
-                        onTap: () {
-                          showModalBottomSheet(
-                              isScrollControlled: true,
-                              context: context,
-                              builder: (context) {
-                                return StatefulBuilder(
-                                    builder: (context, setState) {
-                                  return buildAddToYourTrip(
-                                      setState, context, itineraryDatesRowBool);
-                                });
-                              });
-                        },
-                        child: Container(
-                          height: 32,
-                          margin: const EdgeInsets.only(right: 10),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
-                          decoration: ShapeDecoration(
-                            color: const Color(0xFF005CE7),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(32),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              SvgPicture.asset(
-                                'assets/icons/$save',
-                                color: Colors.white,
-                              ),
-                              const SizedBox(
-                                width: 5,
-                              ),
-                              const Text(
-                                'Save',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontFamily: themeFontFamily,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      //
-                      Container(
-                        height: 32,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 4),
-                        margin: const EdgeInsets.only(right: 10),
-                        decoration: ShapeDecoration(
-                          color: const Color(0xFFECF2FF),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(32),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            SvgPicture.asset('assets/icons/directions.svg'),
-                            const SizedBox(
-                              width: 5,
-                            ),
-                            const Text(
-                              'Directions',
-                              style: TextStyle(
-                                color: Color(0xFF005CE7),
-                                fontSize: 12,
-                                fontFamily: themeFontFamily,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      Container(
-                        height: 32,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 4),
-                        decoration: ShapeDecoration(
-                          color: const Color(0xFFECF2FF),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(32),
-                          ),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // SvgPicture.asset('assets/icons/directions.svg'),
-                            // const SizedBox(
-                            //   width: 5,
-                            // ),
-                            Text(
-                              'Details',
-                              style: TextStyle(
-                                color: Color(0xFF005CE7),
-                                fontSize: 12,
-                                fontFamily: themeFontFamily,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
+//   Widget popUpExploreWidgets(
+//       index,
+//       context,
+//       showPopUpWidgetsBool,
+//       setState,
+//       img,
+//       title,
+//       smallChips,
+//       locationNumBool,
+//       locationInt,
+//       locationBool,
+//       fullDay,
+//       saved) {
+//     // print(
+//     //     '++++++++++++++++++++++++++++++++++++all variables +++++++++++++++++++++++++++++++++++++++++++++++++++++');
+//     // print(
+//     //     'index $index, context $context, showPopUpWidgetsBool $showPopUpWidgetsBool, setState $setState, img $img, title $title, smallChips $smallChips, locationNumBool $locationNumBool, locationInt $locationInt, locationBool $locationBool, fullDay $fullDay, saved $saved');
+//     // print(
+//     //     '++++++++++++++++++++++++++++++++++++all variables +++++++++++++++++++++++++++++++++++++++++++++++++++++');
+// // Add a check to ensure the index is within bounds
+//     if (index < 0 || index >= showPopUpWidgetsBool.length) {
+//       return Container(); // Return an empty container or handle the error appropriately
+//     }
+//     // Ensure img has a valid value
+//     img ??=
+//         'https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png';
+//     String save = 'save_outline.svg';
+//     if (saved) {
+//       save = 'save_fill.svg';
+//     }
+
+//     return Visibility(
+//       visible: showPopUpWidgetsBool[index],
+//       child: Container(
+//         // color: Colors.green,
+//         // width: MediaQuery.of(context).size.width,
+//         margin: const EdgeInsets.only(left: 5, right: 5),
+//         child: Column(
+//           crossAxisAlignment: CrossAxisAlignment.end,
+//           mainAxisAlignment: MainAxisAlignment.end,
+//           children: [
+//             Container(
+//               width: 40,
+//               height: 40,
+//               margin: const EdgeInsets.only(bottom: 10),
+//               padding: const EdgeInsets.all(8),
+//               decoration: ShapeDecoration(
+//                 color: Colors.white,
+//                 shape: RoundedRectangleBorder(
+//                   borderRadius: BorderRadius.circular(50),
+//                 ),
+//               ),
+//               child: IconButton(
+//                 padding: const EdgeInsets.all(0),
+//                 onPressed: () {
+//                   print(index);
+//                   print(showPopUpWidgetsBool[index]);
+//                   showPopUpWidgetsBool[index] = !showPopUpWidgetsBool[index];
+//                   setState(() {});
+//                 },
+//                 icon: const Icon(Icons.close),
+//               ),
+//             ),
+//             Container(
+//               // height: 350,
+//               width: MediaQuery.of(context).size.width * 0.9,
+//               padding: const EdgeInsets.all(10),
+//               decoration: ShapeDecoration(
+//                 color: Colors.white,
+//                 shape: RoundedRectangleBorder(
+//                   borderRadius: BorderRadius.circular(8),
+//                 ),
+//               ),
+//               child: Column(
+//                 children: [
+//                   Container(
+//                     margin: const EdgeInsets.only(bottom: 10),
+//                     height: 120,
+//                     clipBehavior: Clip.antiAlias,
+//                     decoration: ShapeDecoration(
+//                       image: DecorationImage(
+//                         image: NetworkImage(img),
+//                         fit: BoxFit.fill,
+//                       ),
+//                       shape: const RoundedRectangleBorder(
+//                         borderRadius: BorderRadius.only(
+//                           topLeft: Radius.circular(12),
+//                           topRight: Radius.circular(12),
+//                         ),
+//                       ),
+//                     ),
+//                   ),
+//                   Row(
+//                     children: [
+//                       Visibility(
+//                         visible: locationNumBool,
+//                         child: Stack(
+//                           children: [
+//                             SizedBox(
+//                               height: 25,
+//                               width: 25,
+//                               child: SvgPicture.asset(
+//                                   'assets/icons/location_icon_blue.svg'),
+//                             ),
+//                             SizedBox(
+//                               height: 25,
+//                               width: 25,
+//                               child: Row(
+//                                 mainAxisAlignment: MainAxisAlignment.center,
+//                                 crossAxisAlignment: CrossAxisAlignment.start,
+//                                 children: [
+//                                   Text(
+//                                     locationInt.toString(),
+//                                     style: const TextStyle(
+//                                       color: Colors.white,
+//                                       fontSize: 12,
+//                                       fontFamily: themeFontFamily2,
+//                                       fontWeight: FontWeight.w600,
+//                                     ),
+//                                   ),
+//                                 ],
+//                               ),
+//                             ),
+//                           ],
+//                         ),
+//                       ),
+//                       const SizedBox(
+//                         width: 10,
+//                       ),
+//                       Text(
+//                         title,
+//                         style: const TextStyle(
+//                           color: Colors.black,
+//                           fontSize: 14,
+//                           fontFamily: themeFontFamily2,
+//                           fontWeight: FontWeight.w600,
+//                         ),
+//                       ),
+//                     ],
+//                   ),
+//                   // const SizedBox(
+//                   //   height: 10,
+//                   // ),
+//                   Visibility(
+//                     visible: smallChips,
+//                     child: Container(
+//                       margin: const EdgeInsets.only(top: 10),
+//                       child: Row(
+//                         children: [
+//                           //
+//                           Container(
+//                             margin: const EdgeInsets.only(right: 8),
+//                             height: 26,
+//                             padding: const EdgeInsets.symmetric(
+//                                 horizontal: 10, vertical: 4),
+//                             decoration: ShapeDecoration(
+//                               color: const Color(0xFFEFEFEF),
+//                               shape: RoundedRectangleBorder(
+//                                 borderRadius: BorderRadius.circular(32),
+//                               ),
+//                             ),
+//                             child: const Center(
+//                               child: Text(
+//                                 'Farm',
+//                                 style: TextStyle(
+//                                   color: Color(0xFF888888),
+//                                   fontSize: 12,
+//                                   fontFamily: themeFontFamily2,
+//                                   fontWeight: FontWeight.w500,
+//                                 ),
+//                               ),
+//                             ),
+//                           ),
+//                           //
+
+//                           //
+//                           Container(
+//                             margin: const EdgeInsets.only(right: 8),
+//                             height: 26,
+//                             padding: const EdgeInsets.symmetric(
+//                                 horizontal: 10, vertical: 4),
+//                             decoration: ShapeDecoration(
+//                               color: const Color(0xFFEFEFEF),
+//                               shape: RoundedRectangleBorder(
+//                                 borderRadius: BorderRadius.circular(32),
+//                               ),
+//                             ),
+//                             child: const Center(
+//                               child: Text(
+//                                 'Nature & Parks',
+//                                 style: TextStyle(
+//                                   color: Color(0xFF888888),
+//                                   fontSize: 12,
+//                                   fontFamily: themeFontFamily2,
+//                                   fontWeight: FontWeight.w500,
+//                                 ),
+//                               ),
+//                             ),
+//                           ),
+//                           //
+
+//                           //
+//                           Container(
+//                             margin: const EdgeInsets.only(right: 8),
+//                             height: 26,
+//                             padding: const EdgeInsets.symmetric(
+//                                 horizontal: 10, vertical: 4),
+//                             decoration: ShapeDecoration(
+//                               color: const Color(0xFFEFEFEF),
+//                               shape: RoundedRectangleBorder(
+//                                 borderRadius: BorderRadius.circular(32),
+//                               ),
+//                             ),
+//                             child: const Center(
+//                               child: Text(
+//                                 'Museum',
+//                                 style: TextStyle(
+//                                   color: Color(0xFF888888),
+//                                   fontSize: 12,
+//                                   fontFamily: themeFontFamily2,
+//                                   fontWeight: FontWeight.w500,
+//                                 ),
+//                               ),
+//                             ),
+//                           ),
+//                           //
+//                         ],
+//                       ),
+//                     ),
+//                   ),
+//                   const SizedBox(
+//                     height: 10,
+//                   ),
+//                   const Text(
+//                     'Tea gardens in Kochi, Kerala, are scenic plantations known for lush tea cultivation in hilly terrains.',
+//                     style: TextStyle(
+//                       color: Colors.black,
+//                       fontSize: 12,
+//                       fontFamily: themeFontFamily2,
+//                       fontWeight: FontWeight.w400,
+//                     ),
+//                   ),
+//                   const SizedBox(
+//                     height: 10,
+//                   ),
+//                   Row(
+//                     children: [
+//                       SvgPicture.asset(
+//                         'assets/icons/star_rating.svg',
+//                       ),
+//                       const SizedBox(
+//                         width: 10,
+//                       ),
+//                       const Text(
+//                         '4.8 (80224)',
+//                         style: TextStyle(
+//                           color: Color(0xFF888888),
+//                           fontSize: 12,
+//                           fontFamily: 'IBM Plex Sans',
+//                           fontWeight: FontWeight.w400,
+//                           height: 0,
+//                         ),
+//                       ),
+//                     ],
+//                   ),
+
+//                   Visibility(
+//                     visible: locationBool,
+//                     child: Container(
+//                       margin: const EdgeInsets.only(top: 10),
+//                       child: Row(
+//                         children: [
+//                           SvgPicture.asset(
+//                             'assets/icons/timer_clock.svg',
+//                           ),
+//                           // Image(
+//                           //   color: Color(0xFF888888),
+//                           //   image: AssetImage('assets/images/timer_icon.png'),
+//                           // ),
+//                           const SizedBox(
+//                             width: 10,
+//                           ),
+//                           const Text(
+//                             'People typically spend 60 min here',
+//                             style: TextStyle(
+//                               color: Color(0xFF888888),
+//                               fontSize: 12,
+//                               fontFamily: themeFontFamily2,
+//                               fontWeight: FontWeight.w400,
+//                             ),
+//                           ),
+//                         ],
+//                       ),
+//                     ),
+//                   ),
+
+//                   //
+
+//                   //
+//                   Visibility(
+//                     visible: fullDay,
+//                     child: Container(
+//                       margin: const EdgeInsets.only(top: 10),
+//                       child: Row(
+//                         children: [
+//                           SvgPicture.asset(
+//                             'assets/icons/clock_fill.svg',
+//                           ),
+//                           const SizedBox(
+//                             width: 10,
+//                           ),
+//                           const Text(
+//                             'Friday : Open 24 hours',
+//                             style: TextStyle(
+//                               color: Color(0xFF888888),
+//                               fontSize: 12,
+//                               fontFamily: themeFontFamily2,
+//                               fontWeight: FontWeight.w400,
+//                             ),
+//                           ),
+//                         ],
+//                       ),
+//                     ),
+//                   ),
+//                   //
+
+//                   //
+//                   Visibility(
+//                     visible: locationBool,
+//                     child: Container(
+//                       margin: const EdgeInsets.only(top: 10),
+//                       child: Row(
+//                         children: [
+//                           SvgPicture.asset(
+//                             'assets/icons/location.svg',
+//                             color: const Color(0xFF888888),
+//                           ),
+//                           const SizedBox(
+//                             width: 10,
+//                           ),
+//                           const Text(
+//                             'KDHP house,NH 49,Nullatanni,Munnar kerala,685612',
+//                             style: TextStyle(
+//                               color: Color(0xFF888888),
+//                               fontSize: 12,
+//                               fontFamily: themeFontFamily2,
+//                               fontWeight: FontWeight.w400,
+//                             ),
+//                           ),
+//                         ],
+//                       ),
+//                     ),
+//                   ),
+
+//                   Container(
+//                     margin: const EdgeInsets.only(top: 10),
+//                     child: Row(
+//                       children: [
+//                         SvgPicture.asset(
+//                           'assets/icons/clock_fill.svg',
+//                         ),
+//                         const SizedBox(
+//                           width: 10,
+//                         ),
+//                         const Text(
+//                           'Thursday : 9:30 AM - 10:45 PM',
+//                           style: TextStyle(
+//                             color: Color(0xFF888888),
+//                             fontSize: 12,
+//                             fontFamily: themeFontFamily2,
+//                             fontWeight: FontWeight.w400,
+//                           ),
+//                         ),
+//                       ],
+//                     ),
+//                   ),
+//                   //
+
+//                   const SizedBox(
+//                     height: 10,
+//                   ),
+//                   Row(
+//                     children: [
+//                       InkWell(
+//                         onTap: () {
+//                           showModalBottomSheet(
+//                               isScrollControlled: true,
+//                               context: context,
+//                               builder: (context) {
+//                                 return StatefulBuilder(
+//                                     builder: (context, setState) {
+//                                   return buildAddToYourTrip(
+//                                       setState, context, itineraryDatesRowBool);
+//                                 });
+//                               });
+//                         },
+//                         child: Container(
+//                           height: 32,
+//                           margin: const EdgeInsets.only(right: 10),
+//                           padding: const EdgeInsets.symmetric(
+//                               horizontal: 12, vertical: 6),
+//                           decoration: ShapeDecoration(
+//                             color: const Color(0xFF005CE7),
+//                             shape: RoundedRectangleBorder(
+//                               borderRadius: BorderRadius.circular(32),
+//                             ),
+//                           ),
+//                           child: Row(
+//                             mainAxisSize: MainAxisSize.min,
+//                             children: [
+//                               SvgPicture.asset(
+//                                 'assets/icons/$save',
+//                                 color: Colors.white,
+//                               ),
+//                               const SizedBox(
+//                                 width: 5,
+//                               ),
+//                               const Text(
+//                                 'Save',
+//                                 style: TextStyle(
+//                                   color: Colors.white,
+//                                   fontSize: 12,
+//                                   fontFamily: themeFontFamily,
+//                                   fontWeight: FontWeight.w500,
+//                                 ),
+//                               ),
+//                             ],
+//                           ),
+//                         ),
+//                       ),
+//                       //
+//                       Container(
+//                         height: 32,
+//                         padding: const EdgeInsets.symmetric(
+//                             horizontal: 12, vertical: 4),
+//                         margin: const EdgeInsets.only(right: 10),
+//                         decoration: ShapeDecoration(
+//                           color: const Color(0xFFECF2FF),
+//                           shape: RoundedRectangleBorder(
+//                             borderRadius: BorderRadius.circular(32),
+//                           ),
+//                         ),
+//                         child: Row(
+//                           mainAxisSize: MainAxisSize.min,
+//                           children: [
+//                             SvgPicture.asset('assets/icons/directions.svg'),
+//                             const SizedBox(
+//                               width: 5,
+//                             ),
+//                             const Text(
+//                               'Directions',
+//                               style: TextStyle(
+//                                 color: Color(0xFF005CE7),
+//                                 fontSize: 12,
+//                                 fontFamily: themeFontFamily,
+//                                 fontWeight: FontWeight.w500,
+//                               ),
+//                             ),
+//                           ],
+//                         ),
+//                       ),
+
+//                       Container(
+//                         height: 32,
+//                         padding: const EdgeInsets.symmetric(
+//                             horizontal: 12, vertical: 4),
+//                         decoration: ShapeDecoration(
+//                           color: const Color(0xFFECF2FF),
+//                           shape: RoundedRectangleBorder(
+//                             borderRadius: BorderRadius.circular(32),
+//                           ),
+//                         ),
+//                         child: const Row(
+//                           mainAxisSize: MainAxisSize.min,
+//                           children: [
+//                             // SvgPicture.asset('assets/icons/directions.svg'),
+//                             // const SizedBox(
+//                             //   width: 5,
+//                             // ),
+//                             Text(
+//                               'Details',
+//                               style: TextStyle(
+//                                 color: Color(0xFF005CE7),
+//                                 fontSize: 12,
+//                                 fontFamily: themeFontFamily,
+//                                 fontWeight: FontWeight.w500,
+//                               ),
+//                             ),
+//                           ],
+//                         ),
+//                       ),
+//                     ],
+//                   ),
+//                 ],
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
 }
 
 Widget buildAddToYourTrip(StateSetter setState, BuildContext context,

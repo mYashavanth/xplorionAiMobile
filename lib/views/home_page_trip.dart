@@ -65,6 +65,8 @@ class _HomePageTripState extends State<HomePageTrip> {
 
   String? selectedPlace;
   late final responseDataS;
+  late final responseData;
+  String? itinerarySavedFlag;
 
   Future<void> generateItinerary() async {
     String? userToken = await storage.read(key: 'userToken');
@@ -77,6 +79,12 @@ class _HomePageTripState extends State<HomePageTrip> {
     final receivedArgs =
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     String? itinerarySaved = receivedArgs?['itinerarySavedFlag'].toString();
+    print(
+        '+++++++++++++++++++++++++++++++++itinerarySaved+++++++++++++++++++++++++++++++++++');
+    print(itinerarySaved);
+    print(
+        '+++++++++++++++++++++++++++++++++itinerarySaved+++++++++++++++++++++++++++++++++++');
+    itinerarySavedFlag = itinerarySaved;
 
     //final url = Uri.parse('$baseurl/app/generate-itenary/itinerary/671a86310999b3b00a8acf25/$userToken');
 
@@ -101,7 +109,7 @@ class _HomePageTripState extends State<HomePageTrip> {
         );
         // Handle response
         if (response.statusCode == 200) {
-          final responseData = json.decode(response.body);
+          responseData = json.decode(response.body);
 
           var daysData = responseData['itinerary']['days'];
           var place = responseData['place'];
@@ -794,13 +802,23 @@ class _HomePageTripState extends State<HomePageTrip> {
                                 InkWell(
                                   onTap: () {
                                     print(" /////////// ");
-                                    print(responseDataS);
+                                    print(itinerarySavedFlag != '1'
+                                        ? [responseData]
+                                        : responseDataS);
                                     print(" //////////// ");
 
                                     Navigator.of(context).pushNamed(
                                         '/explore_road_map',
                                         arguments: {
-                                          'itineraryDataMaps': responseDataS
+                                          'itineraryDataMaps':
+                                              itinerarySavedFlag != '1'
+                                                  ? [
+                                                      {
+                                                        'itinerary':
+                                                            responseData
+                                                      }
+                                                    ]
+                                                  : responseDataS
                                         });
                                   },
                                   child: Container(
