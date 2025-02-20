@@ -16,9 +16,7 @@ class SavedItineraries extends StatefulWidget {
 }
 
 class _SavedItinerariesState extends State<SavedItineraries> {
-
   Future<List> fetchCollections() async {
-
     const FlutterSecureStorage storage = FlutterSecureStorage();
     String? userToken = await storage.read(key: 'userToken');
 
@@ -46,12 +44,12 @@ class _SavedItinerariesState extends State<SavedItineraries> {
             fontWeight: FontWeight.w600,
           ),
         ),
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.add),
-          ),
-        ],
+        // actions: [
+        //   IconButton(
+        //     onPressed: () {},
+        //     icon: const Icon(Icons.add),
+        //   ),
+        // ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(15),
@@ -73,7 +71,7 @@ class _SavedItinerariesState extends State<SavedItineraries> {
                 // Dynamically add rows based on the API response
                 ...List.generate(
                   (collections.length / 2).ceil(),
-                      (index) {
+                  (index) {
                     final item1 = collections[index * 2];
                     final item2 = index * 2 + 1 < collections.length
                         ? collections[index * 2 + 1]
@@ -81,10 +79,12 @@ class _SavedItinerariesState extends State<SavedItineraries> {
 
                     return Row(
                       children: [
-                        buildCard('default_image.jpeg', item1['collection_name'], true, item1['_id']),
+                        buildCard('default_image.jpeg',
+                            item1['collection_name'], true, item1['_id']),
                         if (item2 != null) ...[
                           const Spacer(),
-                          buildCard('default_image.jpeg', item2['collection_name'], true, item1['_id']),
+                          buildCard('default_image.jpeg',
+                              item2['collection_name'], true, item1['_id']),
                         ],
                       ],
                     );
@@ -115,13 +115,12 @@ class _SavedItinerariesState extends State<SavedItineraries> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         InkWell(
-          onTap: (){
-
-            Navigator.of(context).pushNamed('/detailed_saved_itinerary',arguments: {
-              'collectionId': collectionId,
-              'titleCollection': title
-            });
-
+          onTap: () {
+            Navigator.of(context).pushNamed('/detailed_saved_itinerary',
+                arguments: {
+                  'collectionId': collectionId,
+                  'titleCollection': title
+                });
           },
           child: Container(
             width: size,
@@ -129,11 +128,12 @@ class _SavedItinerariesState extends State<SavedItineraries> {
             clipBehavior: Clip.antiAlias,
             decoration: ShapeDecoration(
               image: const DecorationImage(
-                image: NetworkImage('https://img.freepik.com/free-vector/travel-tourism-label-with-attractions_1284-52995.jpg'),//AssetImage("assets/images/$img"),
+                image: NetworkImage(
+                    'https://img.freepik.com/free-vector/travel-tourism-label-with-attractions_1284-52995.jpg'), //AssetImage("assets/images/$img"),
                 fit: BoxFit.cover,
               ),
-              shape:
-                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
           ),
         ),
@@ -169,9 +169,7 @@ class _SavedItinerariesState extends State<SavedItineraries> {
                   ),
                 )
               ])
-            :
-          
-            buildFriends()
+            : buildFriends()
       ],
     );
   }

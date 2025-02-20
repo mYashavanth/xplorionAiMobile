@@ -26,7 +26,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-
   static const apiKey = 'AIzaSyDEJx-EbYbqRixjZ0DvwuPd3FKVKtvv_OY';
   String currentLocation = 'No Location Selected';
   List<Widget> createdIternery = [];
@@ -70,7 +69,6 @@ class _HomePageState extends State<HomePage> {
 
   // get Name From Lat and Long
   Future<void> _getAddressFromLatLng(Position position) async {
-
     final url =
         'https://maps.googleapis.com/maps/api/geocode/json?latlng=${position.latitude},${position.longitude}&key=$apiKey';
 
@@ -87,7 +85,6 @@ class _HomePageState extends State<HomePage> {
           _getData();
           fetchPopularDestination();
           fetchWeekendTripsNearMe();
-
         } else {
           setState(() {
             currentLocation = 'No address Found';
@@ -106,41 +103,43 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> fetchItineraries() async {
-
     String? userToken = await storage.read(key: 'userToken');
-    final response = await http.get(Uri.parse('$baseurl/itinerary/all/${userToken!}'));
+    final response =
+        await http.get(Uri.parse('$baseurl/itinerary/all/${userToken!}'));
 
-    if (response.statusCode == 200)
-    {
+    if (response.statusCode == 200) {
       var data = jsonDecode(response.body);
       int dataLen = data.length;
 
       setState(() {
         createdIternery = [];
 
-          for (int i = 0; i < dataLen; i++) {
-            var place = data[i]['cityStateCountry'];
-            var itineraryString = data[i]['itinerary'];
-            var travelCompanion = data[i]['travelCompanion'];
-            int noOfDays = itineraryString['itinerary']['days'].length;
-            String dayWithDate = itineraryString['itinerary']['days'][0]['day'];
+        for (int i = 0; i < dataLen; i++) {
+          var place = data[i]['cityStateCountry'];
+          var itineraryString = data[i]['itinerary'];
+          var travelCompanion = data[i]['travelCompanion'];
+          int noOfDays = itineraryString['itinerary']['days'].length;
+          String dayWithDate = itineraryString['itinerary']['days'][0]['day'];
 
-            createdIternery.add(singleCardPlan(
-                context, itineraryString['image_for_main_place'], place, noOfDays,
-                dayWithDate, travelCompanion,data[i]['_id']));
-
-          }
+          createdIternery.add(singleCardPlan(
+              context,
+              itineraryString['image_for_main_place'],
+              place,
+              noOfDays,
+              dayWithDate,
+              travelCompanion,
+              data[i]['_id']));
+        }
       });
     }
   }
 
   Future<void> fetchPopularDestination() async {
-
     String? userToken = await storage.read(key: 'userToken');
-    final response = await http.get(Uri.parse('$baseurl/popular-destination-nearby/$currentLocation/${userToken!}'));
+    final response = await http.get(Uri.parse(
+        '$baseurl/popular-destination-nearby/$currentLocation/${userToken!}'));
 
-    if (response.statusCode == 200)
-    {
+    if (response.statusCode == 200) {
       var data = jsonDecode(response.body);
       int dataLen = data.length;
 
@@ -151,9 +150,9 @@ class _HomePageState extends State<HomePage> {
           var placeName = data[i]['place_name'];
           var imageURL = data[i]['image_url'];
 
-          if(imageURL!= '')
-          {
-              popularDestination.add(popularDestinationsNearby(imageURL, placeName, context));
+          if (imageURL != '') {
+            popularDestination
+                .add(popularDestinationsNearby(imageURL, placeName, context));
           }
         }
       });
@@ -161,12 +160,11 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> fetchWeekendTripsNearMe() async {
-
     String? userToken = await storage.read(key: 'userToken');
-    final response = await http.get(Uri.parse('$baseurl/weekend-trips-nearby/$currentLocation/${userToken!}'));
+    final response = await http.get(Uri.parse(
+        '$baseurl/weekend-trips-nearby/$currentLocation/${userToken!}'));
 
-    if (response.statusCode == 200)
-    {
+    if (response.statusCode == 200) {
       var data = jsonDecode(response.body);
       int dataLen = data.length;
 
@@ -176,16 +174,18 @@ class _HomePageState extends State<HomePage> {
         for (int i = 0; i < dataLen; i++) {
           var placeName = data[i]['place_name'];
           //var imageURL = data[i]['image_url'];
-          String imageURL = data[i]['image_url']?.isNotEmpty == true ? data[i]['image_url'] : 'https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png';
+          String imageURL = data[i]['image_url']?.isNotEmpty == true
+              ? data[i]['image_url']
+              : 'https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png';
           var title = data[i]['title'];
           var noOfDays = data[i]['no_of_days'];
           var cityState = data[i]['city_state'];
           var distanceFromPlace = data[i]['distance_from_place'];
           var activities = data[i]['activities'];
 
-          if(imageURL!= '')
-          {
-            weekendTrips.add(weekendTripsNearYouCard(imageURL,title,noOfDays,cityState,distanceFromPlace,activities,context));
+          if (imageURL != '') {
+            weekendTrips.add(weekendTripsNearYouCard(imageURL, title, noOfDays,
+                cityState, distanceFromPlace, activities, context));
           }
         }
       });
@@ -197,17 +197,13 @@ class _HomePageState extends State<HomePage> {
 
   List<Widget> imageSliders = [];
 
-
-
   List banner = [];
   bool showReload = false;
 
   @override
   void initState() {
-
     fetchItineraries();
     _determinePosition();
-
 
     Timer(const Duration(seconds: 15), () {
       if (popularDestination.isEmpty) {
@@ -221,31 +217,29 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _getData() async {
-
     // Add Banner
     String? userToken = await storage.read(key: 'userToken');
-    final response = await http.get(Uri.parse('$baseurl/app/masters/home-page-banners/all/${userToken!}'));
+    final response = await http.get(
+        Uri.parse('$baseurl/app/masters/home-page-banners/all/${userToken!}'));
 
     if (response.statusCode == 200) {
       var data = jsonDecode(response.body);
       int dataLen = data.length;
 
-      for(int i = 0;i < dataLen;i++)
-      {
-          imageSliders.add(
-            topBannerCard(
-                'NEW',
-                data[i]['banner_title'],
-                data[i]['banner_description'],
-                data[i]['banner_image'],
-                data[i]['fromDate'],
-                data[i]['toDate'],
-                data[i]['travelCompanion'],
-                data[i]['budgetType'],
-                currentLocation,
-                context
-            ),
-          );
+      for (int i = 0; i < dataLen; i++) {
+        imageSliders.add(
+          topBannerCard(
+              'NEW',
+              data[i]['banner_title'],
+              data[i]['banner_description'],
+              data[i]['banner_image'],
+              data[i]['fromDate'],
+              data[i]['toDate'],
+              data[i]['travelCompanion'],
+              data[i]['budgetType'],
+              currentLocation,
+              context),
+        );
       }
 
       /*if(dataLen == 0)
@@ -258,7 +252,6 @@ class _HomePageState extends State<HomePage> {
                 'cp_slide_image2.jpeg'),
           );
       } */
-
     }
 
     /*;
@@ -280,7 +273,6 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-
     print("+++++++");
     print(createdIternery);
     print("+++++++");
@@ -291,17 +283,13 @@ class _HomePageState extends State<HomePage> {
         children: [
           Container(
             color: Colors.white,
-            padding:  EdgeInsets.all(MediaQuery.of(context).size.width * 0.04),
+            padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.04),
             child: Column(
               children: [
                 Row(
                   children: [
-                    SvgPicture.asset(
-                        'assets/icons/location_tripssist_logo.svg',
-                        semanticsLabel: 'XplorionAI',
-                        width: 24,
-                        height: 32
-                    ),
+                    SvgPicture.asset('assets/icons/location_tripssist_logo.svg',
+                        semanticsLabel: 'XplorionAI', width: 24, height: 32),
                     /*Image(
                       width: 25,
                       height: 36,
@@ -446,15 +434,19 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ],
                 ),
-                const Text('Pick up where you left off, Keep your adventures rolling!'),
-                SizedBox(height: 10,),
+                const Text(
+                    'Pick up where you left off, Keep your adventures rolling!'),
+                SizedBox(
+                  height: 10,
+                ),
                 SizedBox(
                   height: 144,
                   child: ListView(
                     itemExtent: MediaQuery.of(context).size.width * 0.92,
                     scrollDirection: Axis.horizontal,
                     shrinkWrap: true,
-                    children: createdIternery/*[
+                    children:
+                        createdIternery /*[
                       singleCardPlan(context),
                       singleCardPlan(context),
                       singleCardPlan(context),
@@ -465,7 +457,8 @@ class _HomePageState extends State<HomePage> {
                       singleCardPlan(context),
                       singleCardPlan(context),
                       singleCardPlan(context),
-                    ]*/,
+                    ]*/
+                    ,
                   ),
                 ),
                 // singleCardPlan(context),
@@ -602,33 +595,35 @@ class _HomePageState extends State<HomePage> {
                   height: 400,
                   child: weekendTrips.isEmpty
                       ? ListView.builder(
-                      padding: const EdgeInsets.only(top: 4, bottom: 4),
-                      scrollDirection: Axis.horizontal,
-                      itemCount: 5, // Number of shimmer cards to display
-                      itemBuilder: (context, index) {
-                      return Shimmer.fromColors(
-                        baseColor: Colors.grey.shade300,
-                        highlightColor: Colors.grey.shade100,
-                        child: Container(
-                          width: 200,
-                          height: 300,
-                          margin: const EdgeInsets.symmetric(horizontal: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.grey,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                          padding: const EdgeInsets.only(top: 4, bottom: 4),
+                          scrollDirection: Axis.horizontal,
+                          itemCount: 5, // Number of shimmer cards to display
+                          itemBuilder: (context, index) {
+                            return Shimmer.fromColors(
+                              baseColor: Colors.grey.shade300,
+                              highlightColor: Colors.grey.shade100,
+                              child: Container(
+                                width: 200,
+                                height: 300,
+                                margin:
+                                    const EdgeInsets.symmetric(horizontal: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            );
+                          },
+                        )
+                      : ListView(
+                          padding: const EdgeInsets.only(top: 4, bottom: 4),
+                          scrollDirection: Axis.horizontal,
+                          children: weekendTrips, //[
+                          //weekendTripsNearYouCard('church.jpeg'),
+                          //weekendTripsNearYouCard('mysore_palace.jpeg'),
+                          //weekendTripsNearYouCard('mysore_palace.jpeg'),
+                          //],
                         ),
-                      );
-                    },
-                  ) : ListView(
-                    padding: const EdgeInsets.only(top: 4, bottom: 4),
-                    scrollDirection: Axis.horizontal,
-                    children: weekendTrips, //[
-                    //weekendTripsNearYouCard('church.jpeg'),
-                    //weekendTripsNearYouCard('mysore_palace.jpeg'),
-                    //weekendTripsNearYouCard('mysore_palace.jpeg'),
-                    //],
-                  ),
                 ),
                 const SizedBox(
                   height: 30,
@@ -645,60 +640,68 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 const Text('Uncover must-see gems just around the corner!'),
-                SizedBox(height: 10,),
+                SizedBox(
+                  height: 10,
+                ),
                 SizedBox(
                   height: 240,
-                  child: popularDestination.isEmpty ? Column(
-                    children: [
-                      Expanded(
-                        child: ListView.builder(
-                          padding: const EdgeInsets.only(top: 4, bottom: 4),
-                          scrollDirection: Axis.horizontal,
-                          itemCount: 5, // Number of shimmer cards to display
-                          itemBuilder: (context, index) {
-                            return Shimmer.fromColors(
-                              baseColor: Colors.grey.shade300,
-                              highlightColor: Colors.grey.shade100,
-                              child: Container(
-                                width: 200,
-                                height: 240,
-                                margin: const EdgeInsets.symmetric(horizontal: 8),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey,
-                                  borderRadius: BorderRadius.circular(12),
+                  child: popularDestination.isEmpty
+                      ? Column(
+                          children: [
+                            Expanded(
+                              child: ListView.builder(
+                                padding:
+                                    const EdgeInsets.only(top: 4, bottom: 4),
+                                scrollDirection: Axis.horizontal,
+                                itemCount:
+                                    5, // Number of shimmer cards to display
+                                itemBuilder: (context, index) {
+                                  return Shimmer.fromColors(
+                                    baseColor: Colors.grey.shade300,
+                                    highlightColor: Colors.grey.shade100,
+                                    child: Container(
+                                      width: 200,
+                                      height: 240,
+                                      margin: const EdgeInsets.symmetric(
+                                          horizontal: 8),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            if (showReload)
+                              Center(
+                                child: Container(
+                                  width: 60,
+                                  height: 60,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.8),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: IconButton(
+                                    icon: const Icon(Icons.refresh,
+                                        color: Colors.blue),
+                                    iconSize: 32,
+                                    onPressed: () {
+                                      setState(() {
+                                        showReload = false;
+                                      });
+                                      fetchPopularDestination(); // Reload data
+                                    },
+                                  ),
                                 ),
                               ),
-                            );
-                          },
+                          ],
+                        )
+                      : ListView(
+                          padding: const EdgeInsets.only(top: 4, bottom: 4),
+                          scrollDirection: Axis.horizontal,
+                          children: popularDestination,
                         ),
-                      ),
-                      if (showReload)
-                        Center(
-                          child: Container(
-                            width: 60,
-                            height: 60,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.8),
-                              shape: BoxShape.circle,
-                            ),
-                            child: IconButton(
-                              icon: const Icon(Icons.refresh, color: Colors.blue),
-                              iconSize: 32,
-                              onPressed: () {
-                                setState(() {
-                                  showReload = false;
-                                });
-                                fetchPopularDestination(); // Reload data
-                              },
-                            ),
-                          ),
-                        ),
-                    ],
-                  ) : ListView(
-                                padding: const EdgeInsets.only(top: 4, bottom: 4),
-                                scrollDirection: Axis.horizontal,
-                                children: popularDestination,
-                      ),
                 ),
                 const SizedBox(
                   height: 10,

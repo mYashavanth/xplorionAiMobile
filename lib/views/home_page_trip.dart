@@ -734,9 +734,11 @@ class _HomePageTripState extends State<HomePageTrip> {
                               children: [
                                 InkWell(
                                   onTap: () {
-                                    Navigator.of(context).pop();
+                                    // Navigator.of(context).pop();
                                     // Navigator.of(context).pushNamed('/home_page');
-                                    //Navigator.of(context).pushNamedAndRemoveUntil('/home_page', (route) => false);
+                                    Navigator.of(context)
+                                        .pushNamedAndRemoveUntil(
+                                            '/home_page', (route) => false);
                                   },
                                   child: Container(
                                     width: 40,

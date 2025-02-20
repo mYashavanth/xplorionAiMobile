@@ -483,10 +483,8 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
                                 width: 190, // Set a fixed width for the title
                                 child: Text(
                                   title,
-                                  maxLines:
-                                      1, // Prevents text from wrapping to the next line
-                                  overflow: TextOverflow
-                                      .ellipsis, // Shows "..." when text overflows
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
                                     color: Colors.black,
                                     fontSize: 14,

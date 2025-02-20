@@ -12,10 +12,10 @@ import 'package:xplorion_ai/views/urlconfig.dart';
 
 const storage = FlutterSecureStorage();
 
-Widget topBannerCard(status, heading, note, image, fromDate, toDate, travelCompanion, budgetType, currentLocation, context) {
+Widget topBannerCard(status, heading, note, image, fromDate, toDate,
+    travelCompanion, budgetType, currentLocation, context) {
   return GestureDetector(
       onTap: () async {
-
         //print("$travelCompanion ---- $budgetType ----- $fromDate ---- $toDate ---- $currentLocation");
 
         //String? userToken = await storage.read(key: 'userToken');
@@ -24,156 +24,151 @@ Widget topBannerCard(status, heading, note, image, fromDate, toDate, travelCompa
         await storage.write(key: 'startDate', value: fromDate);
         await storage.write(key: 'endDate', value: toDate);
         await storage.write(key: 'selectedPlace', value: currentLocation);
-        storage.write(
-            key: 'itinerarySavedFlag',
-            value: '0'
-        );
+        storage.write(key: 'itinerarySavedFlag', value: '0');
 
         Future.delayed(const Duration(seconds: 2), () {
-
           Navigator.of(context).pushNamed('/home_page_trip');
-
         });
       },
-  child:Container(
-    margin: const EdgeInsets.only(bottom: 10, left: 2, right: 2),
-    padding: const EdgeInsets.all(0),
-    // height: 184,
-    width: double.infinity,
-    clipBehavior: Clip.antiAlias,
-    decoration: ShapeDecoration(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
-      ),
-      shadows: const [
-        BoxShadow(
-          color: Color(0x33BCB080),
-          blurRadius: 8,
-          offset: Offset(1, 4),
-          spreadRadius: 0,
-        )
-      ],
-    ),
-    child: Stack(
-      children: [
-        SizedBox(
-          width: double.maxFinite,
-          height: double.maxFinite,
-          child: Stack(
-            children: [
-              Image(
-                width: double.maxFinite,
-                height: double.maxFinite,
-                fit: BoxFit.cover,
-                image: NetworkImage('$baseurl/banner-images/$image'), //AssetImage('assets/images/$image'),
-              ),
-              Positioned.fill(
-                child: Opacity(
-                  opacity: 0.3,
-                  child: Container(
-                    color: const Color(0xFF000000),
-                  ),
-                ),
-              ),
-            ],
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10, left: 2, right: 2),
+        padding: const EdgeInsets.all(0),
+        // height: 184,
+        width: double.infinity,
+        clipBehavior: Clip.antiAlias,
+        decoration: ShapeDecoration(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
           ),
+          shadows: const [
+            BoxShadow(
+              color: Color(0x33BCB080),
+              blurRadius: 8,
+              offset: Offset(1, 4),
+              spreadRadius: 0,
+            )
+          ],
         ),
-        Padding(
-          padding: const EdgeInsets.all(15),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.only(
-                    top: 5, bottom: 5, left: 10, right: 10),
-                decoration: ShapeDecoration(
-                  color: const Color(0xFF005CE7),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
+        child: Stack(
+          children: [
+            SizedBox(
+              width: double.maxFinite,
+              height: double.maxFinite,
+              child: Stack(
+                children: [
+                  Image(
+                    width: double.maxFinite,
+                    height: double.maxFinite,
+                    fit: BoxFit.cover,
+                    image: NetworkImage(
+                        '$baseurl/banner-images/$image'), //AssetImage('assets/images/$image'),
                   ),
-                ),
-                child: Text(
-                  status,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontFamily: themeFontFamily2,
-                    fontWeight: FontWeight.w700,
-                    // height: 0.15,
-                  ),
-                ),
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              SizedBox(
-                child: Text(
-                  heading,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontFamily: themeFontFamily,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              SizedBox(
-                width: 240,
-                child: Text(
-                  note,
-                  style: const TextStyle(
-                    color: Color(0xFFEDF2FE),
-                    fontSize: 14,
-                    fontFamily: themeFontFamily2,
-                    fontWeight: FontWeight.w400,
-                    // height: 0.12,
-                  ),
-                ),
-              ),
-              const Spacer(),
-              Container(
-                  margin: const EdgeInsets.only(top: 10),
-                  // padding: const EdgeInsets.all(10),
-                  width: 60,
-                  height: 30,
-                  // padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: ShapeDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment(-1.00, 0.06),
-                      end: Alignment(1, -0.06),
-                      colors: [
-                        Color(0xFF0099FF),
-                        Color(0xFF54AB6A),
-                      ],
+                  Positioned.fill(
+                    child: Opacity(
+                      opacity: 0.3,
+                      child: Container(
+                        color: const Color(0xFF000000),
+                      ),
                     ),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(32)),
                   ),
-                  child: const Icon(
-                    Icons.arrow_forward,
-                    color: Colors.white,
-                  )),
-            ],
-          ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(15),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.only(
+                        top: 5, bottom: 5, left: 10, right: 10),
+                    decoration: ShapeDecoration(
+                      color: const Color(0xFF005CE7),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                    ),
+                    child: Text(
+                      status,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontFamily: themeFontFamily2,
+                        fontWeight: FontWeight.w700,
+                        // height: 0.15,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  SizedBox(
+                    child: Text(
+                      heading,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontFamily: themeFontFamily,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  SizedBox(
+                    width: 240,
+                    child: Text(
+                      note,
+                      style: const TextStyle(
+                        color: Color(0xFFEDF2FE),
+                        fontSize: 14,
+                        fontFamily: themeFontFamily2,
+                        fontWeight: FontWeight.w400,
+                        // height: 0.12,
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                      margin: const EdgeInsets.only(top: 10),
+                      // padding: const EdgeInsets.all(10),
+                      width: 60,
+                      height: 30,
+                      // padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: ShapeDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment(-1.00, 0.06),
+                          end: Alignment(1, -0.06),
+                          colors: [
+                            Color(0xFF0099FF),
+                            Color(0xFF54AB6A),
+                          ],
+                        ),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(32)),
+                      ),
+                      child: const Icon(
+                        Icons.arrow_forward,
+                        color: Colors.white,
+                      )),
+                ],
+              ),
+            ),
+            // const Positioned(
+            //   bottom: 0,
+            //   right: 0,
+            //   child: Image(
+            //     image: AssetImage('assets/icons/robo_girl.png'),
+            //   ),
+            // ),
+          ],
         ),
-        // const Positioned(
-        //   bottom: 0,
-        //   right: 0,
-        //   child: Image(
-        //     image: AssetImage('assets/icons/robo_girl.png'),
-        //   ),
-        // ),
-      ],
-    ),
-  )
-  );
+      ));
 }
 
-Widget singleCardPlan(context,imageUrl,placeName,noOfDays,dayDate,travelCompanion,itineraryId) {
-
+Widget singleCardPlan(context, imageUrl, placeName, noOfDays, dayDate,
+    travelCompanion, itineraryId) {
   return Container(
     margin: const EdgeInsets.only(right: 8),
     padding: const EdgeInsets.all(12),
@@ -198,9 +193,10 @@ Widget singleCardPlan(context,imageUrl,placeName,noOfDays,dayDate,travelCompanio
           clipBehavior: Clip.antiAlias,
           decoration: ShapeDecoration(
             image: DecorationImage(
-              image: imageUrl!= null && imageUrl.isNotEmpty
+              image: imageUrl != null && imageUrl.isNotEmpty
                   ? NetworkImage(imageUrl)
-                  : const AssetImage("assets/images/panjim_goa.jpeg") as ImageProvider,
+                  : const AssetImage("assets/images/panjim_goa.jpeg")
+                      as ImageProvider,
               fit: BoxFit.fill,
             ),
             shape:
@@ -216,6 +212,8 @@ Widget singleCardPlan(context,imageUrl,placeName,noOfDays,dayDate,travelCompanio
               child: Row(
                 children: [
                   Text(
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     placeName,
                     style: const TextStyle(
                       color: Color(0xFF030917),
@@ -346,34 +344,36 @@ Widget singleCardPlan(context,imageUrl,placeName,noOfDays,dayDate,travelCompanio
                           value: itineraryId
                       ); */
 
-                      Navigator.of(context).pushNamed('/home_page_trip',arguments: {
-                        'itinerarySavedFlag': 1,
-                        'itineraryId': itineraryId
-                      });
+                      Navigator.of(context).pushNamed('/home_page_trip',
+                          arguments: {
+                            'itinerarySavedFlag': 1,
+                            'itineraryId': itineraryId
+                          });
                     },
                     child: Container(
-                        width: 55,
-                        height: 29,
-                        padding: const EdgeInsets.all(0),
-                        decoration: ShapeDecoration(
-                          color: const Color(0xFFECF2FF),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(32),
+                      width: 55,
+                      height: 29,
+                      padding: const EdgeInsets.all(0),
+                      decoration: ShapeDecoration(
+                        color: const Color(0xFFECF2FF),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(32),
+                        ),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'View',
+                          style: TextStyle(
+                            color: Color(0xFF005CE7),
+                            fontSize: 12,
+                            fontFamily: 'Sora',
+                            fontWeight: FontWeight.w600,
+                            // height: 0,
                           ),
                         ),
-                        child: const Center(
-                          child: Text(
-                            'View',
-                            style: TextStyle(
-                              color: Color(0xFF005CE7),
-                              fontSize: 12,
-                              fontFamily: 'Sora',
-                              fontWeight: FontWeight.w600,
-                              // height: 0,
-                            ),
-                          ),
-                        ),
-                  ),)
+                      ),
+                    ),
+                  )
                 ],
               ),
             ),
@@ -384,8 +384,8 @@ Widget singleCardPlan(context,imageUrl,placeName,noOfDays,dayDate,travelCompanio
   );
 }
 
-Widget weekendTripsNearYouCard(image,title,noOfDays,cityState,distanceFromPlace,activities,context) {
-
+Widget weekendTripsNearYouCard(
+    image, title, noOfDays, cityState, distanceFromPlace, activities, context) {
   List<DateTime> getWeekendDates() {
     final now = DateTime.now();
     // Find the first day of the week (Monday).
@@ -412,179 +412,88 @@ Widget weekendTripsNearYouCard(image,title,noOfDays,cityState,distanceFromPlace,
     child: Column(
       children: [
         InkWell(
-              onTap: () async {
-
-              await storage.write(
-              key: 'selectedPlace',
-              value: cityState
-              );
-
-              // Format and print the weekend dates.
-              final weekendDates = getWeekendDates();
-              final formatter = DateFormat('d MMM');
-
-              await storage.write(
-                  key: 'startDate',
-                  value: formatter.format(weekendDates[0])
-              );
-              await storage.write(
-                  key: 'endDate',
-                  value: formatter.format(weekendDates[1])
-              );
-
-              Navigator.of(context).pushNamed('/create_itinerary');
-        },
-        child: Container(
-          padding: EdgeInsets.all(0),
-          clipBehavior: Clip.antiAlias,
-          decoration: const ShapeDecoration(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(23),
-                topRight: Radius.circular(23),
-              ),
-            ),
-          ),
-          width: double.infinity,
-          height: 186,
-          child: Image(
-            fit: BoxFit.fill,
-            image: NetworkImage(image),
-          ),
-        ),),
-        InkWell(
           onTap: () async {
-
-            await storage.write(
-              key: 'selectedPlace',
-              value: cityState
-            );
+            await storage.write(key: 'selectedPlace', value: cityState);
 
             // Format and print the weekend dates.
             final weekendDates = getWeekendDates();
             final formatter = DateFormat('d MMM');
 
             await storage.write(
-                key: 'startDate',
-                value: formatter.format(weekendDates[0])
-            );
+                key: 'startDate', value: formatter.format(weekendDates[0]));
             await storage.write(
-                key: 'endDate',
-                value: formatter.format(weekendDates[1])
-            );
+                key: 'endDate', value: formatter.format(weekendDates[1]));
 
             Navigator.of(context).pushNamed('/create_itinerary');
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(15),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: Color(0xFF030917),
-                      fontSize: 16,
-                      fontFamily: 'Public Sans',
-                      fontWeight: FontWeight.w500,
-                      // height: 0.09,
-                    ),
-                  ),
-                ],
+          },
+          child: Container(
+            padding: EdgeInsets.all(0),
+            clipBehavior: Clip.antiAlias,
+            decoration: const ShapeDecoration(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(23),
+                  topRight: Radius.circular(23),
+                ),
               ),
-              const SizedBox(
-                height: 10,
-              ),
-              Row(
-                children: [
-                  SvgPicture.asset(
-                    'assets/icons/calendar.svg',
-                    height: 13,
-                    width: 13,
-                  ),
-                  const SizedBox(
-                    width: 10,
-                  ),
-                  Text(
-                    '$noOfDays Day',
-                    style: const TextStyle(
-                      color: Color(0xFF8B8D98),
-                      fontSize: 12,
-                      fontFamily: 'Public Sans',
-                      fontWeight: FontWeight.w400,
-                      // height: 0,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              Row(
-                children: [
-                  SvgPicture.asset(
-                    'assets/icons/location.svg',
-                    height: 13,
-                    width: 13,
-                  ),
-                  const SizedBox(
-                    width: 10,
-                  ),
-                  Text(
-                    cityState,
-                    style: const TextStyle(
-                      color: Color(0xFF8B8D98),
-                      fontSize: 12,
-                      fontFamily: 'Public Sans',
-                      fontWeight: FontWeight.w400,
-                      // height: 0,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              Row(
-                children: [
-                  SvgPicture.asset(
-                    'assets/icons/route.svg',
-                    height: 13,
-                    width: 13,
-                  ),
-                  const SizedBox(
-                    width: 10,
-                  ),
-                  Text(
-                    distanceFromPlace,
-                    style: const TextStyle(
-                      color: Color(0xFF8B8D98),
-                      fontSize: 12,
-                      fontFamily: 'Public Sans',
-                      fontWeight: FontWeight.w400,
-                      // height: 0,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              Row(
-                children: [
-                  SvgPicture.asset(
-                    'assets/icons/escape.svg',
-                    height: 13,
-                    width: 13,
-                  ),
-                  const SizedBox(
-                    width: 10,
-                  ),
-                  Expanded(
-                    child: Text(activities,
+            ),
+            width: double.infinity,
+            height: 186,
+            child: Image(
+              fit: BoxFit.fill,
+              image: NetworkImage(image),
+            ),
+          ),
+        ),
+        InkWell(
+          onTap: () async {
+            await storage.write(key: 'selectedPlace', value: cityState);
+
+            // Format and print the weekend dates.
+            final weekendDates = getWeekendDates();
+            final formatter = DateFormat('d MMM');
+
+            await storage.write(
+                key: 'startDate', value: formatter.format(weekendDates[0]));
+            await storage.write(
+                key: 'endDate', value: formatter.format(weekendDates[1]));
+
+            Navigator.of(context).pushNamed('/create_itinerary');
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(15),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      title,
                       style: const TextStyle(
-                        overflow: TextOverflow.ellipsis,
+                        color: Color(0xFF030917),
+                        fontSize: 16,
+                        fontFamily: 'Public Sans',
+                        fontWeight: FontWeight.w500,
+                        // height: 0.09,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(
+                  height: 10,
+                ),
+                Row(
+                  children: [
+                    SvgPicture.asset(
+                      'assets/icons/calendar.svg',
+                      height: 13,
+                      width: 13,
+                    ),
+                    const SizedBox(
+                      width: 10,
+                    ),
+                    Text(
+                      '$noOfDays Day',
+                      style: const TextStyle(
                         color: Color(0xFF8B8D98),
                         fontSize: 12,
                         fontFamily: 'Public Sans',
@@ -592,12 +501,89 @@ Widget weekendTripsNearYouCard(image,title,noOfDays,cityState,distanceFromPlace,
                         // height: 0,
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+                const SizedBox(
+                  height: 10,
+                ),
+                Row(
+                  children: [
+                    SvgPicture.asset(
+                      'assets/icons/location.svg',
+                      height: 13,
+                      width: 13,
+                    ),
+                    const SizedBox(
+                      width: 10,
+                    ),
+                    Text(
+                      cityState,
+                      style: const TextStyle(
+                        color: Color(0xFF8B8D98),
+                        fontSize: 12,
+                        fontFamily: 'Public Sans',
+                        fontWeight: FontWeight.w400,
+                        // height: 0,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(
+                  height: 10,
+                ),
+                Row(
+                  children: [
+                    SvgPicture.asset(
+                      'assets/icons/route.svg',
+                      height: 13,
+                      width: 13,
+                    ),
+                    const SizedBox(
+                      width: 10,
+                    ),
+                    Text(
+                      distanceFromPlace,
+                      style: const TextStyle(
+                        color: Color(0xFF8B8D98),
+                        fontSize: 12,
+                        fontFamily: 'Public Sans',
+                        fontWeight: FontWeight.w400,
+                        // height: 0,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(
+                  height: 10,
+                ),
+                Row(
+                  children: [
+                    SvgPicture.asset(
+                      'assets/icons/escape.svg',
+                      height: 13,
+                      width: 13,
+                    ),
+                    const SizedBox(
+                      width: 10,
+                    ),
+                    Expanded(
+                      child: Text(
+                        activities,
+                        style: const TextStyle(
+                          overflow: TextOverflow.ellipsis,
+                          color: Color(0xFF8B8D98),
+                          fontSize: 12,
+                          fontFamily: 'Public Sans',
+                          fontWeight: FontWeight.w400,
+                          // height: 0,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
         ),
         Container(
           width: 291,
@@ -618,7 +604,10 @@ Widget weekendTripsNearYouCard(image,title,noOfDays,cityState,distanceFromPlace,
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Icon(Icons.flash_on,color: Colors.white,),
+              Icon(
+                Icons.flash_on,
+                color: Colors.white,
+              ),
               SizedBox(width: 12),
               Text(
                 'Viewed 14 times today',
@@ -634,7 +623,6 @@ Widget weekendTripsNearYouCard(image,title,noOfDays,cityState,distanceFromPlace,
           ),
         ),
       ],
-      
     ),
   );
 }
@@ -651,30 +639,25 @@ Widget popularDestinationsNearby(image, title, context) {
       children: [
         InkWell(
             onTap: () async {
-
-              await storage.write(
-                  key: 'selectedPlace',
-                  value: title
-              );
+              await storage.write(key: 'selectedPlace', value: title);
 
               Navigator.of(context).pushNamed('/create_itinerary');
             },
             borderRadius: BorderRadius.circular(8),
             child: Container(
-                width: 152,
-                height: 230,
-                clipBehavior: Clip.antiAlias,
-                decoration: ShapeDecoration(
-                  image: DecorationImage(
-                    image: NetworkImage("$image"),
-                    fit: BoxFit.cover,
-                  ),
-                  shape:
-                      RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              width: 152,
+              height: 230,
+              clipBehavior: Clip.antiAlias,
+              decoration: ShapeDecoration(
+                image: DecorationImage(
+                  image: NetworkImage("$image"),
+                  fit: BoxFit.cover,
                 ),
-                child: const Text(''),
-              )
-        ),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Text(''),
+            )),
         Align(
           alignment: Alignment.bottomCenter,
           child: Container(
@@ -721,7 +704,9 @@ Widget popularDestinationsNearby(image, title, context) {
                 ),
               ),
               Text(
-                title.split(" ").length > 1 ? title.split(" ")[1] : "", // Second part (normal)
+                title.split(" ").length > 1
+                    ? title.split(" ")[1]
+                    : "", // Second part (normal)
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 14,
