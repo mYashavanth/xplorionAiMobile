@@ -51,7 +51,6 @@ class _CreateItineraryState extends State<CreateItinerary> {
   Widget build(BuildContext context) {
     double mediaWidth = MediaQuery.of(context).size.width;
     return Scaffold(
-      
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -72,39 +71,42 @@ class _CreateItineraryState extends State<CreateItinerary> {
               );
             });
           },
-          icon: const Icon(Icons.arrow_back_ios_new,size: 30,),
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            size: 30,
+          ),
         ),
         title: Column(
-                children: [
-                  const SizedBox(
-                    width: 104,
-                    child: Text(
-                      'Itinerary for',
-                      style: TextStyle(
-                        color: Color(0xFF888888),
-                        fontSize: 12,
-                        fontFamily: themeFontFamily,
-                        fontWeight: FontWeight.w400,
-                        height: 0,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 6,
-                  ),
-                  Text(
-                    location,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Color(0xFF1F1F1F),
-                      fontSize: 13,
-                      fontFamily: 'Public Sans',
-                      fontWeight: FontWeight.w600,
-                      height: 0,
-                    ),
-                  ),
-                ],
+          children: [
+            const SizedBox(
+              width: 104,
+              child: Text(
+                'Itinerary for',
+                style: TextStyle(
+                  color: Color(0xFF888888),
+                  fontSize: 12,
+                  fontFamily: themeFontFamily,
+                  fontWeight: FontWeight.w400,
+                  height: 0,
+                ),
               ),
+            ),
+            const SizedBox(
+              height: 6,
+            ),
+            Text(
+              location,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Color(0xFF1F1F1F),
+                fontSize: 13,
+                fontFamily: 'Public Sans',
+                fontWeight: FontWeight.w600,
+                height: 0,
+              ),
+            ),
+          ],
+        ),
         centerTitle: true,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(10),
@@ -195,7 +197,6 @@ class _CreateItineraryState extends State<CreateItinerary> {
         ),
       ),
       body: PageView(
-      
         physics: const NeverScrollableScrollPhysics(),
         controller: pageController,
         children: [
@@ -223,33 +224,29 @@ class _CreateItineraryState extends State<CreateItinerary> {
               shadowColor: Colors.transparent,
             ),
             onPressed: () async {
-
               String? placeName = await storage.read(key: 'selectedPlace');
               String? startDate = await storage.read(key: 'startDate');
               String? endDate = await storage.read(key: 'endDate');
 
-              if(placeName == null || placeName!.isEmpty)
-              {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text('Please Select Place Name'),
-                        duration: Duration(seconds: 3),
-                      ));
+              if (placeName == null || placeName!.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text('Please Select Place Name'),
+                  duration: Duration(seconds: 3),
+                ));
 
-                      return;
+                return;
               }
 
-              if(startDate == null || startDate!.isEmpty)
-              {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text('Please Select Start Date'),
-                        duration: Duration(seconds: 3),
-                      ));
+              if (startDate == null || startDate!.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text('Please Select Start Date'),
+                  duration: Duration(seconds: 3),
+                ));
 
-                      return;
+                return;
               }
 
-              if(endDate == null || endDate!.isEmpty)
-              {
+              if (endDate == null || endDate!.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                   content: Text('Please Select End Date'),
                   duration: Duration(seconds: 3),
@@ -259,11 +256,9 @@ class _CreateItineraryState extends State<CreateItinerary> {
               }
 
               setState(() {
-
                 location = placeName;
-                if(_curr >= 2)
-                {
-                  Navigator.of(context).pushNamed('/itinerary_generating_screen');
+                if (_curr >= 2) {
+                  Navigator.of(context).pushNamed('/home_page_trip');
                 }
                 locationTaken = true;
                 _curr += 1;
@@ -272,7 +267,6 @@ class _CreateItineraryState extends State<CreateItinerary> {
                   duration: const Duration(milliseconds: 400),
                   curve: Curves.easeInOut,
                 );
-
               });
             },
             child: const Text(

@@ -16,7 +16,8 @@ Widget topBannerCard(status, heading, note, image, fromDate, toDate,
     travelCompanion, budgetType, currentLocation, context) {
   return GestureDetector(
       onTap: () async {
-        //print("$travelCompanion ---- $budgetType ----- $fromDate ---- $toDate ---- $currentLocation");
+        print(
+            "$travelCompanion ---- $budgetType ----- $fromDate ---- $toDate ---- $currentLocation ---- $heading");
 
         //String? userToken = await storage.read(key: 'userToken');
         await storage.write(key: 'travelCompanion', value: travelCompanion);
@@ -211,15 +212,18 @@ Widget singleCardPlan(context, imageUrl, placeName, noOfDays, dayDate,
               width: MediaQuery.of(context).size.width * 0.54,
               child: Row(
                 children: [
-                  Text(
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    placeName,
-                    style: const TextStyle(
-                      color: Color(0xFF030917),
-                      fontSize: 16,
-                      fontFamily: themeFontFamily2,
-                      fontWeight: FontWeight.w500,
+                  SizedBox(
+                    width: 200,
+                    child: Text(
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      placeName,
+                      style: const TextStyle(
+                        color: Color(0xFF030917),
+                        fontSize: 16,
+                        fontFamily: themeFontFamily2,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                   // const Spacer(),
@@ -343,7 +347,7 @@ Widget singleCardPlan(context, imageUrl, placeName, noOfDays, dayDate,
                           key: 'itineraryId',
                           value: itineraryId
                       ); */
-
+                      storage.write(key: 'selectedPlace', value: placeName);
                       Navigator.of(context).pushNamed('/home_page_trip',
                           arguments: {
                             'itinerarySavedFlag': 1,

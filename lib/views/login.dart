@@ -179,7 +179,7 @@ class _LogInState extends State<LogIn> {
               height: 54,
               decoration: inputContainerDecoration,
               child: TextField(
-                enableInteractiveSelection: false,
+                // enableInteractiveSelection: false,
                 style: const TextStyle(
                     color: Colors.black,
                     fontSize: 18,
@@ -231,7 +231,7 @@ class _LogInState extends State<LogIn> {
               height: 54,
               child: TextField(
                 textAlignVertical: TextAlignVertical.center,
-                enableInteractiveSelection: false,
+                // enableInteractiveSelection: false,
                 style: const TextStyle(
                     color: Colors.black,
                     fontSize: 18,

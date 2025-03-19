@@ -14,6 +14,7 @@ import 'package:xplorion_ai/lib_assets/fonts.dart';
 import 'package:xplorion_ai/views/urlconfig.dart';
 import 'package:xplorion_ai/widgets/home_page_trip_widgets.dart';
 import 'package:http/http.dart' as http;
+import 'package:share_plus/share_plus.dart';
 
 class HomePageTrip extends StatefulWidget {
   const HomePageTrip({super.key});
@@ -112,6 +113,8 @@ class _HomePageTripState extends State<HomePageTrip> {
           responseData = json.decode(response.body);
 
           var daysData = responseData['itinerary']['days'];
+          print('daysData $daysData');
+          setDay1SliderShowActivity(daysData);
           var place = responseData['place'];
           var budgetType = responseData['budget_type'];
           resIterneryId = responseData['itineraryId'];
@@ -184,6 +187,8 @@ class _HomePageTripState extends State<HomePageTrip> {
       if (responseS.statusCode == 200) {
         responseDataS = json.decode(responseS.body);
         var daysData = responseDataS[0]['itinerary']['itinerary']['days'];
+        print('daysData $daysData');
+        setDay1SliderShowActivity(daysData);
         var place = responseDataS[0]['itinerary']['place'];
         var budgetType = responseDataS[0]['itinerary']['budget_type'];
 
@@ -258,7 +263,15 @@ class _HomePageTripState extends State<HomePageTrip> {
   List fourthImages = ['ub_city.jpeg', 'dose.jpeg'];
 
   List<int> day1SliderCurrentPos = [0, 0, 0, 0];
-  List<bool> day1SliderShowActivity = [false, true, true, false];
+  List<bool> day1SliderShowActivity = [];
+
+  void setDay1SliderShowActivity(daysData) {
+    if (daysData.isNotEmpty) {
+      var activities = daysData[0]['activities'];
+      day1SliderShowActivity = List<bool>.filled(activities.length, true);
+    }
+  }
+
   List<bool> importantInfoShowCardBool = [false, true, true, false, false];
   List<bool> packingListShowCardBool = [false, true, true, false, false];
   List<bool> transpotationModeBool = [true, false, false];
@@ -904,33 +917,36 @@ class _HomePageTripState extends State<HomePageTrip> {
                               ),
                               Positioned(
                                 left: 20,
-                                child: Container(
-                                  width: 92,
-                                  height: 35,
-                                  decoration: ShapeDecoration(
-                                    color: const Color(0xFFECF2FF),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(33),
+                                child: GestureDetector(
+                                  onTap: () {
+                                    Share.share(
+                                        'Hey, I just generated a Travel Iteninary using Xplorion Ai. Check it out : www.xplorionai.com');
+                                  },
+                                  child: Container(
+                                    width: 92,
+                                    height: 35,
+                                    decoration: ShapeDecoration(
+                                      color: const Color(0xFFECF2FF),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(33),
+                                      ),
                                     ),
-                                  ),
-                                  child: const Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.share_outlined),
-                                      SizedBox(
-                                        width: 8,
-                                      ),
-                                      Text(
-                                        'Share',
-                                        style: TextStyle(
-                                          color: Color(0xFF030917),
-                                          fontSize: 14,
-                                          fontFamily: themeFontFamily2,
-                                          fontWeight: FontWeight.w400,
-                                          // height: 0.12,
+                                    child: const Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.share_outlined),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          'Share',
+                                          style: TextStyle(
+                                            color: Color(0xFF030917),
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w400,
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
@@ -1416,7 +1432,7 @@ class _HomePageTripState extends State<HomePageTrip> {
 
         List<Widget> tips = tipsArray.map((item) {
           String tipText = item["tip"] as String;
-          return buildTipsWidgetCard('tips.svg', tipText);
+          return buildTipsWidgetCard('lightbulb.svg', tipText);
         }).toList();
 
         return tips;
@@ -1459,7 +1475,7 @@ class _HomePageTripState extends State<HomePageTrip> {
 
         List<Widget> tips = tipsArray.map((item) {
           String tipText = item["tip"] as String;
-          return buildTipsWidgetCard('tips.svg', tipText);
+          return buildTipsWidgetCard('your-location.svg', tipText);
         }).toList();
 
         return tips;
@@ -1479,6 +1495,7 @@ class _HomePageTripState extends State<HomePageTrip> {
       // Read the user token and selected place from secure storage
       String? userToken = await storage.read(key: 'userToken');
       String? selectedPlace = await storage.read(key: 'selectedPlace');
+      print(userToken);
       final url =
           Uri.parse('$baseurl/national-holidays/$selectedPlace/$userToken');
 
@@ -1492,7 +1509,9 @@ class _HomePageTripState extends State<HomePageTrip> {
         var nationalHolidaysDataLen = nationalHolidaysData.length;
 
         for (int i = 0; i < nationalHolidaysDataLen; i++) {
-          holiday.add(nationalHolidaysData[i]);
+          setState(() {
+            holiday.add(nationalHolidaysData[i]);
+          });
         }
 
         return 1;

@@ -82,6 +82,13 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
   ];
   List<Widget> exploreLocationCards = [];
   bool isLoading = true;
+  void _updateCameraPosition() {
+    if (points.isNotEmpty && mapController != null) {
+      mapController!.animateCamera(
+        CameraUpdate.newLatLng(points.first), // Move camera to first point
+      );
+    }
+  }
 
   // Create polylines
   Set<Polyline> polylines = {};
@@ -208,6 +215,7 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
         });
       }
     });
+    _updateCameraPosition();
     final String origin = '${points.first.latitude},${points.first.longitude}';
     final String destination =
         '${points.last.latitude},${points.last.longitude}';
@@ -287,6 +295,7 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
   Widget build(BuildContext context) {
     print("++++++++++exploreLocationCards++++++++");
     print(exploreLocationCards);
+    print(points);
     print("++++++++++exploreLocationCards++++++++");
     return Scaffold(
       appBar: AppBar(
@@ -359,7 +368,7 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
                 },
                 initialCameraPosition: CameraPosition(
                   target: points[0],
-                  zoom: 10,
+                  zoom: 11.0,
                 ),
                 markers: points.map((point) {
                   return Marker(

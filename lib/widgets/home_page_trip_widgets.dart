@@ -435,7 +435,11 @@ Widget buildDayActivity(
   }
 
   Widget visitedWidget = Text('');
-
+  print(
+      '++++++++++++++++++++++++++++++++++++++++++++++data++++++++++++++++++++++++=');
+  print(data[3]);
+  print(
+      '++++++++++++++++++++++++++++++++++++++++++++++data++++++++++++++++++++++++=');
   if (visited > 0) {
     visitedWidget = Container(
       height: 32,
@@ -726,7 +730,7 @@ Widget buildDayActivity(
       Visibility(
         // maintainAnimation: true,
         // maintainState: true,
-        visible: day1SliderShowActivity[0],
+        visible: !day1SliderShowActivity[index],
         // Visibility Widget child is in bottom of this widget
         replacement: Container(
           // height: 590,
@@ -831,13 +835,18 @@ Widget buildDayActivity(
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          data[4],
-                          style: const TextStyle(
-                            color: Color(0xFF030917),
-                            fontSize: 20,
-                            fontFamily: themeFontFamily2,
-                            fontWeight: FontWeight.w500,
+                        SizedBox(
+                          width: 270,
+                          child: Text(
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            data[4],
+                            style: const TextStyle(
+                              color: Color(0xFF030917),
+                              fontSize: 20,
+                              fontFamily: themeFontFamily2,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
                         RedoButton(
@@ -918,13 +927,18 @@ Widget buildDayActivity(
                             ),
                           ),
                           child: Center(
-                            child: Text(
-                              data[4],
-                              style: const TextStyle(
-                                color: Color(0xFF888888),
-                                fontSize: 12,
-                                fontFamily: themeFontFamily2,
-                                fontWeight: FontWeight.w500,
+                            child: SizedBox(
+                              width: 165,
+                              child: Text(
+                                data[4],
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Color(0xFF888888),
+                                  fontSize: 12,
+                                  fontFamily: themeFontFamily2,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ),
                           ),
@@ -1602,7 +1616,12 @@ Widget buildLocalFoodAndDrinks(context, Future<List<Widget>> foodDrinkArr) {
             );
           }
 
-          return Column(children: rows);
+          return Column(children: [
+            ...spacedWidgetsFD,
+            const SizedBox(height: 10),
+            ...rows,
+            const SizedBox(height: 40),
+          ]);
         }
       },
     )
@@ -1725,13 +1744,13 @@ Widget buildLocalFoodAndDrinksCard(img, svg, title, desc, context) {
               children: [
                 Row(
                   children: [
-                    SvgPicture.asset(
-                      'assets/icons/$svgIconString',
-                      width: 21,
-                    ),
-                    const SizedBox(
-                      width: 10,
-                    ),
+                    // SvgPicture.asset(
+                    //   'assets/icons/$svgIconString',
+                    //   width: 21,
+                    // ),
+                    // const SizedBox(
+                    //   width: 10,
+                    // ),
                     Container(
                       // height: 16,
                       padding: const EdgeInsets.symmetric(
@@ -2061,6 +2080,11 @@ Widget buildBestTimeToVisit(Future<List<Widget>> bestTimeToVisitArr) {
             // Build the list of widgets with SizedBox spacing
             List<Widget> spacedWidgets = [];
             for (int i = 0; i < snapshot.data!.length; i++) {
+              print(
+                  '+++++++++++++++++++++++++++++++++++++++++snapshot+++++++++++++++++++++++++++++++++++++++');
+              print(snapshot.data![i]);
+              print(
+                  '+++++++++++++++++++++++++++++++++++++++++snapshot+++++++++++++++++++++++++++++++++++++++');
               spacedWidgets.add(snapshot.data![i]);
               if (i < snapshot.data!.length - 1) {
                 spacedWidgets.add(const SizedBox(height: 10));

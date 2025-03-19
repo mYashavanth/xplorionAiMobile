@@ -32,8 +32,9 @@ class _SelectDateRangeState extends State<SelectDateRange> {
   int tripDays = 0;
 
   List<bool> monthSelected = [true, false, false, false];
-  List<String> cityList = [];  // List to store city suggestions
-  final String token = "your_token_here";  // Replace with your actual token
+  List<String> cityList = []; // List to store city suggestions
+  final String token = "your_token_here"; // Replace with your actual token
+  DateTime? selectedStartDate;
 
   @override
   void initState() {
@@ -90,19 +91,22 @@ class _SelectDateRangeState extends State<SelectDateRange> {
                 onSelected: (String selectedCity) {
                   print("Selected city: $selectedCity");
                 },
-                fieldViewBuilder: (BuildContext context, TextEditingController textEditingController,
-                    FocusNode focusNode, VoidCallback onFieldSubmitted) {
-
-                  textEditingController.text = textEditingController.text.isEmpty
-                      ? preLoadLocation.text
-                      : textEditingController.text;
+                fieldViewBuilder: (BuildContext context,
+                    TextEditingController textEditingController,
+                    FocusNode focusNode,
+                    VoidCallback onFieldSubmitted) {
+                  textEditingController.text =
+                      textEditingController.text.isEmpty
+                          ? preLoadLocation.text
+                          : textEditingController.text;
 
                   return Container(
                     margin: const EdgeInsets.only(bottom: 20),
                     height: 50,
                     decoration: ShapeDecoration(
                       shape: RoundedRectangleBorder(
-                        side: const BorderSide(width: 1, color: Color(0xFFCDCED7)),
+                        side: const BorderSide(
+                            width: 1, color: Color(0xFFCDCED7)),
                         borderRadius: BorderRadius.circular(32),
                       ),
                     ),
@@ -128,7 +132,8 @@ class _SelectDateRangeState extends State<SelectDateRange> {
                     ),
                   );
                 },
-                optionsViewBuilder: (BuildContext context, AutocompleteOnSelected<String> onSelected,
+                optionsViewBuilder: (BuildContext context,
+                    AutocompleteOnSelected<String> onSelected,
                     Iterable<String> options) {
                   final optionCount = options.length;
                   return Align(
@@ -136,7 +141,8 @@ class _SelectDateRangeState extends State<SelectDateRange> {
                     child: Material(
                       child: Container(
                         width: 300,
-                        height: optionCount * 56.0 < 500 ? optionCount * 56.0 : 500,
+                        height:
+                            optionCount * 56.0 < 500 ? optionCount * 56.0 : 500,
                         color: Colors.white,
                         child: ListView.builder(
                           padding: const EdgeInsets.all(8.0),
@@ -150,13 +156,10 @@ class _SelectDateRangeState extends State<SelectDateRange> {
                                   onTap: () async {
                                     onSelected(option);
                                     await storage.write(
-                                        key: 'selectedPlace',
-                                        value: option
-                                    );
+                                        key: 'selectedPlace', value: option);
                                   },
                                 ),
-                                if (index != optionCount - 1)
-                                  const Divider(),
+                                if (index != optionCount - 1) const Divider(),
                               ],
                             );
                           },
@@ -200,7 +203,8 @@ class _SelectDateRangeState extends State<SelectDateRange> {
                   height: 50,
                   decoration: ShapeDecoration(
                     shape: RoundedRectangleBorder(
-                      side: const BorderSide(width: 1, color: Color(0xFFCDCED7)),
+                      side:
+                          const BorderSide(width: 1, color: Color(0xFFCDCED7)),
                       borderRadius: BorderRadius.circular(32),
                     ),
                   ),
@@ -212,7 +216,7 @@ class _SelectDateRangeState extends State<SelectDateRange> {
                           builder: (context) {
                             return StatefulBuilder(builder:
                                 (BuildContext context,
-                                StateSetter modalSetState) {
+                                    StateSetter modalSetState) {
                               return dateModal(modalSetState);
                             });
                           });
@@ -292,7 +296,18 @@ class _SelectDateRangeState extends State<SelectDateRange> {
         fontWeight: FontWeight.w500,
       ),
       selectableDayPredicate: (day) {
-        return day.isAfter(DateTime.now().subtract(const Duration(days: 1)));
+        // Allow dates after today
+        if (day.isBefore(DateTime.now().subtract(const Duration(days: 1)))) {
+          return false;
+        }
+
+        // If a start date is selected, limit the end date to 7 days after the start date
+        if (selectedStartDate != null) {
+          final maxEndDate = selectedStartDate!.add(const Duration(days: 6));
+          return day.isBefore(maxEndDate) || day.isAtSameMomentAs(maxEndDate);
+        }
+
+        return true;
       },
     );
 
@@ -340,7 +355,12 @@ class _SelectDateRangeState extends State<SelectDateRange> {
                 config: config,
                 value: dateProvider.rangeDatePickerValueWithDefaultValue,
                 onValueChanged: (dates) {
-                  setState(() => dateProvider.changeDate(dates));
+                  if (dates.isNotEmpty) {
+                    setState(() {
+                      selectedStartDate = dates[0];
+                      dateProvider.changeDate(dates);
+                    });
+                  }
                 }),
           ),
           const SizedBox(
@@ -354,6 +374,9 @@ class _SelectDateRangeState extends State<SelectDateRange> {
                     startDate = 'Start Date';
                     endDate = 'End Date';
                     dateProvider.resetDate();
+                    setState(() {
+                      selectedStartDate = null;
+                    });
                     modalSetState(() {});
                   },
                   child: Container(
@@ -384,7 +407,7 @@ class _SelectDateRangeState extends State<SelectDateRange> {
                 child: InkWell(
                   onTap: () async {
                     if (dateProvider
-                        .rangeDatePickerValueWithDefaultValue.length >
+                            .rangeDatePickerValueWithDefaultValue.length >
                         1) {
                       startDate = splitDate(dateProvider
                           .rangeDatePickerValueWithDefaultValue[0]
@@ -393,15 +416,9 @@ class _SelectDateRangeState extends State<SelectDateRange> {
                           .rangeDatePickerValueWithDefaultValue[1]
                           .toString());
 
-                      await storage.write(
-                          key: 'startDate',
-                          value: startDate
-                      );
+                      await storage.write(key: 'startDate', value: startDate);
 
-                      await storage.write(
-                          key: 'endDate',
-                          value: endDate
-                      );
+                      await storage.write(key: 'endDate', value: endDate);
                     } else {
                       startDate = splitDate(dateProvider
                           .rangeDatePickerValueWithDefaultValue[0]
@@ -410,15 +427,9 @@ class _SelectDateRangeState extends State<SelectDateRange> {
                           .rangeDatePickerValueWithDefaultValue[0]
                           .toString());
 
-                      await storage.write(
-                          key: 'startDate',
-                          value: startDate
-                      );
+                      await storage.write(key: 'startDate', value: startDate);
 
-                      await storage.write(
-                          key: 'endDate',
-                          value: endDate
-                      );
+                      await storage.write(key: 'endDate', value: endDate);
                     }
                     setState(() {
                       Navigator.of(context).pop();
@@ -428,7 +439,7 @@ class _SelectDateRangeState extends State<SelectDateRange> {
                     width: double.maxFinite,
                     height: 56,
                     padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+                        const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
                     decoration: ShapeDecoration(
                       gradient: const LinearGradient(
                         begin: Alignment(-1.00, 0.06),
@@ -473,19 +484,32 @@ class _SelectDateRangeState extends State<SelectDateRange> {
 
   String getMonthName(int month) {
     switch (month) {
-      case 1: return 'Jan';
-      case 2: return 'Feb';
-      case 3: return 'Mar';
-      case 4: return 'Apr';
-      case 5: return 'May';
-      case 6: return 'June';
-      case 7: return 'July';
-      case 8: return 'Aug';
-      case 9: return 'Sep';
-      case 10: return 'Oct';
-      case 11: return 'Nov';
-      case 12: return 'Dec';
-      default: return '';
+      case 1:
+        return 'Jan';
+      case 2:
+        return 'Feb';
+      case 3:
+        return 'Mar';
+      case 4:
+        return 'Apr';
+      case 5:
+        return 'May';
+      case 6:
+        return 'June';
+      case 7:
+        return 'July';
+      case 8:
+        return 'Aug';
+      case 9:
+        return 'Sep';
+      case 10:
+        return 'Oct';
+      case 11:
+        return 'Nov';
+      case 12:
+        return 'Dec';
+      default:
+        return '';
     }
   }
 }

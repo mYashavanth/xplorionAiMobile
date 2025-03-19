@@ -77,6 +77,7 @@ class _HomePageState extends State<HomePage> {
 
       if (response.statusCode == 200) {
         Map<String, dynamic> data = json.decode(response.body);
+        print(data);
         if (data['results'] != null && data['results'].isNotEmpty) {
           setState(() {
             currentLocation = data['results'][0]['formatted_address'];
@@ -365,44 +366,58 @@ class _HomePageState extends State<HomePage> {
                 const SizedBox(
                   height: 20,
                 ),
-                CarouselSlider(
-                  options: CarouselOptions(
-                      // aspectRatio: 1,
-                      viewportFraction: 1,
-                      enableInfiniteScroll: false,
-                      initialPage: 0,
-                      // autoPlay: true,
-                      onPageChanged: (index, reason) {
-                        setState(() {
-                          currentPos = index;
-                        });
-                      }),
-                  items: imageSliders,
-                ),
-                imageSliders.isEmpty || imageSliders.length == 1
-                    ? const Text('')
-                    : Align(
-                        alignment: Alignment.bottomCenter,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: imageSliders.map((url) {
-                            int index = imageSliders.indexOf(url);
-                            return Container(
-                              width: currentPos == index ? 14 : 8.0,
-                              height: 8,
-                              margin: const EdgeInsets.symmetric(
-                                  vertical: 10.0, horizontal: 2.0),
-                              decoration: BoxDecoration(
-                                borderRadius:
-                                    const BorderRadius.all(Radius.circular(50)),
-                                // shape: BoxShape.circle,
-                                color: currentPos == index
-                                    ? const Color(0xFF8B8D98)
-                                    : const Color(0xFFCDCED7),
-                              ),
-                            );
-                          }).toList(),
+                imageSliders.isEmpty
+                    ? Shimmer.fromColors(
+                        baseColor: Colors.grey.shade300,
+                        highlightColor: Colors.grey.shade100,
+                        child: Container(
+                          width: double.infinity,
+                          height: 200,
+                          decoration: BoxDecoration(
+                            color: Colors.grey,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
+                      )
+                    : Column(
+                        children: [
+                          CarouselSlider(
+                            options: CarouselOptions(
+                                viewportFraction: 1,
+                                enableInfiniteScroll: false,
+                                initialPage: 0,
+                                onPageChanged: (index, reason) {
+                                  setState(() {
+                                    currentPos = index;
+                                  });
+                                }),
+                            items: imageSliders,
+                          ),
+                          imageSliders.length == 1
+                              ? const Text('')
+                              : Align(
+                                  alignment: Alignment.bottomCenter,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: imageSliders.map((url) {
+                                      int index = imageSliders.indexOf(url);
+                                      return Container(
+                                        width: currentPos == index ? 14 : 8.0,
+                                        height: 8,
+                                        margin: const EdgeInsets.symmetric(
+                                            vertical: 10.0, horizontal: 2.0),
+                                        decoration: BoxDecoration(
+                                          borderRadius: const BorderRadius.all(
+                                              Radius.circular(50)),
+                                          color: currentPos == index
+                                              ? const Color(0xFF8B8D98)
+                                              : const Color(0xFFCDCED7),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                        ],
                       ),
                 Row(
                   children: [
@@ -422,7 +437,7 @@ class _HomePageState extends State<HomePage> {
                         Navigator.of(context).pushNamed('/continue_planning');
                       },
                       child: const Text(
-                        'See all',
+                        'Top 6',
                         style: TextStyle(
                           color: Colors.black,
                           fontSize: 14,
@@ -441,25 +456,49 @@ class _HomePageState extends State<HomePage> {
                 ),
                 SizedBox(
                   height: 144,
-                  child: ListView(
-                    itemExtent: MediaQuery.of(context).size.width * 0.92,
-                    scrollDirection: Axis.horizontal,
-                    shrinkWrap: true,
-                    children:
-                        createdIternery /*[
-                      singleCardPlan(context),
-                      singleCardPlan(context),
-                      singleCardPlan(context),
-                      singleCardPlan(context),
-                      singleCardPlan(context),
-                      singleCardPlan(context),
-                      singleCardPlan(context),
-                      singleCardPlan(context),
-                      singleCardPlan(context),
-                      singleCardPlan(context),
-                    ]*/
-                    ,
-                  ),
+                  child: createdIternery.isEmpty
+                      ? FutureBuilder(
+                          future: Future.delayed(const Duration(minutes: 1)),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.done) {
+                              return Center(
+                                child: Text('No data available'),
+                              );
+                            } else {
+                              return ListView.builder(
+                                itemExtent:
+                                    MediaQuery.of(context).size.width * 0.92,
+                                scrollDirection: Axis.horizontal,
+                                shrinkWrap: true,
+                                itemCount:
+                                    5, // Number of shimmer cards to display
+                                itemBuilder: (context, index) {
+                                  return Shimmer.fromColors(
+                                    baseColor: Colors.grey.shade300,
+                                    highlightColor: Colors.grey.shade100,
+                                    child: Container(
+                                      width: MediaQuery.of(context).size.width *
+                                          0.92,
+                                      margin: const EdgeInsets.symmetric(
+                                          horizontal: 8),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            }
+                          },
+                        )
+                      : ListView(
+                          itemExtent: MediaQuery.of(context).size.width * 0.92,
+                          scrollDirection: Axis.horizontal,
+                          shrinkWrap: true,
+                          children: createdIternery,
+                        ),
                 ),
                 // singleCardPlan(context),
               ],
