@@ -33,7 +33,8 @@ class _SavedInDetailedItineraryState extends State<SavedInDetailedItinerary>
     super.initState();
     // The API call will be assigned after the first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>;
+      final args =
+          ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>;
       setState(() {
         futureIterneryData = fetchIndetailIterneryData(args['collectionId']);
       });
@@ -53,23 +54,21 @@ class _SavedInDetailedItineraryState extends State<SavedInDetailedItinerary>
     // Your API call logic here
     const FlutterSecureStorage storage = FlutterSecureStorage();
     String? userToken = await storage.read(key: 'userToken');
-    final response = await http.get(Uri.parse('$baseurl/app/collection/iternery/all/$collectionId/$userToken'));
+    final response = await http.get(Uri.parse(
+        '$baseurl/app/collection/iternery/all/$collectionId/$userToken'));
 
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
       return data.map<Widget>((item) {
-
         var daysData = item[0]['itinerary']['itinerary']['days'];
         int daysDataLen = daysData.length;
         return singleCardPlanForSavedItinarary(
-          context,
-          item[0]['cityStateCountry'],
-          daysDataLen.toString(),
-          item[0]['itinerary']['itinerary']['days'][0]['day'],
-          item[0]['itinerary']['travel_companion'],
-          item[0]['itinerary']['image_for_main_place']
-        );
-
+            context,
+            item[0]['cityStateCountry'],
+            daysDataLen.toString(),
+            item[0]['itinerary']['itinerary']['days'][0]['day'],
+            item[0]['itinerary']['travel_companion'],
+            item[0]['itinerary']['image_for_main_place']);
       }).toList();
     } else {
       throw Exception('Failed to load itineraries');
@@ -78,7 +77,8 @@ class _SavedInDetailedItineraryState extends State<SavedInDetailedItinerary>
 
   @override
   Widget build(BuildContext context) {
-    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>;
+    final args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>;
 
     return Scaffold(
       appBar: AppBar(
@@ -100,37 +100,37 @@ class _SavedInDetailedItineraryState extends State<SavedInDetailedItinerary>
             height: 0,
           ),
         ),
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.more_horiz_outlined),
-          ),
-        ],
+        // actions: [
+        //   IconButton(
+        //     onPressed: () {},
+        //     icon: const Icon(Icons.more_horiz_outlined),
+        //   ),
+        // ],
       ),
       body: futureIterneryData == null
           ? const Center(child: CircularProgressIndicator())
           : FutureBuilder<List<Widget>>(
-          future: futureIterneryData,
-          builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return const Center(child: Text('No itineraries found'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No itineraries found'));
-          }
+              future: futureIterneryData,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return const Center(child: Text('No itineraries found'));
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(child: Text('No itineraries found'));
+                }
 
-          return SizedBox(
-            width: MediaQuery.of(context).size.width,
-            child: Padding(
-              padding: const EdgeInsets.all(15),
-              child: ListView(
-                children: snapshot.data!,
-              ),
+                return SizedBox(
+                  width: MediaQuery.of(context).size.width,
+                  child: Padding(
+                    padding: const EdgeInsets.all(15),
+                    child: ListView(
+                      children: snapshot.data!,
+                    ),
+                  ),
+                );
+              },
             ),
-          );
-        },
-      ),
     );
   }
 
@@ -177,7 +177,6 @@ class _SavedInDetailedItineraryState extends State<SavedInDetailedItinerary>
       ),
     );
   }  */
-
 
   /* void deleteSavedItinerary() {
     showDialog(
@@ -313,301 +312,307 @@ class _SavedInDetailedItineraryState extends State<SavedInDetailedItinerary>
     return singleCardPlanForSavedItinarary(context, index);
   }*/
 
-  Widget singleCardPlanForSavedItinarary(context, cityStateTitle,days,startDate,travelCompanion,imageUrl) {
-    return Container(
-      height: 146,
-      decoration: const BoxDecoration(),
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        height: 144,
-        // clipBehavior: Clip.antiAlias,
-        decoration: const ShapeDecoration(
-          color: Colors.white,
-          shape: RoundedRectangleBorder(
-            side: BorderSide(
-              width: 1,
-              color: Color(0xFFCDCED7),
-            ),
-            borderRadius: BorderRadius.all(
-              Radius.circular(24),
-            ),
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              width: 96,
-              height: 116,
-              clipBehavior: Clip.antiAlias,
-              decoration: ShapeDecoration(
-                image: DecorationImage(
-                  image: NetworkImage(imageUrl),
-                  fit: BoxFit.fill,
+  Widget singleCardPlanForSavedItinarary(
+      context, cityStateTitle, days, startDate, travelCompanion, imageUrl) {
+    return Column(
+      children: [
+        Container(
+          height: 146,
+          decoration: const BoxDecoration(),
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            height: 144,
+            // clipBehavior: Clip.antiAlias,
+            decoration: const ShapeDecoration(
+              color: Colors.white,
+              shape: RoundedRectangleBorder(
+                side: BorderSide(
+                  width: 1,
+                  color: Color(0xFFCDCED7),
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.all(
+                  Radius.circular(24),
                 ),
               ),
             ),
-            const SizedBox(width: 20),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.57,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    // mainAxisSize: MainAxisSize.max,
-                    children: [
-                      Text(
-                        cityStateTitle,
-                        style: const TextStyle(
-                          color: Color(0xFF030917),
-                          fontSize: 16,
-                          fontFamily: themeFontFamily2,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      // const Spacer(),
-
-                      MenuAnchor(
-                        alignmentOffset: const Offset(-140, 0),
-                        style: MenuStyle(
-                          backgroundColor: getMaterialStateColor(),
-                          shadowColor: getMaterialStateColor(),
-                          surfaceTintColor: getMaterialStateColor(),
-                          shape: getMaterialStateShape(),
-                        ),
-                        builder: (context, controller, child) {
-                          return GestureDetector(
-                            onTap: () {
-                              if (controller.isOpen) {
-                                controller.close();
-                              } else {
-                                controller.open();
-                              }
-                              //setState(() {});
-                            },
-                            child: const Icon(
-                              Icons.more_vert,
-                              color: Color(0xFF8B8D98),
-                            ),
-                          );
-                        },
-                        menuChildren: const [
-                          
-                          /*MenuItemButton(
-                         
-                            onPressed: () => setState(() {
-                              
-                            }),
-                            child: Container(
-                              color: Colors.white,
-                              // width: 185,
-                              // height: 22,
-                              padding: const EdgeInsets.all(0),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.edit,
-                                    color: Color(0xFF888888),
-                                  ),
-                                  // SizedBox(
-                                  //   child: SvgPicture.asset(
-                                  //       'assets/icons/${menuItemIcons[index]}',
-                                  //       width: 20),
-                                  // ),
-                                  SizedBox(width: 12),
-                                  Text(
-                                    'Edit itinerary',
-                                    style: TextStyle(
-                                      color: Color(0xFF888888),
-                                      fontSize: 14,
-                                      fontFamily: themeFontFamily2,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          MenuItemButton(
-                            onPressed: () => setState(() {}),
-                            child: Container(
-                              color: Colors.white,
-                              // width: 185,
-                              // height: 22,
-                              padding: const EdgeInsets.all(0),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.delete,
-                                    color: Color(0xFF888888),
-                                  ),
-                                  // SizedBox(
-                                  //   child: SvgPicture.asset(
-                                  //       'assets/icons/${menuItemIcons[index]}',
-                                  //       width: 20),
-                                  // ),
-                                  SizedBox(width: 12),
-                                  Text(
-                                    'Delete itinerary',
-                                    style: TextStyle(
-                                      color: Color(0xFF888888),
-                                      fontSize: 14,
-                                      fontFamily: themeFontFamily2,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ), */
-                        ],
-                      ),
-                    ],
+                Container(
+                  width: 96,
+                  height: 116,
+                  clipBehavior: Clip.antiAlias,
+                  decoration: ShapeDecoration(
+                    image: DecorationImage(
+                      image: NetworkImage(imageUrl),
+                      fit: BoxFit.fill,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
                 ),
-                const SizedBox(
-                  height: 10,
-                ),
-                Text(
-                  '$startDate ($days days)',
-                  style: const TextStyle(
-                    color: Color(0xFF888888),
-                    fontSize: 14,
-                    fontFamily: themeFontFamily2,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-                const SizedBox(
-                  height: 10,
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                const SizedBox(width: 20),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(
-                      width: 13,
-                      height: 13.96,
-                      child: SvgPicture.asset('assets/icons/bag.svg'),
+                      width: MediaQuery.of(context).size.width * 0.57,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        // mainAxisSize: MainAxisSize.max,
+                        children: [
+                          Text(
+                            cityStateTitle,
+                            style: const TextStyle(
+                              color: Color(0xFF030917),
+                              fontSize: 16,
+                              fontFamily: themeFontFamily2,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          // const Spacer(),
+
+                          // MenuAnchor(
+                          //   alignmentOffset: const Offset(-140, 0),
+                          //   style: MenuStyle(
+                          //     backgroundColor: getMaterialStateColor(),
+                          //     shadowColor: getMaterialStateColor(),
+                          //     surfaceTintColor: getMaterialStateColor(),
+                          //     shape: getMaterialStateShape(),
+                          //   ),
+                          //   builder: (context, controller, child) {
+                          //     return GestureDetector(
+                          //       onTap: () {
+                          //         if (controller.isOpen) {
+                          //           controller.close();
+                          //         } else {
+                          //           controller.open();
+                          //         }
+                          //         //setState(() {});
+                          //       },
+                          //       child: const Icon(
+                          //         Icons.more_vert,
+                          //         color: Color(0xFF8B8D98),
+                          //       ),
+                          //     );
+                          //   },
+                          //   menuChildren: const [
+                          //     /*MenuItemButton(
+
+                          //       onPressed: () => setState(() {
+
+                          //       }),
+                          //       child: Container(
+                          //         color: Colors.white,
+                          //         // width: 185,
+                          //         // height: 22,
+                          //         padding: const EdgeInsets.all(0),
+                          //         child: const Row(
+                          //           mainAxisSize: MainAxisSize.min,
+                          //           mainAxisAlignment: MainAxisAlignment.start,
+                          //           crossAxisAlignment: CrossAxisAlignment.center,
+                          //           children: [
+                          //             Icon(
+                          //               Icons.edit,
+                          //               color: Color(0xFF888888),
+                          //             ),
+                          //             // SizedBox(
+                          //             //   child: SvgPicture.asset(
+                          //             //       'assets/icons/${menuItemIcons[index]}',
+                          //             //       width: 20),
+                          //             // ),
+                          //             SizedBox(width: 12),
+                          //             Text(
+                          //               'Edit itinerary',
+                          //               style: TextStyle(
+                          //                 color: Color(0xFF888888),
+                          //                 fontSize: 14,
+                          //                 fontFamily: themeFontFamily2,
+                          //                 fontWeight: FontWeight.w500,
+                          //               ),
+                          //             ),
+                          //           ],
+                          //         ),
+                          //       ),
+                          //     ),
+                          //     MenuItemButton(
+                          //       onPressed: () => setState(() {}),
+                          //       child: Container(
+                          //         color: Colors.white,
+                          //         // width: 185,
+                          //         // height: 22,
+                          //         padding: const EdgeInsets.all(0),
+                          //         child: const Row(
+                          //           mainAxisSize: MainAxisSize.min,
+                          //           mainAxisAlignment: MainAxisAlignment.start,
+                          //           crossAxisAlignment: CrossAxisAlignment.center,
+                          //           children: [
+                          //             Icon(
+                          //               Icons.delete,
+                          //               color: Color(0xFF888888),
+                          //             ),
+                          //             // SizedBox(
+                          //             //   child: SvgPicture.asset(
+                          //             //       'assets/icons/${menuItemIcons[index]}',
+                          //             //       width: 20),
+                          //             // ),
+                          //             SizedBox(width: 12),
+                          //             Text(
+                          //               'Delete itinerary',
+                          //               style: TextStyle(
+                          //                 color: Color(0xFF888888),
+                          //                 fontSize: 14,
+                          //                 fontFamily: themeFontFamily2,
+                          //                 fontWeight: FontWeight.w500,
+                          //               ),
+                          //             ),
+                          //           ],
+                          //         ),
+                          //       ),
+                          //     ), */
+                          //   ],
+                          // ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(width: 5),
+                    const SizedBox(
+                      height: 10,
+                    ),
                     Text(
-                      travelCompanion,
+                      '$startDate ($days days)',
                       style: const TextStyle(
                         color: Color(0xFF888888),
                         fontSize: 14,
                         fontFamily: themeFontFamily2,
                         fontWeight: FontWeight.w400,
-                        // height: 0.12,
+                      ),
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 13,
+                          height: 13.96,
+                          child: SvgPicture.asset('assets/icons/bag.svg'),
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          travelCompanion,
+                          style: const TextStyle(
+                            color: Color(0xFF888888),
+                            fontSize: 14,
+                            fontFamily: themeFontFamily2,
+                            fontWeight: FontWeight.w400,
+                            // height: 0.12,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width * 0.54,
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 47,
+                            height: 28,
+                            child: Stack(
+                              children: [
+                                Positioned(
+                                  left: 0,
+                                  top: 0,
+                                  child: Container(
+                                    width: 28,
+                                    height: 28,
+                                    decoration: const ShapeDecoration(
+                                      image: DecorationImage(
+                                        image: AssetImage(
+                                            "assets/images/friend_photo.jpeg"),
+                                        fit: BoxFit.fill,
+                                      ),
+                                      shape: OvalBorder(
+                                        side: BorderSide(
+                                          width: 1,
+                                          strokeAlign:
+                                              BorderSide.strokeAlignOutside,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  left: 19,
+                                  top: 0,
+                                  child: Container(
+                                    width: 28,
+                                    height: 28,
+                                    decoration: const ShapeDecoration(
+                                      color: Color(0xFF8B8D98),
+                                      shape: OvalBorder(
+                                        side: BorderSide(
+                                          width: 1,
+                                          strokeAlign:
+                                              BorderSide.strokeAlignOutside,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                    child: const Image(
+                                      image: AssetImage(
+                                          'assets/icons/add_person.png'),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            width: 55,
+                            height: 29,
+                            padding: const EdgeInsets.all(0),
+                            decoration: ShapeDecoration(
+                              color: const Color(0xFFECF2FF),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(32),
+                              ),
+                            ),
+                            child: const Center(
+                              child: Text(
+                                'View',
+                                style: TextStyle(
+                                  color: Color(0xFF005CE7),
+                                  fontSize: 12,
+                                  fontFamily: 'Sora',
+                                  fontWeight: FontWeight.w600,
+                                  // height: 0,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
-                ),
-                const SizedBox(
-                  height: 10,
-                ),
-                SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.54,
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: 47,
-                        height: 28,
-                        child: Stack(
-                          children: [
-                            Positioned(
-                              left: 0,
-                              top: 0,
-                              child: Container(
-                                width: 28,
-                                height: 28,
-                                decoration: const ShapeDecoration(
-                                  image: DecorationImage(
-                                    image: AssetImage(
-                                        "assets/images/friend_photo.jpeg"),
-                                    fit: BoxFit.fill,
-                                  ),
-                                  shape: OvalBorder(
-                                    side: BorderSide(
-                                      width: 1,
-                                      strokeAlign:
-                                          BorderSide.strokeAlignOutside,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Positioned(
-                              left: 19,
-                              top: 0,
-                              child: Container(
-                                width: 28,
-                                height: 28,
-                                decoration: const ShapeDecoration(
-                                  color: Color(0xFF8B8D98),
-                                  shape: OvalBorder(
-                                    side: BorderSide(
-                                      width: 1,
-                                      strokeAlign:
-                                          BorderSide.strokeAlignOutside,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                                child: const Image(
-                                  image:
-                                      AssetImage('assets/icons/add_person.png'),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Spacer(),
-                      Container(
-                        width: 55,
-                        height: 29,
-                        padding: const EdgeInsets.all(0),
-                        decoration: ShapeDecoration(
-                          color: const Color(0xFFECF2FF),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(32),
-                          ),
-                        ),
-                        child: const Center(
-                          child: Text(
-                            'View',
-                            style: TextStyle(
-                              color: Color(0xFF005CE7),
-                              fontSize: 12,
-                              fontFamily: 'Sora',
-                              fontWeight: FontWeight.w600,
-                              // height: 0,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                )
               ],
-            )
-          ],
+            ),
+          ),
         ),
-      ),
+        const SizedBox(
+          height: 12,
+        ),
+      ],
     );
   }
 }
-

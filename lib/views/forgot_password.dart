@@ -1,8 +1,11 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:xplorion_ai/lib_assets/colors.dart';
 import 'package:xplorion_ai/lib_assets/fonts.dart';
 import 'package:xplorion_ai/lib_assets/input_decoration.dart';
+import 'package:xplorion_ai/views/urlconfig.dart';
 
 class ForgotPassword extends StatefulWidget {
   const ForgotPassword({super.key});
@@ -13,6 +16,53 @@ class ForgotPassword extends StatefulWidget {
 
 class _ForgotPasswordState extends State<ForgotPassword> {
   TextEditingController emailController = TextEditingController();
+
+  Future<void> resetPassword() async {
+    final String endpoint = '$baseurl/app/app-users/forgot-password';
+
+    try {
+      final response = await http.post(
+        Uri.parse(endpoint),
+        body: {
+          'email': emailController.text,
+        },
+      );
+      print(response.body);
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        final String message =
+            responseData['message'] ?? 'Something went wrong';
+        final int errFlag = responseData['errFlag'] ?? 0;
+
+        // Show a SnackBar with the message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errFlag == 0
+                ? "We've sent you an email with instructions to reset your password. Follow the Instructions, and you'll be back on your journey in no time! 🗺️✨"
+                : message),
+            backgroundColor: errFlag == 0 ? Colors.green : Colors.red,
+          ),
+        );
+      } else {
+        // Handle non-200 status codes
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to reset password. Please try again later.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      // Handle network or other errors
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('An error occurred: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -49,7 +99,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                 fontWeight: FontWeight.w500,
               ),
             ),
-            const SizedBox(height: 15,),
+            const SizedBox(height: 15),
             const Text(
               'Please enter your email to reset your password',
               style: TextStyle(
@@ -60,30 +110,27 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                 height: 0.12,
               ),
             ),
-            const SizedBox(
-              height: 30,
-            ),
+            const SizedBox(height: 30),
             const Text(
-          'Email address',
-          style: TextStyle(
-            color: Color(0xFF191B1C),
-            fontSize: 16,
-            fontFamily: themeFontFamily2,
-            fontWeight: FontWeight.w400,
-          
-          ),
-        ),
+              'Email address',
+              style: TextStyle(
+                color: Color(0xFF191B1C),
+                fontSize: 16,
+                fontFamily: themeFontFamily2,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
             Container(
-              margin: const EdgeInsets.only(bottom: 20,top: 6),
-              // padding: const EdgeInsets.only(left: 10),
+              margin: const EdgeInsets.only(bottom: 20, top: 6),
               height: 54,
               decoration: inputContainerDecoration,
               child: TextField(
-                enableInteractiveSelection: false,
+                // enableInteractiveSelection: false,
                 style: const TextStyle(
-                    color: Colors.black,
-                    fontSize: 18,
-                    fontFamily: themeFontFamily2),
+                  color: Colors.black,
+                  fontSize: 18,
+                  fontFamily: themeFontFamily2,
+                ),
                 keyboardType: TextInputType.text,
                 controller: emailController,
                 decoration: const InputDecoration(
@@ -100,8 +147,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                 onChanged: (value) {},
               ),
             ),
-
-             Container(
+            Container(
               margin: const EdgeInsets.only(top: 20),
               height: 48,
               width: double.maxFinite,
@@ -113,13 +159,12 @@ class _ForgotPasswordState extends State<ForgotPassword> {
               ),
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.all(0),
-                    backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
-                    surfaceTintColor: Colors.transparent),
-                onPressed: () {
-                  Navigator.of(context).pushNamed('/verify_otp');
-                },
+                  padding: const EdgeInsets.all(0),
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  surfaceTintColor: Colors.transparent,
+                ),
+                onPressed: resetPassword,
                 child: const Center(
                   child: Text(
                     'Reset password',
@@ -134,7 +179,6 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                 ),
               ),
             ),
-
           ],
         ),
       ),

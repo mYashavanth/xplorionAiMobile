@@ -40,7 +40,8 @@ Future<void> _openMap(double latitude, double longitude) async {
   }
 }
 
-Future<void> addCollection(String collectionName, String token) async {
+Future<void> addCollection(
+    String collectionName, String token, BuildContext context) async {
   if (collectionName.isEmpty || token.isEmpty) {
     print(" Collection Name and Token Is emprty ");
   }
@@ -62,7 +63,23 @@ Future<void> addCollection(String collectionName, String token) async {
 
     // Check the response
     if (response.statusCode == 200) {
+      final responseBody = jsonDecode(response.body);
       print('Collection added successfully: ${response.body}');
+      if (responseBody['errFlag'] == 0) {
+        // Collection added successfully
+        print('Collection ID: ${responseBody['collectionId']}');
+      } else {
+        // Handle error case
+        print('Error adding collection: ${responseBody['message']}');
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content:
+                Text('Error adding collection: ${responseBody['message']}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } else {
       print(
           'Failed to add collection: ${response.statusCode}, ${response.body}');
@@ -168,6 +185,8 @@ class DayItineraryView extends StatefulWidget {
   final String weatherText;
   final Future<void> Function(String) redoItinerary;
   final Future<void> Function(String, String) redoIndividualItinerary;
+  final Future<void> Function(String, String, String) updateMarkAsVisitedData;
+  final List markAsVisitedList;
 
   const DayItineraryView({
     Key? key,
@@ -180,6 +199,8 @@ class DayItineraryView extends StatefulWidget {
     required this.weatherText,
     required this.redoItinerary,
     required this.redoIndividualItinerary,
+    required this.markAsVisitedList,
+    required this.updateMarkAsVisitedData,
   }) : super(key: key);
 
   @override
@@ -362,6 +383,8 @@ class _DayItineraryViewState extends State<DayItineraryView> {
             widget.transpotationModeBool,
             widget.redoIndividualItinerary,
             widget.dayNum,
+            widget.markAsVisitedList,
+            widget.updateMarkAsVisitedData,
           ),
         ),
         const SizedBox(height: 20),
@@ -380,7 +403,9 @@ List<Widget> buildMultipleDayActivity(
     contextP,
     transpotationModeBool,
     redoIndividualItinerary,
-    dayNum) {
+    dayNum,
+    markAsVisitedList,
+    updateMarkAsVisitedData) {
   List<Widget> column = [];
   for (var i = 0; i < data.length; i++) {
     column.add(
@@ -393,7 +418,9 @@ List<Widget> buildMultipleDayActivity(
           contextP,
           transpotationModeBool,
           redoIndividualItinerary,
-          dayNum),
+          dayNum,
+          markAsVisitedList,
+          updateMarkAsVisitedData),
     );
   }
 
@@ -409,7 +436,9 @@ Widget buildDayActivity(
     context,
     transpotationModeBool,
     redoIndividualItinerary,
-    dayNum) {
+    dayNum,
+    markAsVisitedList,
+    updateMarkAsVisitedData) {
   var currentPos = day1SliderCurrentPos[0];
   List<Widget> imageSliders = data[2];
   String vehicle = data[0];
@@ -435,17 +464,45 @@ Widget buildDayActivity(
   }
 
   Widget visitedWidget = Text('');
-  print(
-      '++++++++++++++++++++++++++++++++++++++++++++++data++++++++++++++++++++++++=');
-  print(data[3]);
-  print(
-      '++++++++++++++++++++++++++++++++++++++++++++++data++++++++++++++++++++++++=');
-  if (visited > 0) {
-    visitedWidget = Container(
+  // print(
+  //     '++++++++++++++++++++++++++++++++++++++++++++++data++++++++++++++++++++++++=');
+  // print(data[3]);
+  // print(
+  //     '++++++++++++++++++++++++++++++++++++++++++++++data++++++++++++++++++++++++=');
+  // print(
+  //     '++++++++++++++++++++++++++++++++++++++++++++++markvisited++++++++++++++++++++++++=');
+  // print(markAsVisitedList);
+  // print(
+  //     '++++++++++++++++++++++++++++++++++++++++++++++markvisited++++++++++++++++++++++++=');
+  visitedWidget = InkWell(
+    onTap: () {
+      print('Clicked on mark as visited');
+      print('dayNum: $dayNum, index: $index');
+      if (markAsVisitedList.any((item) =>
+          item["day_no"] == dayNum.toString() &&
+          item["indexId"] == index.toString())) {
+        updateMarkAsVisitedData(
+          index.toString(),
+          '1',
+          dayNum.toString(),
+        );
+      } else {
+        updateMarkAsVisitedData(
+          index.toString(),
+          '0',
+          dayNum.toString(),
+        );
+      }
+    },
+    child: Container(
       height: 32,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: ShapeDecoration(
-        color: visited == 2 ? const Color(0xFFC3E7FF) : const Color(0xFFECF2FF),
+        color: markAsVisitedList.any((item) =>
+                item["day_no"] == dayNum.toString() &&
+                item["indexId"] == index.toString())
+            ? const Color.fromARGB(255, 0, 189, 16)
+            : const Color(0xFFECF2FF),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(32),
         ),
@@ -453,39 +510,38 @@ Widget buildDayActivity(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          visited == 1
-              ? const Text(
-                  'Mark as visited',
-                  style: TextStyle(
-                    color: Color(0xFF005CE7),
-                    fontSize: 12,
-                    fontFamily: themeFontFamily,
-                    fontWeight: FontWeight.w500,
-                    // overflow: TextOverflow.ellipsis
-                  ),
-                )
-              : const Row(
+          markAsVisitedList.any((item) =>
+                  item["day_no"] == dayNum.toString() &&
+                  item["indexId"] == index.toString())
+              ? const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.done),
-                    SizedBox(
-                      width: 5,
-                    ),
+                    SizedBox(width: 5),
                     Text(
                       'Visited',
                       style: TextStyle(
-                        color: Color(0xFF0A0A0A),
+                        color: Colors.white,
                         fontSize: 12,
                         fontFamily: themeFontFamily,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
+                )
+              : const Text(
+                  'Mark as visited',
+                  style: TextStyle(
+                    color: Color(0xFF005CE7),
+                    fontSize: 12,
+                    fontFamily: themeFontFamily,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
         ],
       ),
-    );
-  }
+    ),
+  );
 
   Widget vehicleIcon =
       const Icon(Icons.directions_car, color: Color(0xFF888888));
@@ -512,33 +568,34 @@ Widget buildDayActivity(
                     fontWeight: FontWeight.w400,
                   ),
                 ),
-                InkWell(
-                  onTap: () {
-                    showModalBottomSheet(
-                      isScrollControlled: true,
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(8),
-                          topRight: Radius.circular(8),
-                        ),
-                      ),
-                      context: context,
-                      builder: (context) {
-                        return StatefulBuilder(
-                          builder: (
-                            context,
-                            StateSetter modalSetState,
-                          ) {
-                            return buildChangeTransportationModeBottomSheet(
-                                transpotationModeBool, modalSetState, context);
-                          },
-                        );
-                        // return Container();
-                      },
-                    );
-                  },
-                  child: const Icon(Icons.arrow_drop_down),
-                ),
+                // InkWell(
+                //   onTap: () {
+                //     showModalBottomSheet(
+                //       isScrollControlled: true,
+                //       shape: const RoundedRectangleBorder(
+                //         borderRadius: BorderRadius.only(
+                //           topLeft: Radius.circular(8),
+                //           topRight: Radius.circular(8),
+                //         ),
+                //       ),
+                //       context: context,
+                //       builder: (context) {
+                //         return StatefulBuilder(
+                //           builder: (
+                //             context,
+                //             StateSetter modalSetState,
+                //           ) {
+                //             return buildChangeTransportationModeBottomSheet(
+                //                 transpotationModeBool, modalSetState, context);
+                //           },
+                //         );
+                //         // return Container();
+                //       },
+                //     );
+                //   },
+                //   child: const Icon(Icons.arrow_drop_down),
+                // ),
+                const SizedBox(width: 10),
                 GestureDetector(
                   onTap: () async {
                     if (originDestination != '') {
@@ -973,7 +1030,10 @@ Widget buildDayActivity(
                           width: 10,
                         ),
                         Text(
-                          '$ratings ( Google ) • ₹₹',
+                          // '$ratings ( Google ) • ₹₹',
+                          ratings == "N/A"
+                              ? 'No reviews yet—be the first!'
+                              : '$ratings ( Google ) • ₹₹',
                           style: const TextStyle(
                             color: Color(0xFF0A0A0A),
                             fontSize: 14,
@@ -998,7 +1058,9 @@ Widget buildDayActivity(
                         ),
                         Expanded(
                           child: Text(
-                            address,
+                            address == "N/A"
+                                ? 'Location unknown—explore!'
+                                : address,
                             style: const TextStyle(
                               color: Color(0xFF0A0A0A),
                               fontSize: 14,
@@ -1085,7 +1147,10 @@ Widget buildDayActivity(
                         ),
                         Expanded(
                           child: Text(
-                            'Price Level : $priceDescription',
+                            // 'Price Level : $priceDescription',
+                            priceDescription == "N/A"
+                                ? 'Price Level : Price info missing—discover it!'
+                                : 'Price Level : $priceDescription',
                             style: const TextStyle(
                               color: Color(0xFF0A0A0A),
                               fontSize: 14,
@@ -2945,7 +3010,7 @@ Widget buildSavedItineriesBottomSheet(savedItineraryCollectionBool, setState,
                               });
                         },
                         child: const Text(
-                          'New collection',
+                          'Create new collection',
                           style: TextStyle(
                             color: Color(0xFF030917),
                             fontSize: 16,
@@ -3687,7 +3752,9 @@ Widget buildNewCollectionBottomSheet(
 
                                   addCollection(
                                       collectionNameController.text.trim(),
-                                      userToken!);
+                                      userToken!,
+                                      context);
+                                  Navigator.pop(context);
 
                                   if (context.mounted) {
                                     showModalBottomSheet(

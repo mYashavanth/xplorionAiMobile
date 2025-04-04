@@ -10,7 +10,6 @@ import 'package:xplorion_ai/lib_assets/fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:xplorion_ai/views/urlconfig.dart';
 
-
 class ChooseYourInterests extends StatefulWidget {
   const ChooseYourInterests({super.key});
 
@@ -32,7 +31,8 @@ class _ChooseYourInterestsState extends State<ChooseYourInterests> {
   // Function to fetch categories from the API
   Future<List<Map<String, dynamic>>> fetchCategories() async {
     String? userToken = await storage.read(key: 'userToken');
-    final response = await http.get(Uri.parse('$baseurl/app/sub-category/all/${userToken!}'));
+    final response = await http
+        .get(Uri.parse('$baseurl/app/sub-category/all/${userToken!}'));
 
     if (response.statusCode == 200) {
       // Parse the JSON response
@@ -171,7 +171,6 @@ class _ChooseYourInterestsState extends State<ChooseYourInterests> {
             const SizedBox(
               height: 20,
             ),
-
             FutureBuilder<List<Map<String, dynamic>>>(
               future: _categoriesFuture,
               builder: (context, snapshot) {
@@ -188,12 +187,12 @@ class _ChooseYourInterestsState extends State<ChooseYourInterests> {
                 return Column(
                   children: categories.map((category) {
                     final primaryCategoryName = category['primaryCategoryName'];
-                    final subCategoryData = category['sub_category_data'] as List<dynamic>;
+                    final subCategoryData =
+                        category['sub_category_data'] as List<dynamic>;
                     final subCategoryLen = subCategoryData.length;
 
-                    for(int i = 0;i <= subCategoryLen;i++)
-                    {
-                        subCategoryList.add(false);
+                    for (int i = 0; i <= subCategoryLen; i++) {
+                      subCategoryList.add(false);
                     }
 
                     return Padding(
@@ -219,26 +218,31 @@ class _ChooseYourInterestsState extends State<ChooseYourInterests> {
                           const SizedBox(height: 10),
                           subCategoryData.isNotEmpty
                               ? Wrap(
-                            spacing: 12,
-                            runSpacing: 12,
-                            children: subCategoryData.asMap().entries.map<Widget>((subCategory) { //.map<Widget>((subCategory) {
+                                  spacing: 12,
+                                  runSpacing: 12,
+                                  children: subCategoryData
+                                      .asMap()
+                                      .entries
+                                      .map<Widget>((subCategory) {
+                                    //.map<Widget>((subCategory) {
 
-                              //final subCategoryId = subCategory['sub_category_id'].toString();
-                              //bool isSelected = true;
-                              final int index = subCategory.key;
-                              final subCategoryData = subCategory.value;
+                                    //final subCategoryId = subCategory['sub_category_id'].toString();
+                                    //bool isSelected = true;
+                                    final int index = subCategory.key;
+                                    final subCategoryData = subCategory.value;
 
-                              return interestsContainer(
-                                  subCategoryData['sl'].toString(),
-                                  subCategoryData['sub_category_name'], false,
-                                subCategoryList, subCategoryData['sub_category_id']
-                              );
-                            }).toList(),
-                          ) // End of Wrap
+                                    return interestsContainer(
+                                        subCategoryData['sl'].toString(),
+                                        subCategoryData['sub_category_name'],
+                                        false,
+                                        subCategoryList,
+                                        subCategoryData['sub_category_id']);
+                                  }).toList(),
+                                ) // End of Wrap
                               : const Text(
-                            'No subcategories available',
-                            style: TextStyle(color: Colors.grey),
-                          ),
+                                  'No subcategories available',
+                                  style: TextStyle(color: Colors.grey),
+                                ),
                           const SizedBox(height: 20),
                         ],
                       ),
@@ -247,7 +251,6 @@ class _ChooseYourInterestsState extends State<ChooseYourInterests> {
                 ); // End of Column wrapping FutureBuilder results
               }, // End of FutureBuilder builder
             ),
-
             InkWell(
               onTap: allSelected
                   ? () {
@@ -294,18 +297,20 @@ class _ChooseYourInterestsState extends State<ChooseYourInterests> {
       ),
     );
   }
+
   //(String id, String interestsText, bool isSelected, String subCatId)
   Widget interestsContainer(id, interestsText, cat, arrayBool, subCatId) {
     var index = int.parse(id);
     return InkWell(
-      onTap: () { //cat ?
-              arrayBool[index] = !arrayBool[index];
-              addSubInterestCat(subCatId);
-              //allowInterestcategory();
-              //cat = true;
-              setState(() {});
-            },
-          //: null,
+      onTap: () {
+        //cat ?
+        arrayBool[index] = !arrayBool[index];
+        addSubInterestCat(subCatId);
+        //allowInterestcategory();
+        //cat = true;
+        setState(() {});
+      },
+      //: null,
       child: Opacity(
         opacity: arrayBool[index] ? 1 : 0.5,
         child: Container(
@@ -350,58 +355,57 @@ class _ChooseYourInterestsState extends State<ChooseYourInterests> {
     );
   }
 
-  addSubInterestCat(String subCatId){
-    if(selectedSubCategory.contains(subCatId.toString()))
-    {
-        selectedSubCategory.remove(subCatId.toString());
-    }
-    else
-    {
-        selectedSubCategory.add(subCatId.toString());
+  addSubInterestCat(String subCatId) {
+    if (selectedSubCategory.contains(subCatId.toString())) {
+      selectedSubCategory.remove(subCatId.toString());
+    } else {
+      selectedSubCategory.add(subCatId.toString());
     }
 
-    if(selectedSubCategory.isNotEmpty)
-    {
-        setState(() {allSelected = true;});
-    }
-    else
-    {
-        setState(() {allSelected = false;});
+    if (selectedSubCategory.isNotEmpty) {
+      setState(() {
+        allSelected = true;
+      });
+    } else {
+      setState(() {
+        allSelected = false;
+      });
     }
   }
 
   saveSelectedInterest() async {
-      String? userToken = await storage.read(key: 'userToken');
-      List<String> stringSelectedSubCategory = selectedSubCategory.map((e) => '"$e"').toList();
+    String? userToken = await storage.read(key: 'userToken');
+    List<String> stringSelectedSubCategory =
+        selectedSubCategory.map((e) => '"$e"').toList();
 
-      try {
-        // Create the body for the POST request
-        final map = <String, dynamic>{};
-        map['userToken'] = userToken;
-        map['subCategoryId'] = stringSelectedSubCategory.toString();
+    try {
+      // Create the body for the POST request
+      final map = <String, dynamic>{};
+      map['userToken'] = userToken;
+      map['subCategoryId'] = stringSelectedSubCategory.toString();
 
-        // Send the POST request
-        final response = await http.post(
-          Uri.parse('$baseurl/app/interests/add'),
-          body: map,
-        );
+      // Send the POST request
+      final response = await http.post(
+        Uri.parse('$baseurl/app/interests/add'),
+        body: map,
+      );
 
-        // Check the status code of the response
-        if (response.statusCode == 200) {
-          // If the server returns a 200 OK response, parse the response body
-          final responseData = jsonDecode(response.body);
+      // Check the status code of the response
+      if (response.statusCode == 200) {
+        // If the server returns a 200 OK response, parse the response body
+        final responseData = jsonDecode(response.body);
 
-          if (responseData['errFlag'] == 0)
-          {
-              Navigator.of(context).pushNamed('/account_setup');
-          }
-
-        } else {
-          // If the server did not return a 200 OK response
-          print('Failed to send POST request. Status code: ${response.statusCode}');
+        if (responseData['errFlag'] == 0) {
+          // Navigator.of(context).pushNamed('/account_setup');
+          Navigator.of(context).pushNamed('/welcome_page');
         }
-      } catch (e) {
-        print('Error occurred: $e');
+      } else {
+        // If the server did not return a 200 OK response
+        print(
+            'Failed to send POST request. Status code: ${response.statusCode}');
       }
+    } catch (e) {
+      print('Error occurred: $e');
+    }
   }
 }

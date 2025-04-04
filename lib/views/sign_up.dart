@@ -35,6 +35,9 @@ class _SignUpState extends State<SignUp> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
+  bool eligibleForSignup = false;
+  bool safetyAgreementChecked = false; // New variable for the checkbox
+
   Future<void> _signInWithGoogle() async {
     try {
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
@@ -131,7 +134,6 @@ class _SignUpState extends State<SignUp> {
     }
   }
 
-  bool eligibleForSignup = false;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -152,7 +154,6 @@ class _SignUpState extends State<SignUp> {
         ),
       ),
       body: Container(
-        // color: const Color,
         padding: const EdgeInsets.only(top: 20, right: 20, left: 20),
         child: ListView(
           children: [
@@ -163,20 +164,18 @@ class _SignUpState extends State<SignUp> {
                 fontSize: 16,
                 fontFamily: themeFontFamily2,
                 fontWeight: FontWeight.w400,
-                // height: 0.08,
               ),
             ),
             Container(
               margin: const EdgeInsets.only(bottom: 20, top: 8),
-              // padding: const EdgeInsets.only(left: 10),
               height: 54,
               decoration: inputContainerDecoration,
               child: TextField(
-                // enableInteractiveSelection: false,
                 style: const TextStyle(
-                    color: Colors.black,
-                    fontSize: 18,
-                    fontFamily: themeFontFamily2),
+                  color: Colors.black,
+                  fontSize: 18,
+                  fontFamily: themeFontFamily2,
+                ),
                 keyboardType: TextInputType.text,
                 controller: nameController,
                 decoration: const InputDecoration(
@@ -211,11 +210,9 @@ class _SignUpState extends State<SignUp> {
             ),
             Container(
               margin: const EdgeInsets.only(bottom: 20),
-              // padding: const EdgeInsets.only(left: 10),
               height: 54,
               decoration: inputContainerDecoration,
               child: TextField(
-                // enableInteractiveSelection: false,
                 style: const TextStyle(
                     color: Colors.black,
                     fontSize: 18,
@@ -259,7 +256,6 @@ class _SignUpState extends State<SignUp> {
               height: 54,
               child: TextField(
                 textAlignVertical: TextAlignVertical.center,
-                // enableInteractiveSelection: false,
                 style: const TextStyle(
                     color: Colors.black,
                     fontSize: 18,
@@ -313,12 +309,10 @@ class _SignUpState extends State<SignUp> {
             ),
             Container(
               decoration: inputContainerDecoration,
-              // padding: const EdgeInsets.only(left: 10),
               padding: const EdgeInsets.only(left: 20, right: 10),
               height: 54,
               child: TextField(
                 textAlignVertical: TextAlignVertical.center,
-                // enableInteractiveSelection: false,
                 style: const TextStyle(
                     color: Colors.black,
                     fontSize: 18,
@@ -335,7 +329,6 @@ class _SignUpState extends State<SignUp> {
                     fontSize: 14,
                     fontFamily: themeFontFamily2,
                     fontWeight: FontWeight.w400,
-                    // height: 0.10,
                   ),
                   suffixIcon: IconButton(
                     onPressed: () {
@@ -357,34 +350,38 @@ class _SignUpState extends State<SignUp> {
                 },
               ),
             ),
-            // Visibility(
-            //   visible: wrongPassword,
-            //   child: const Row(
-            //     children: [
-            //       Icon(
-            //         Icons.error,
-            //         color: Colors.red,
-            //         size: 17,
-            //       ),
-            //       SizedBox(
-            //         width: 10,
-            //       ),
-            //       Text(
-            //         'wrong password',
-            //         style: TextStyle(
-            //           color: Color(0xFFFF3636),
-            //           fontSize: 12,
-            //           fontFamily: 'Inter',
-            //           fontWeight: FontWeight.w400,
-            //           height: 0.11,
-            //         ),
-            //       ),
-            //     ],
-            //   ),
-            // ),
-            const SizedBox(
-              height: 20,
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Checkbox(
+                  value: safetyAgreementChecked,
+                  onChanged: (value) {
+                    setState(() {
+                      safetyAgreementChecked = value ?? false;
+                      checkEligible();
+                    });
+                  },
+                ),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      _showSafetyAgreementBottomSheet(context);
+                    },
+                    child: const Text(
+                      'I agree to the terms and conditions of this safety sign-off.',
+                      style: TextStyle(
+                        color: Color(0xFF191B1C),
+                        fontSize: 14,
+                        fontFamily: themeFontFamily2,
+                        fontWeight: FontWeight.w400,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
+            const SizedBox(height: 20),
             Opacity(
               opacity: eligibleForSignup ? 1 : 0.5,
               child: InkWell(
@@ -429,7 +426,6 @@ class _SignUpState extends State<SignUp> {
             const SizedBox(
               height: 20,
             ),
-
             Row(
               children: [
                 Container(
@@ -473,12 +469,9 @@ class _SignUpState extends State<SignUp> {
                 ),
               ],
             ),
-
             const SizedBox(
               height: 20,
             ),
-
-            // Google Sign-In Button
             GestureDetector(
               onTap: _signInWithGoogle,
               child: Container(
@@ -517,54 +510,9 @@ class _SignUpState extends State<SignUp> {
                 ),
               ),
             ),
-
-            // const SizedBox(
-            //   height: 20,
-            // ),
-            //
-            // // facebook sign in
-            // Container(
-            //   width: 358,
-            //   height: 56,
-            //   padding: const EdgeInsets.all(16),
-            //   decoration: ShapeDecoration(
-            //     color: const Color(0xFF1877F2),
-            //     shape: RoundedRectangleBorder(
-            //         borderRadius: BorderRadius.circular(32)),
-            //   ),
-            //   child: Row(
-            //     mainAxisSize: MainAxisSize.min,
-            //     mainAxisAlignment: MainAxisAlignment.center,
-            //     crossAxisAlignment: CrossAxisAlignment.center,
-            //     children: [
-            //       Container(
-            //         width: 24,
-            //         height: 24,
-            //         clipBehavior: Clip.antiAlias,
-            //         decoration: const BoxDecoration(color: Color(0xFF1877F2)),
-            //         child: SvgPicture.asset('assets/icons/FacebookLogo.svg'),
-            //       ),
-            //       const SizedBox(width: 12),
-            //       const Text(
-            //         'Continue with Facebook',
-            //         style: TextStyle(
-            //           color: Colors.white,
-            //           fontSize: 16,
-            //           fontFamily: themeFontFamily2,
-            //           fontWeight: FontWeight.w400,
-            //           height: 0,
-            //         ),
-            //       ),
-            //     ],
-            //   ),
-            // ),
-
             const SizedBox(
               height: 20,
             ),
-
-            //apple sign in
-
             Platform.isIOS
                 ? Container(
                     margin: const EdgeInsets.only(bottom: 20),
@@ -602,8 +550,6 @@ class _SignUpState extends State<SignUp> {
                     ),
                   )
                 : Text(''),
-
-            //new to tripssist
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -614,7 +560,6 @@ class _SignUpState extends State<SignUp> {
                     fontSize: 14,
                     fontFamily: themeFontFamily2,
                     fontWeight: FontWeight.w400,
-                    // height: 0,
                   ),
                 ),
                 const SizedBox(
@@ -637,7 +582,6 @@ class _SignUpState extends State<SignUp> {
                 ),
               ],
             ),
-
             const SizedBox(
               height: 20,
             )
@@ -647,19 +591,102 @@ class _SignUpState extends State<SignUp> {
     );
   }
 
-  checkEligible() {
+  void checkEligible() {
     var name = nameController.text;
     var email = emailController.text;
     var password = passwordController.text;
     var confirmPassword = confirmPasswordController.text;
 
-    if (email != '' && password != '' && name != '' && confirmPassword != '') {
+    if (email.isNotEmpty &&
+        password.isNotEmpty &&
+        name.isNotEmpty &&
+        confirmPassword.isNotEmpty &&
+        safetyAgreementChecked) {
       eligibleForSignup = true;
-      setState(() {});
     } else {
       eligibleForSignup = false;
-      setState(() {});
     }
+    setState(() {});
+  }
+
+  void _showSafetyAgreementBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return Padding(
+          padding: const EdgeInsets.all(20),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Safety Sign-Off Form',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: themeFontFamily,
+                      ),
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200], // Background color
+                        shape: BoxShape.circle,
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'Before proceeding, please read and acknowledge the following safety guidelines. Your safety is our top priority, and compliance with these guidelines is mandatory for participation.\n',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontFamily: themeFontFamily2,
+                    color: Color(0xFF888888),
+                  ),
+                ),
+                const Text(
+                  'Safety Agreement',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: themeFontFamily,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  '1. Personal Responsibility: I am responsible for my own safety and will adhere to all instructions provided.\n'
+                  '2. Compliance with Rules: I will follow all safety protocols, regulations, and guidelines outlined for this activity.\n'
+                  '3. Protective Gear: If required, I will wear the necessary protective equipment at all times.\n'
+                  '4. Health & Fitness: I confirm that I am in good health and physically fit to participate. I will inform the organizers of any medical conditions that may affect my participation.\n'
+                  '5. Risk Awareness: I understand that this activity involves inherent risks, and I am participating voluntarily.\n'
+                  '6. Emergency Response: I will immediately report any accidents, injuries, or unsafe conditions to the responsible personnel.\n'
+                  '7. Liability Release: I release the organizers, facilitators, and associated parties from any liability in case of injury, loss, or damage incurred during participation.\n\n'
+                  'By ticking the checkbox on the main page, I confirm that I have read, understood, and agreed to the terms of this safety sign-off form.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontFamily: themeFontFamily2,
+                    color: Color(0xFF888888),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future performSignUp() async {

@@ -11,6 +11,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:xplorion_ai/lib_assets/fonts.dart';
+import 'package:xplorion_ai/views/trip_settings.dart';
 import 'package:xplorion_ai/views/urlconfig.dart';
 import 'package:xplorion_ai/widgets/home_page_trip_widgets.dart';
 import 'package:http/http.dart' as http;
@@ -56,6 +57,7 @@ class _HomePageTripState extends State<HomePageTrip> {
   String placeDescription = '';
   String localityInPlace = '';
   String resIterneryId = '';
+  List markAsVisitedList = [];
   String mainPlaceImage =
       'https://loading.io/assets/mod/spinner/spinner/lg.gif';
   String weatherInfo = '';
@@ -385,7 +387,7 @@ class _HomePageTripState extends State<HomePageTrip> {
 
       print(
           '+++++++++++++++++++++++++++++++++++++redoIndvidualItinerary++++++++++++++++++++++++++++++++++++++++++++++++++');
-      print(data);
+      print(apiUrl);
       print(
           '+++++++++++++++++++++++++++++++++++++redoIndvidualItinerary++++++++++++++++++++++++++++++++++++++++++++++++++');
       if (data != null && data is Map<String, dynamic>) {
@@ -409,12 +411,108 @@ class _HomePageTripState extends State<HomePageTrip> {
     }
   }
 
+  Future<void> getMarkAsVisitedData() async {
+    String? userToken = await storage.read(key: 'userToken');
+    if (resIterneryId.isEmpty) {
+      return; // Exit if resIterneryId is not set
+    }
+
+    // Define the API endpoint
+    final String apiUrl = '$baseurl/app/mark-visited/$resIterneryId/$userToken';
+
+    try {
+      // Make the Get request
+      final response = await http.get(Uri.parse(apiUrl));
+      var data = json.decode(response.body);
+
+      // print(
+      //     '+++++++++++++++++++++++++++++++++++++getMarkAsVisitedData++++++++++++++++++++++++++++++++++++++++++++++++++');
+      // print(data);
+      // print(
+      //     '+++++++++++++++++++++++++++++++++++++getMarkAsVisitedData++++++++++++++++++++++++++++++++++++++++++++++++++');
+      if (response.statusCode == 200) {
+        if (data != null && data is List) {
+          // Check if the response is a list
+          setState(() {
+            markAsVisitedList = data;
+          });
+        } else {
+          throw Exception("Invalid data format received.");
+        }
+      } else {
+        throw Exception("Failed to load mark as visited data.");
+      }
+
+      // print('markAsVisitedList $markAsVisitedList');
+    } catch (e) {
+      print('Error occurred: $e');
+      // show a snackbar
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content:
+                Text('Error Loading Mark as visited Data Please Try Again')),
+      );
+    }
+  }
+
+  Future<void> updateMarkAsVisitedData(
+      String indexId, String deleteFlag, String dayNo) async {
+    String? userToken = await storage.read(key: 'userToken');
+    // print(
+    //     'indexId $indexId, deleteFlag $deleteFlag, dayNo $dayNo, userToken $userToken, resIterneryId $resIterneryId');
+    if (resIterneryId.isEmpty || userToken == null) {
+      return; // Exit if resIterneryId is not set or userToken is null
+    }
+
+    // Define the API endpoint
+    final String apiUrl = '$baseurl/app/mark-visited/update';
+
+    // Prepare the request body
+    final map = <String, dynamic>{};
+    map['token'] = userToken;
+    map['iterneryId'] = resIterneryId;
+    map['indexId'] = indexId;
+    map['deleteFlag'] = deleteFlag;
+    map['dayNo'] = dayNo;
+
+    try {
+      // Make the POST request
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        body: map,
+      );
+
+      var responseData = json.decode(response.body);
+
+      print('++++++++++++++ updateMarkAsVisitedData ++++++++++++++');
+      print(responseData);
+      print('++++++++++++++ updateMarkAsVisitedData ++++++++++++++');
+
+      if (response.statusCode == 200) {
+        // Update local list after API call
+        getMarkAsVisitedData();
+      } else {
+        throw Exception("Failed to update mark as visited data.");
+      }
+    } catch (e) {
+      print('Error occurred: $e');
+      // Show a snackbar
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content:
+                Text('Error updating Mark as Visited Data. Please try again')),
+      );
+    }
+  }
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     _getData();
-    generateItinerary();
+    generateItinerary().then((_) {
+      getMarkAsVisitedData();
+    });
     startAutoCarousel();
   }
 
@@ -855,8 +953,16 @@ class _HomePageTripState extends State<HomePageTrip> {
 
                                 InkWell(
                                   onTap: () {
-                                    Navigator.of(context)
-                                        .pushNamed('/trip_settings');
+                                    print(resIterneryId);
+                                    Navigator.push(
+                                        this.context,
+                                        MaterialPageRoute(
+                                          builder: (buildContext) =>
+                                              TripSettings(
+                                            resIterneryId: resIterneryId,
+                                            iterneryTitle: iterneryTitle,
+                                          ),
+                                        ));
                                   },
                                   child: Container(
                                       width: 40,
@@ -1251,8 +1357,9 @@ class _HomePageTripState extends State<HomePageTrip> {
 
     if (day > dataLen) {
       if (day == (dataLen + 1)) {
+        print(tripTipsArr);
         if (tripTipsArr == null || tripTipsArr == '') {
-          tripTipsArr = getTipsData(); // Assign value if null
+          tripTipsArr = getTipsData(); // Assign value if null or invalid
         } else {
           tripTipsArr = tripTipsArr;
         }
@@ -1354,7 +1461,7 @@ class _HomePageTripState extends State<HomePageTrip> {
 
     menuIndex = menuIndex + 1;
     fetchNationalHolidays();
-
+    print('markAsVisitedList == $markAsVisitedList');
     return DayItineraryView(
         weatherSvg: 'thunder_cloud.svg',
         dayNum: '$menuIndex',
@@ -1364,8 +1471,10 @@ class _HomePageTripState extends State<HomePageTrip> {
         transpotationModeBool: transpotationModeBool,
         weatherText: weatherInfoToSend,
         redoItinerary: redoItinerary,
-        redoIndividualItinerary:
-            redoIndividualItinerary); // dayActivityDataArray
+        redoIndividualItinerary: redoIndividualItinerary,
+        markAsVisitedList: markAsVisitedList,
+        updateMarkAsVisitedData:
+            updateMarkAsVisitedData); // dayActivityDataArray
 
     /*switch (menuIndex) {
       /*case 0:
@@ -1421,14 +1530,21 @@ class _HomePageTripState extends State<HomePageTrip> {
         return [];
       }
 
+      // print(itinerarySavedFlag);
+      final url = Uri.parse(itinerarySavedFlag == '1'
+          ? '$baseurl/get-all-tips/$resIterneryId/$userToken'
+          : '$baseurl/tips-for-place/$selectedPlace/$resIterneryId/$userToken');
       // Perform GET request
-      final response = await http
-          .get(Uri.parse('$baseurl/tips-for-place/$selectedPlace/$userToken'));
+      final response = await http.get(url);
+      // print(url);
+      // print(response.body);
 
       // Check if response is successful
       if (response.statusCode == 200) {
         // Parse JSON response
-        List<dynamic> tipsArray = json.decode(response.body);
+        List<dynamic> tipsArray = itinerarySavedFlag == "1"
+            ? json.decode(response.body)[0]["tipsJsonData"]
+            : json.decode(response.body);
 
         List<Widget> tips = tipsArray.map((item) {
           String tipText = item["tip"] as String;
@@ -1464,14 +1580,23 @@ class _HomePageTripState extends State<HomePageTrip> {
         return [];
       }
 
+      print(itinerarySavedFlag);
+      final url = Uri.parse(itinerarySavedFlag == '1'
+          ? '$baseurl/get-all-best-time-to-visit/$resIterneryId/$userToken'
+          : '$baseurl/best-time-to-visit-place/$selectedPlace/$resIterneryId/$userToken');
+
       // Perform GET request
-      final response = await http.get(Uri.parse(
-          '$baseurl/best-time-to-visit-place/$selectedPlace/$userToken'));
+      final response = await http.get(url);
+
+      // print(url);
+      // print(response.body);
 
       // Check if response is successful
       if (response.statusCode == 200) {
         // Parse JSON response
-        List<dynamic> tipsArray = json.decode(response.body);
+        List<dynamic> tipsArray = itinerarySavedFlag == '1'
+            ? json.decode(response.body)[0]['bestTimeToVisitJsonData']
+            : json.decode(response.body);
 
         List<Widget> tips = tipsArray.map((item) {
           String tipText = item["tip"] as String;
@@ -1495,17 +1620,23 @@ class _HomePageTripState extends State<HomePageTrip> {
       // Read the user token and selected place from secure storage
       String? userToken = await storage.read(key: 'userToken');
       String? selectedPlace = await storage.read(key: 'selectedPlace');
-      print(userToken);
-      final url =
-          Uri.parse('$baseurl/national-holidays/$selectedPlace/$userToken');
+      // print(itinerarySavedFlag);
+      final url = Uri.parse(itinerarySavedFlag == '1'
+          ? '$baseurl/get-all-national-holidays/$resIterneryId/$userToken'
+          : '$baseurl/national-holidays/$selectedPlace/$resIterneryId/$userToken');
 
       // Perform the GET request
       final response = await http.get(url);
+      // print(url);
+      // print(response.body);
+      // print(json.decode(response.body)[0]['nationalHolidaysJsonData']);
 
       // Check the response status
       if (response.statusCode == 200) {
         // Decode and return the JSON response as a list of maps
-        var nationalHolidaysData = json.decode(response.body);
+        var nationalHolidaysData = itinerarySavedFlag == '1'
+            ? json.decode(response.body)[0]['nationalHolidaysJsonData']
+            : json.decode(response.body);
         var nationalHolidaysDataLen = nationalHolidaysData.length;
 
         for (int i = 0; i < nationalHolidaysDataLen; i++) {
@@ -1540,14 +1671,22 @@ class _HomePageTripState extends State<HomePageTrip> {
         return [];
       }
 
+      print(itinerarySavedFlag);
+      final url = Uri.parse(itinerarySavedFlag == '1'
+          ? '$baseurl/get-all-food-drinks/$resIterneryId/$userToken'
+          : '$baseurl/food-drinks/$selectedPlace/$resIterneryId/$userToken');
       // Perform GET request
-      final response = await http
-          .get(Uri.parse('$baseurl/food-drinks/$selectedPlace/$userToken'));
+      final response = await http.get(url);
+
+      print(url);
+      print(response.body);
 
       // Check if response is successful
       if (response.statusCode == 200) {
         // Parse JSON response
-        List<dynamic> FoodAndDrinksArray = json.decode(response.body);
+        List<dynamic> FoodAndDrinksArray = itinerarySavedFlag == '1'
+            ? json.decode(response.body)[0]['foodAndDrinkJsonData']
+            : json.decode(response.body);
 
         List<Widget> foodDrinksArr = FoodAndDrinksArray.map((item) {
           String foodDrinkDescription =

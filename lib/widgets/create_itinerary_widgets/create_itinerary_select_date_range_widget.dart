@@ -85,8 +85,9 @@ class _SelectDateRangeState extends State<SelectDateRange> {
                   if (textEditingValue.text.isEmpty) {
                     return const Iterable<String>.empty();
                   }
-                  fetchCities(textEditingValue.text);
-                  return cityList;
+                  return fetchCities(textEditingValue.text)
+                      .then((_) => cityList);
+                  // return cityList;
                 },
                 onSelected: (String selectedCity) {
                   print("Selected city: $selectedCity");

@@ -92,7 +92,7 @@ class _LogInState extends State<LogIn> {
           await storage.write(key: 'username', value: responseData['username']);
 
           if (responseData['showInterestsPage'] == 0) {
-            Navigator.of(context).pushNamed('/home_page');
+            Navigator.pushReplacementNamed(context, '/home_page');
           } else {
             Navigator.of(context).pushNamed('/choose_your_interests');
           }
@@ -672,7 +672,7 @@ class _LogInState extends State<LogIn> {
         }
 
         if (jsonData['showInterestsPage'] == 0) {
-          Navigator.of(context).pushNamed('/home_page');
+          Navigator.pushReplacementNamed(context, '/home_page');
         } else {
           Navigator.of(context).pushNamed('/choose_your_interests');
         }

@@ -15,7 +15,6 @@ class Profile extends StatefulWidget {
 }
 
 class _ProfileState extends State<Profile> {
-
   final FlutterSecureStorage storage = const FlutterSecureStorage();
   String? userName;
 
@@ -28,7 +27,8 @@ class _ProfileState extends State<Profile> {
   Future<void> _loadUsername() async {
     try {
       // Fetch the username from secure storage
-      String? username = await storage.read(key: 'username');  // Assuming 'username' is the key
+      String? username =
+          await storage.read(key: 'username'); // Assuming 'username' is the key
       setState(() {
         userName = username; // Update the state with the fetched username
       });
@@ -41,7 +41,7 @@ class _ProfileState extends State<Profile> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-         backgroundColor: Colors.white,
+        backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
         leading: IconButton(
           onPressed: () {
@@ -78,7 +78,7 @@ class _ProfileState extends State<Profile> {
                     clipBehavior: Clip.antiAlias,
                     decoration: ShapeDecoration(
                       image: const DecorationImage(
-                        image: AssetImage("assets/images/katrina.jpeg"),
+                        image: AssetImage("assets/images/traveler.png"),
                         fit: BoxFit.cover,
                       ),
                       shape: RoundedRectangleBorder(
@@ -95,23 +95,23 @@ class _ProfileState extends State<Profile> {
                     children: [
                       userName != null
                           ? Text(
-                        'Welcome\n$userName',
-                        style: const TextStyle(
-                          color: Color(0xFF191B1C),
-                          fontSize: 18,
-                          fontFamily: themeFontFamily2,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      )
+                              'Welcome\n$userName',
+                              style: const TextStyle(
+                                color: Color(0xFF191B1C),
+                                fontSize: 18,
+                                fontFamily: themeFontFamily2,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            )
                           : const Text(
-                        'Hi, Katrina',
-                        style: TextStyle(
-                          color: Color(0xFF191B1C),
-                          fontSize: 18,
-                          fontFamily: themeFontFamily2,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+                              'Hi, Katrina',
+                              style: TextStyle(
+                                color: Color(0xFF191B1C),
+                                fontSize: 18,
+                                fontFamily: themeFontFamily2,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
                       // buildlinearProgressBar(),
                       // const SizedBox(
                       //   height: 10,
@@ -129,16 +129,16 @@ class _ProfileState extends State<Profile> {
                     ],
                   ),
                   const Spacer(),
-                  IconButton(
-                    onPressed: () {
-                      Navigator.of(context).pushNamed('/your_profile');
-                    },
-                    icon: const Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 20,
-                      color: Color(0xFF000000),
-                    ),
-                  ),
+                  // IconButton(
+                  //   onPressed: () {
+                  //     Navigator.of(context).pushNamed('/your_profile');
+                  //   },
+                  //   icon: const Icon(
+                  //     Icons.arrow_forward_ios_rounded,
+                  //     size: 20,
+                  //     color: Color(0xFF000000),
+                  //   ),
+                  // ),
                 ],
               ),
             ),
@@ -157,11 +157,13 @@ class _ProfileState extends State<Profile> {
             const SizedBox(
               height: 5,
             ),
-            buildProfileRowWidget('about.svg', 'Edit Preferences','es'),
-            buildProfileRowWidget('save_outline.svg', 'Saved','sd'),
-            buildProfileRowWidget('ongoing.svg', 'Ongoing','og'),
-            buildProfileRowWidget('completed.svg', 'Completed','cp'),
-            buildProfileRowWidget('share.svg', 'Shared','sh'),
+            buildProfileRowWidget('about.svg', 'Edit Preferences', 'es'),
+            buildProfileRowWidget('save_outline.svg', 'Saved', 'Saved'),
+            // buildProfileRowWidget('ongoing.svg', 'Ongoing','og'),
+            // buildProfileRowWidget('completed.svg', 'Completed','cp'),
+            // buildProfileRowWidget('share.svg', 'Shared','sh'),
+            buildProfileRowWidget(
+                'ongoing.svg', 'Continue Planning', 'continue_planning'),
             const SizedBox(
               height: 15,
             ),
@@ -177,8 +179,8 @@ class _ProfileState extends State<Profile> {
             const SizedBox(
               height: 5,
             ),
-            buildProfileRowWidget('feedback.svg', 'Feedback','fb'),
-            buildProfileRowWidget('rate_star_outline.svg', 'Rate Us','ru'),
+            // buildProfileRowWidget('feedback.svg', 'Feedback', 'Feedback'),
+            buildProfileRowWidget('rate_star_outline.svg', 'Rate Us', 'ru'),
             const SizedBox(
               height: 15,
             ),
@@ -194,10 +196,10 @@ class _ProfileState extends State<Profile> {
             const SizedBox(
               height: 5,
             ),
-            buildProfileRowWidget('about.svg', 'About','at'),
-            buildProfileRowWidget('terms_of_use.svg', 'Terms of use','tu'),
-            buildProfileRowWidget('privacy_policy.svg', 'Privacy Policy','pp'),
-            buildProfileRowWidget('log_out.svg', 'Log out','lt'),
+            buildProfileRowWidget('about.svg', 'About', 'at'),
+            buildProfileRowWidget('terms_of_use.svg', 'Terms of use', 'tu'),
+            buildProfileRowWidget('privacy_policy.svg', 'Privacy Policy', 'pp'),
+            buildProfileRowWidget('log_out.svg', 'Log out', 'LogOut'),
           ],
         ),
       ),
@@ -217,17 +219,13 @@ class _ProfileState extends State<Profile> {
         ),
       ),
       child: InkWell(
-         onTap: (){
-
-           if(page == 'es')
-           {
-                Navigator.of(context).pushNamed('/edit_your_interests');
-           }
-           else
-           {
-                redirect(title);
-           }
-      },
+        onTap: () {
+          if (page == 'es') {
+            Navigator.of(context).pushNamed('/edit_your_interests');
+          } else {
+            redirect(title, page);
+          }
+        },
         child: Row(
           children: [
             Container(
@@ -258,7 +256,7 @@ class _ProfileState extends State<Profile> {
             IconButton(
               padding: const EdgeInsets.all(0),
               onPressed: () {
-                redirect(title);
+                redirect(title, page);
               },
               icon: const Icon(
                 Icons.arrow_forward_ios_outlined,
@@ -272,12 +270,11 @@ class _ProfileState extends State<Profile> {
     );
   }
 
-  redirect(route) {
-    if(route == 'LogOut')
-    {
+  redirect(route, page) {
+    if (page == 'LogOut') {
       return logOut();
     }
-    Navigator.of(context).pushNamed('/$route');
+    Navigator.of(context).pushNamed('/$page');
   }
 
   Widget buildlinearProgressBar() {
@@ -403,7 +400,12 @@ class _ProfileState extends State<Profile> {
                       Expanded(
                         child: InkWell(
                           onTap: () {
-                            Navigator.pop(context);
+                            storage.deleteAll();
+                            Navigator.of(context).pop();
+                            Navigator.of(context).pop();
+                            Navigator.of(context)
+                                .pushReplacementNamed('/login');
+                            // Navigator.pop(context);
                           },
                           child: Container(
                             height: 56,

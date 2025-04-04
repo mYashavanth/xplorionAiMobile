@@ -287,52 +287,58 @@ Widget singleCardPlan(context, imageUrl, placeName, noOfDays, dayDate,
                   SizedBox(
                     width: 47,
                     height: 28,
-                    child: Stack(
-                      children: [
-                        Positioned(
-                          left: 0,
-                          top: 0,
-                          child: Container(
-                            width: 28,
-                            height: 28,
-                            decoration: const ShapeDecoration(
-                              image: DecorationImage(
-                                image: AssetImage(
-                                    "assets/images/friend_photo.jpeg"),
-                                fit: BoxFit.fill,
-                              ),
-                              shape: OvalBorder(
-                                side: BorderSide(
-                                  width: 1,
-                                  strokeAlign: BorderSide.strokeAlignOutside,
-                                  color: Colors.white,
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.of(context).pushNamed('/friends');
+                      },
+                      child: Stack(
+                        children: [
+                          Positioned(
+                            left: 0,
+                            top: 0,
+                            child: Container(
+                              width: 28,
+                              height: 28,
+                              decoration: const ShapeDecoration(
+                                image: DecorationImage(
+                                  image: AssetImage(
+                                      "assets/images/friend_photo.jpeg"),
+                                  fit: BoxFit.fill,
+                                ),
+                                shape: OvalBorder(
+                                  side: BorderSide(
+                                    width: 1,
+                                    strokeAlign: BorderSide.strokeAlignOutside,
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                        Positioned(
-                          left: 19,
-                          top: 0,
-                          child: Container(
-                            width: 28,
-                            height: 28,
-                            decoration: const ShapeDecoration(
-                              color: Color(0xFF8B8D98),
-                              shape: OvalBorder(
-                                side: BorderSide(
-                                  width: 1,
-                                  strokeAlign: BorderSide.strokeAlignOutside,
-                                  color: Colors.white,
+                          Positioned(
+                            left: 19,
+                            top: 0,
+                            child: Container(
+                              width: 28,
+                              height: 28,
+                              decoration: const ShapeDecoration(
+                                color: Color(0xFF8B8D98),
+                                shape: OvalBorder(
+                                  side: BorderSide(
+                                    width: 1,
+                                    strokeAlign: BorderSide.strokeAlignOutside,
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
-                            ),
-                            child: const Image(
-                              image: AssetImage('assets/icons/add_person.png'),
+                              child: const Image(
+                                image:
+                                    AssetImage('assets/icons/add_person.png'),
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                   const Spacer(),

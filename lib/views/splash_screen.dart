@@ -7,6 +7,9 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:xplorion_ai/lib_assets/colors.dart';
 import 'package:xplorion_ai/lib_assets/fonts.dart';
 import 'package:xplorion_ai/widgets/gradient_text.dart';
+import 'urlconfig.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class SpalshScreen extends StatefulWidget {
   const SpalshScreen({super.key});
@@ -16,21 +19,49 @@ class SpalshScreen extends StatefulWidget {
 }
 
 class _SpalshScreenState extends State<SpalshScreen> {
-
   FlutterSecureStorage storage = const FlutterSecureStorage();
 
   @override
   void initState() {
     super.initState();
-    _deleteAllSecureData(); // Call the async function here
+    _validateUserLogin();
   }
 
-  Future<void> _deleteAllSecureData() async {
-    await storage.deleteAll();
-    Map<String, String> allData = await storage.readAll();
-    allData.forEach((key, value) {
-      print('$key: $value');
-    });
+  Future<void> _validateUserLogin() async {
+    try {
+      // Retrieve token and username from secure storage
+      String? token = await storage.read(key: 'userToken');
+      String? username = await storage.read(key: 'username');
+      print('token: $token, username: $username');
+      if (token != null && username != null) {
+        // Construct the API URL
+        String url =
+            '$baseurl/app/app-users/valiadte-app-user-token/$token/$username';
+
+        // Make the API call
+        final response = await http.get(Uri.parse(url));
+        print(response.body);
+
+        if (response.statusCode == 200) {
+          final responseBody = json.decode(response.body);
+          if (responseBody['errFlag'] == 0) {
+            // Navigate to the home screen
+            Navigator.pushReplacementNamed(context, '/home_page');
+          } else {
+            // Navigate to the login screen
+            return;
+          }
+        } else {
+          // Navigate to the login screen
+          return;
+        }
+      }
+
+      // If token is invalid or not found, proceed to the splash screen
+    } catch (e) {
+      // Handle errors (e.g., network issues, invalid JSON)
+      print('Error validating user: $e');
+    }
   }
 
   @override
@@ -204,7 +235,7 @@ class _SpalshScreenState extends State<SpalshScreen> {
                           shadowColor: Colors.transparent,
                           surfaceTintColor: Colors.transparent),
                       onPressed: () {
-                        Navigator.of(context).pushNamed('/sign_up');
+                        Navigator.of(context).pushReplacementNamed('/sign_up');
                       },
                       child: const Center(
                         child: Text(
@@ -229,18 +260,18 @@ class _SpalshScreenState extends State<SpalshScreen> {
                     decoration: ShapeDecoration(
                       color: Colors.white,
                       shape: RoundedRectangleBorder(
-                        side: const BorderSide(width: 1, color: Color(0xFF005CE7)),
+                        side: const BorderSide(
+                            width: 1, color: Color(0xFF005CE7)),
                         borderRadius: BorderRadius.circular(24),
                       ),
                     ),
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        // backgroundColor: Colors.transparent,
-                        shadowColor: Colors.white
-                        ),
+                          backgroundColor: Colors.white,
+                          // backgroundColor: Colors.transparent,
+                          shadowColor: Colors.white),
                       onPressed: () {
-                        Navigator.of(context).pushNamed('/login');
+                        Navigator.of(context).pushReplacementNamed('/login');
                       },
                       child: const Center(
                         child: Text(

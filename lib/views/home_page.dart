@@ -451,18 +451,18 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const Text(
                     'Pick up where you left off, Keep your adventures rolling!'),
-                SizedBox(
+                const SizedBox(
                   height: 10,
                 ),
                 SizedBox(
                   height: 144,
                   child: createdIternery.isEmpty
                       ? FutureBuilder(
-                          future: Future.delayed(const Duration(minutes: 1)),
+                          future: Future.delayed(const Duration(seconds: 30)),
                           builder: (context, snapshot) {
                             if (snapshot.connectionState ==
                                 ConnectionState.done) {
-                              return Center(
+                              return const Center(
                                 child: Text('No data available'),
                               );
                             } else {

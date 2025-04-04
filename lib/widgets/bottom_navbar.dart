@@ -32,13 +32,10 @@ class _TripssistNavigationBarState extends State<TripssistNavigationBar> {
 
       switch (index) {
         case 0:
-          Navigator.of(context).pop();
-          //Navigator.of(context).pushNamed('/home_page');
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        //Navigator.of(context).pushNamed('/home_page');
         case 1:
-            storage.write(
-              key: 'selectedPlace',
-              value: ''
-            );
+          storage.write(key: 'selectedPlace', value: '');
           Navigator.of(context).pushNamed('/create_itinerary');
         case 2:
           Navigator.of(context).pushNamed('/profile');
@@ -76,7 +73,7 @@ class _TripssistNavigationBarState extends State<TripssistNavigationBar> {
                     height: 4,
                     decoration: ShapeDecoration(
                       color: _selectedIndex != 0
-                          ?Colors.white
+                          ? Colors.white
                           : const Color(0xFF2C64E3),
                       shape: const RoundedRectangleBorder(
                         borderRadius: BorderRadius.only(
@@ -210,8 +207,8 @@ class _TripssistNavigationBarState extends State<TripssistNavigationBar> {
                     //         ? const Color(0xFF8B8D98)
                     //         : const Color(0xFF2C64E3),
                     //     BlendMode.srcIn),
-                    height: 25,  // Set the desired height
-                    width: 25,   // Set the desired width
+                    height: 25, // Set the desired height
+                    width: 25, // Set the desired width
                     colorFilter: const ColorFilter.mode(
                       Color(0xFF8B8D98),
                       BlendMode.srcIn,

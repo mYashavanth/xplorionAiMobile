@@ -28,6 +28,7 @@ import 'package:xplorion_ai/views/trip_settings.dart';
 import 'package:xplorion_ai/views/verify_otp.dart';
 import 'package:xplorion_ai/views/welcome_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,19 +37,65 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => CIDateProvider()),
+        ChangeNotifierProvider(create: (_) => ConnectivityProvider()),
       ],
       child: const MyApp(),
     ),
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+
+  @override
+  void initState() {
+    super.initState();
+    _initConnectivity();
+    _setupConnectivityListener();
+  }
+
+  Future<void> _initConnectivity() async {
+    final connectivityProvider =
+        Provider.of<ConnectivityProvider>(context, listen: false);
+    await connectivityProvider.checkConnectivity();
+  }
+
+  void _setupConnectivityListener() {
+    Connectivity().onConnectivityChanged.listen((results) {
+      final connectivityProvider =
+          Provider.of<ConnectivityProvider>(context, listen: false);
+      final isOffline =
+          results.any((result) => result == ConnectivityResult.none);
+
+      connectivityProvider.setOffline(isOffline);
+
+      // Navigate to NoInternetScreen if offline
+      if (isOffline) {
+        _navigatorKey.currentState?.pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => NoInternetScreen()),
+          (route) => false,
+        );
+      } else {
+        // Navigate back to SplashScreen if online
+        _navigatorKey.currentState?.pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const SpalshScreen()),
+          (route) => false,
+        );
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: _navigatorKey,
       title: 'Xplorion AI',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
@@ -64,7 +111,13 @@ class MyApp extends StatelessWidget {
         Locale('ko', ''),
         Locale('hi', ''),
       ],
-      home: const SpalshScreen(),
+      home: Consumer<ConnectivityProvider>(
+        builder: (context, connectivityProvider, child) {
+          return connectivityProvider.isOffline
+              ? NoInternetScreen()
+              : const SpalshScreen();
+        },
+      ),
       routes: {
         '/login': (context) => const LogIn(),
         '/sign_up': (context) => const SignUp(),
@@ -83,7 +136,6 @@ class MyApp extends StatelessWidget {
         '/detailed_saved_itinerary': (context) =>
             const SavedInDetailedItinerary(),
         '/Feedback': (context) => const FeedBack(),
-        '/trip_settings': (context) => const TripSettings(),
         '/friends': (context) => const Friends(),
         '/forgot_password': (context) => const ForgotPassword(),
         '/verify_otp': (context) => const VerifyOtp(),
@@ -97,4 +149,74 @@ class MyApp extends StatelessWidget {
   }
 }
 
+class ConnectivityProvider with ChangeNotifier {
+  bool _isOffline = false;
+
+  bool get isOffline => _isOffline;
+
+  Future<void> checkConnectivity() async {
+    var connectivityResult = await Connectivity().checkConnectivity();
+    _isOffline =
+        connectivityResult.any((result) => result == ConnectivityResult.none);
+    notifyListeners();
+  }
+
+  void setOffline(bool offline) {
+    print("offline : $offline");
+    _isOffline = offline;
+    notifyListeners();
+  }
+}
+
 // Maps API KEY : AIzaSyDEJx-EbYbqRixjZ0DvwuPd3FKVKtvv_OY
+
+class NoInternetScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.wifi_off, size: 80, color: Colors.grey),
+            const SizedBox(height: 20),
+            const Text(
+              "No Internet Connection",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              "Check your network and try again.",
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () async {
+                var connectivityResult =
+                    await Connectivity().checkConnectivity();
+                print('Connectivity result: $connectivityResult');
+
+                if (!connectivityResult
+                    .any((result) => result == ConnectivityResult.none)) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const SpalshScreen()),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                          "Still no internet connection. Please try again."),
+                    ),
+                  );
+                }
+              },
+              child: const Text("Retry"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
