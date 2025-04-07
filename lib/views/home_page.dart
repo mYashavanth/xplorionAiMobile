@@ -18,8 +18,10 @@ import 'package:http/http.dart' as http;
 
 import '../widgets/home_page_widgets.dart';
 
+final GlobalKey<_HomePageState> homePageKey = GlobalKey<_HomePageState>();
+
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  HomePage({Key? key}) : super(key: homePageKey);
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -111,7 +113,7 @@ class _HomePageState extends State<HomePage> {
     if (response.statusCode == 200) {
       var data = jsonDecode(response.body);
       int dataLen = data.length;
-
+      print(data);
       setState(() {
         createdIternery = [];
 
@@ -215,6 +217,13 @@ class _HomePageState extends State<HomePage> {
     });
 
     super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    print("didChangeDependencies");
+    fetchItineraries(); // Call fetchItineraries whenever the page reappears
   }
 
   Future<void> _getData() async {
@@ -752,5 +761,21 @@ class _HomePageState extends State<HomePage> {
       ),
       bottomNavigationBar: const TripssistNavigationBar(0),
     );
+  }
+}
+
+class CustomNavigatorObserver extends NavigatorObserver {
+  final VoidCallback onPopNext;
+
+  CustomNavigatorObserver({required this.onPopNext});
+
+  @override
+  void didPop(Route route, Route? previousRoute) {
+    super.didPop(route, previousRoute);
+    print("didPop called ${previousRoute?.settings.name}");
+    if (previousRoute?.settings.name == '/home_page') {
+      print("onPopNext called");
+      onPopNext(); // Trigger the callback when navigating back to HomePage
+    }
   }
 }

@@ -18,13 +18,17 @@ Widget topBannerCard(status, heading, note, image, fromDate, toDate,
       onTap: () async {
         print(
             "$travelCompanion ---- $budgetType ----- $fromDate ---- $toDate ---- $currentLocation ---- $heading");
+        final List<String> words =
+            currentLocation.replaceAll(RegExp(r','), "").split(" ");
+        final String location = words.sublist(words.length - 5).join(' ');
 
+        print(location);
         //String? userToken = await storage.read(key: 'userToken');
         await storage.write(key: 'travelCompanion', value: travelCompanion);
         await storage.write(key: 'budgetTier', value: budgetType);
         await storage.write(key: 'startDate', value: fromDate);
         await storage.write(key: 'endDate', value: toDate);
-        await storage.write(key: 'selectedPlace', value: currentLocation);
+        await storage.write(key: 'selectedPlace', value: location);
         storage.write(key: 'itinerarySavedFlag', value: '0');
 
         Future.delayed(const Duration(seconds: 2), () {

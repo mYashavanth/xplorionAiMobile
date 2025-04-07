@@ -103,7 +103,7 @@ class _HomePageTripState extends State<HomePageTrip> {
 
     if (itinerarySaved != '1') {
       final url = Uri.parse('$baseurl/app/generate-itenary');
-
+      print(requestBody);
       try {
         // Send HTTP POST request
         final response = await http.post(
@@ -111,6 +111,10 @@ class _HomePageTripState extends State<HomePageTrip> {
           body: requestBody,
         );
         // Handle response
+        print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
+        print('Response status: ${response.body}');
+        print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
+
         if (response.statusCode == 200) {
           responseData = json.decode(response.body);
 
@@ -153,7 +157,12 @@ class _HomePageTripState extends State<HomePageTrip> {
             iterneryTitle = "$place $noOfDays Days - $budgetType";
             noOfDaysDisplay = "$noOfDays Days";
             placeDescription = responseData['about_place'];
-            localityInPlace = responseData['locality_in_place'];
+            // if responseData['locality_in_place'] this is a list I want to handle that case to, just save the firlst element of the list
+            if (responseData['locality_in_place'] is List) {
+              localityInPlace = responseData['locality_in_place'][0];
+            } else {
+              localityInPlace = responseData['locality_in_place'];
+            }
             mainPlaceImage = responseData['image_for_main_place'] ??
                 'https://coffective.com/wp-content/uploads/2018/06/default-featured-image.png.jpg';
             isLoading = false;
@@ -227,7 +236,14 @@ class _HomePageTripState extends State<HomePageTrip> {
           iterneryTitle = "$place $noOfDays Days - $budgetType";
           noOfDaysDisplay = "$noOfDays Days";
           placeDescription = responseDataS[0]['itinerary']['about_place'];
-          localityInPlace = responseDataS[0]['itinerary']['locality_in_place'];
+          // if responseData['locality_in_place'] this is a list I want to handle that case to, just save the firlst element of the list
+          if (responseDataS[0]['itinerary']['locality_in_place'] is List) {
+            localityInPlace =
+                responseDataS[0]['itinerary']['locality_in_place'][0];
+          } else {
+            localityInPlace =
+                responseDataS[0]['itinerary']['locality_in_place'];
+          }
           mainPlaceImage = responseDataS[0]['itinerary']
                   ['image_for_main_place'] ??
               'https://coffective.com/wp-content/uploads/2018/06/default-featured-image.png.jpg';
@@ -844,12 +860,15 @@ class _HomePageTripState extends State<HomePageTrip> {
                             child: Row(
                               children: [
                                 InkWell(
-                                  onTap: () {
+                                  onTap: () async {
                                     // Navigator.of(context).pop();
                                     // Navigator.of(context).pushNamed('/home_page');
+                                    // Navigator.of(context)
+                                    //     .pushNamedAndRemoveUntil(
+                                    //         '/home_page', (route) => false);
+
                                     Navigator.of(context)
-                                        .pushNamedAndRemoveUntil(
-                                            '/home_page', (route) => false);
+                                        .popUntil((route) => route.isFirst);
                                   },
                                   child: Container(
                                     width: 40,
@@ -1456,11 +1475,21 @@ class _HomePageTripState extends State<HomePageTrip> {
     Map iterneryData = {
       'data': activities,
       'sliderPos': day1SliderCurrentPos,
-      'showActivity': day1SliderShowActivity
+      'showActivity': day1SliderShowActivity,
+      'place': iterneryTitle.split(' ').first,
     };
 
     menuIndex = menuIndex + 1;
     fetchNationalHolidays();
+    if (tripTipsArr == null || tripTipsArr == '') {
+      tripTipsArr = getTipsData(); // Assign value if null or invalid
+    }
+    if (bestTimeToVisitArr == null || bestTimeToVisitArr == '') {
+      bestTimeToVisitArr = getBestTimeToVisit();
+    }
+    if (foodDrinksArr == null || foodDrinksArr == '') {
+      foodDrinksArr = getFoodAndDrink();
+    }
     print('markAsVisitedList == $markAsVisitedList');
     return DayItineraryView(
         weatherSvg: 'thunder_cloud.svg',
@@ -1522,29 +1551,41 @@ class _HomePageTripState extends State<HomePageTrip> {
       String? userToken = await storage.read(key: 'userToken');
       String? selectedPlace = await storage.read(key: 'selectedPlace');
 
-      //print("$userToken ===== $selectedPlace");
-
       // Ensure the values are not null
       if (userToken == null || selectedPlace == null) {
         print("User token or selected place is null");
         return [];
       }
 
-      // print(itinerarySavedFlag);
-      final url = Uri.parse(itinerarySavedFlag == '1'
+      // Determine the initial URL based on itinerarySavedFlag
+      String initialUrl = itinerarySavedFlag == '1'
           ? '$baseurl/get-all-tips/$resIterneryId/$userToken'
-          : '$baseurl/tips-for-place/$selectedPlace/$resIterneryId/$userToken');
+          : '$baseurl/tips-for-place/$selectedPlace/$resIterneryId/$userToken';
+
       // Perform GET request
-      final response = await http.get(url);
-      // print(url);
+      final response = await http.get(Uri.parse(initialUrl));
       // print(response.body);
 
       // Check if response is successful
       if (response.statusCode == 200) {
         // Parse JSON response
-        List<dynamic> tipsArray = itinerarySavedFlag == "1"
-            ? json.decode(response.body)[0]["tipsJsonData"]
-            : json.decode(response.body);
+        List<dynamic> tipsArray =
+            itinerarySavedFlag == "1" && response.body != '[]'
+                ? json.decode(response.body)[0]["tipsJsonData"]
+                : json.decode(response.body);
+
+        // If the response body is an empty array and itinerarySavedFlag is '1',
+        // make another call with a different URL
+        if (itinerarySavedFlag == '1' && tipsArray.isEmpty) {
+          final fallbackUrl =
+              '$baseurl/tips-for-place/$selectedPlace/$resIterneryId/$userToken';
+          final fallbackResponse = await http.get(Uri.parse(fallbackUrl));
+          print(fallbackResponse.body);
+
+          if (fallbackResponse.statusCode == 200) {
+            tipsArray = json.decode(fallbackResponse.body);
+          }
+        }
 
         List<Widget> tips = tipsArray.map((item) {
           String tipText = item["tip"] as String;
@@ -1581,12 +1622,12 @@ class _HomePageTripState extends State<HomePageTrip> {
       }
 
       print(itinerarySavedFlag);
-      final url = Uri.parse(itinerarySavedFlag == '1'
+      final initialUrl = itinerarySavedFlag == '1'
           ? '$baseurl/get-all-best-time-to-visit/$resIterneryId/$userToken'
-          : '$baseurl/best-time-to-visit-place/$selectedPlace/$resIterneryId/$userToken');
+          : '$baseurl/best-time-to-visit-place/$selectedPlace/$resIterneryId/$userToken';
 
       // Perform GET request
-      final response = await http.get(url);
+      final response = await http.get(Uri.parse(initialUrl));
 
       // print(url);
       // print(response.body);
@@ -1594,9 +1635,23 @@ class _HomePageTripState extends State<HomePageTrip> {
       // Check if response is successful
       if (response.statusCode == 200) {
         // Parse JSON response
-        List<dynamic> tipsArray = itinerarySavedFlag == '1'
-            ? json.decode(response.body)[0]['bestTimeToVisitJsonData']
-            : json.decode(response.body);
+        List<dynamic> tipsArray =
+            itinerarySavedFlag == '1' && response.body != '[]'
+                ? json.decode(response.body)[0]['bestTimeToVisitJsonData']
+                : json.decode(response.body);
+
+        // If the response body is an empty array and itinerarySavedFlag is '1',
+        // make another call with a different URL
+        if (itinerarySavedFlag == '1' && tipsArray.isEmpty) {
+          final fallbackUrl =
+              '$baseurl/best-time-to-visit-place/$selectedPlace/$resIterneryId/$userToken';
+          final fallbackResponse = await http.get(Uri.parse(fallbackUrl));
+          print(fallbackResponse.body);
+
+          if (fallbackResponse.statusCode == 200) {
+            tipsArray = json.decode(fallbackResponse.body);
+          }
+        }
 
         List<Widget> tips = tipsArray.map((item) {
           String tipText = item["tip"] as String;
@@ -1628,7 +1683,7 @@ class _HomePageTripState extends State<HomePageTrip> {
       // Perform the GET request
       final response = await http.get(url);
       // print(url);
-      // print(response.body);
+      print(response.body);
       // print(json.decode(response.body)[0]['nationalHolidaysJsonData']);
 
       // Check the response status
@@ -1672,21 +1727,35 @@ class _HomePageTripState extends State<HomePageTrip> {
       }
 
       print(itinerarySavedFlag);
-      final url = Uri.parse(itinerarySavedFlag == '1'
+      final initialUrl = itinerarySavedFlag == '1'
           ? '$baseurl/get-all-food-drinks/$resIterneryId/$userToken'
-          : '$baseurl/food-drinks/$selectedPlace/$resIterneryId/$userToken');
+          : '$baseurl/food-drinks/$selectedPlace/$resIterneryId/$userToken';
       // Perform GET request
-      final response = await http.get(url);
+      final response = await http.get(Uri.parse(initialUrl));
 
-      print(url);
+      print(initialUrl);
       print(response.body);
 
       // Check if response is successful
       if (response.statusCode == 200) {
         // Parse JSON response
-        List<dynamic> FoodAndDrinksArray = itinerarySavedFlag == '1'
-            ? json.decode(response.body)[0]['foodAndDrinkJsonData']
-            : json.decode(response.body);
+        List<dynamic> FoodAndDrinksArray =
+            itinerarySavedFlag == '1' && response.body != '[]'
+                ? json.decode(response.body)[0]['foodAndDrinkJsonData']
+                : json.decode(response.body);
+
+        // If the response body is an empty array and itinerarySavedFlag is '1',
+        // make another call with a different URL
+        if (itinerarySavedFlag == '1' && FoodAndDrinksArray.isEmpty) {
+          final fallbackUrl =
+              '$baseurl/food-drinks/$selectedPlace/$resIterneryId/$userToken';
+          final fallbackResponse = await http.get(Uri.parse(fallbackUrl));
+          print(fallbackResponse.body);
+
+          if (fallbackResponse.statusCode == 200) {
+            FoodAndDrinksArray = json.decode(fallbackResponse.body);
+          }
+        }
 
         List<Widget> foodDrinksArr = FoodAndDrinksArray.map((item) {
           String foodDrinkDescription =

@@ -109,7 +109,7 @@ class _ContinuePlanningState extends State<ContinuePlanning> {
           ),
         ),
       ),
-      bottomNavigationBar: const TripssistNavigationBar(0),
+      // bottomNavigationBar: const TripssistNavigationBar(0),
     );
   }
 

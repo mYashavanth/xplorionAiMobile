@@ -228,6 +228,7 @@ class _DayItineraryViewState extends State<DayItineraryView> {
     List<bool> day1SliderShowActivity =
         widget.dayActivityDataArray['showActivity'];
     List<int> day1SliderCurrentPos = widget.dayActivityDataArray['sliderPos'];
+    String place = widget.dayActivityDataArray['place'];
 
     return Column(
       children: [
@@ -377,6 +378,7 @@ class _DayItineraryViewState extends State<DayItineraryView> {
           children: buildMultipleDayActivity(
             widget.setState,
             data,
+            place,
             day1SliderCurrentPos,
             day1SliderShowActivity,
             widget.contextP,
@@ -398,6 +400,7 @@ class _DayItineraryViewState extends State<DayItineraryView> {
 List<Widget> buildMultipleDayActivity(
     setState,
     data,
+    place,
     day1SliderCurrentPos,
     day1SliderShowActivity,
     contextP,
@@ -412,6 +415,7 @@ List<Widget> buildMultipleDayActivity(
       buildDayActivity(
           setState,
           data[i],
+          place,
           day1SliderCurrentPos,
           day1SliderShowActivity,
           i,
@@ -430,6 +434,7 @@ List<Widget> buildMultipleDayActivity(
 Widget buildDayActivity(
     setState,
     data,
+    place,
     List<int> day1SliderCurrentPos,
     List<bool> day1SliderShowActivity,
     index,
@@ -1102,7 +1107,7 @@ Widget buildDayActivity(
                                       ),
                                     ),
                                     const TextSpan(
-                                      text: ' • Closes 8:30 pm',
+                                      text: ' • ',
                                       style: TextStyle(
                                         color: Color(0xFF0A0A0A),
                                         fontSize: 14,
@@ -1116,15 +1121,36 @@ Widget buildDayActivity(
                               const SizedBox(
                                 width: 10,
                               ),
-                              const Text(
-                                'See hours',
-                                style: TextStyle(
-                                  color: Color(0xFF214EB0),
-                                  fontSize: 14,
-                                  fontFamily: themeFontFamily2,
-                                  fontWeight: FontWeight.w500,
-                                  decoration: TextDecoration.underline,
-                                  decorationColor: Color(0xFF214EB0),
+                              GestureDetector(
+                                onTap: () async {
+                                  print(data[4]);
+                                  try {
+                                    final weekData = await fetchOpenCloseInfo(
+                                        data[4]); // Pass placeName (data[0])
+                                    final weekdayText = List<String>.from(
+                                        weekData['weekday_text']);
+                                    showOpenCloseInfoBottomSheet(
+                                        context, weekdayText);
+                                  } catch (e) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                            'Failed to load opening hours: $e'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                },
+                                child: const Text(
+                                  'See hours',
+                                  style: TextStyle(
+                                    color: Color(0xFF214EB0),
+                                    fontSize: 14,
+                                    fontFamily: themeFontFamily2,
+                                    fontWeight: FontWeight.w500,
+                                    decoration: TextDecoration.underline,
+                                    decorationColor: Color(0xFF214EB0),
+                                  ),
                                 ),
                               ),
                             ],
@@ -1236,7 +1262,10 @@ Widget buildDayActivity(
                         InkWell(
                           onTap: () {
                             Navigator.of(context)
-                                .pushNamed('/similar_restuarant');
+                                .pushNamed('/similar_restuarant', arguments: {
+                              'placeName': data[4],
+                              'place': place,
+                            });
                           },
                           child: Container(
                             height: 32,
@@ -2601,6 +2630,79 @@ Widget buildHideShowCard(index, List<bool> importantInfoShowCardBool, setState,
       ],
     ),
   );
+}
+
+void showOpenCloseInfoBottomSheet(
+    BuildContext context, List<String> weekdayText) {
+  showModalBottomSheet(
+    context: context,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.only(
+        topLeft: Radius.circular(12),
+        topRight: Radius.circular(12),
+      ),
+    ),
+    builder: (BuildContext context) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Opening Hours',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ListView.builder(
+              shrinkWrap: true,
+              itemCount: weekdayText.length,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Text(
+                    weekdayText[index],
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
+
+Future<Map<String, dynamic>> fetchOpenCloseInfo(String placeName) async {
+  const FlutterSecureStorage storage = FlutterSecureStorage();
+  String? userToken = await storage.read(key: 'userToken');
+
+  final String apiUrl = '$baseurl/get-open-close-info/$placeName/$userToken';
+
+  try {
+    final response = await http.get(Uri.parse(apiUrl));
+    print('Response: ${response.body}');
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      print('Error: ${response.statusCode}');
+      return {
+        "weekday_text": [
+          "Not available",
+        ]
+      };
+    }
+  } catch (e) {
+    print('Error occurred while fetching data: $e');
+    return {
+      "weekday_text": [
+        "Not available",
+      ]
+    };
+  }
 }
 
 Widget createList(text) {

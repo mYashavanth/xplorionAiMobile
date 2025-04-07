@@ -4,6 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:xplorion_ai/lib_assets/fonts.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:xplorion_ai/views/urlconfig.dart';
+import 'package:url_launcher/url_launcher_string.dart';
+import 'dart:io';
 
 class SimilarRestuarants extends StatefulWidget {
   const SimilarRestuarants({super.key});
@@ -13,125 +19,156 @@ class SimilarRestuarants extends StatefulWidget {
 }
 
 class _SimilarRestuarantsState extends State<SimilarRestuarants> {
-  List<int> restuarantCurrentPos = [0, 0,0,0];
-
-  List<String> resturantImages1 = ['dose.jpeg', 'idli.jpeg','poori.jpeg','bread_toast.jpeg'];
-  List<Widget> restuarantImageWidgets1 = [];
-
-  List<String> resturantImages2 = ['idli.jpeg','dose.jpeg','bread_toast.jpeg'];
-  List<Widget> restuarantImageWidgets2 = [];
-
-  List<String> resturantImages3 = ['poori.jpeg','idli.jpeg','dose.jpeg'];
-  List<Widget> restuarantImageWidgets3 = [];
-
-  List<String> resturantImages4 = ['bread_toast.jpeg'];
-  List<Widget> restuarantImageWidgets4 = [];
-
-  List<bool> resturantExpandWidget = [true, false,true,false];
+  final storage = const FlutterSecureStorage();
+  String placeName = '';
+  String place = '';
+  List<int> restuarantCurrentPos = [];
+  bool isLoading = true;
+  String errorMessage = '';
+  List<dynamic> restaurants = [];
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-    getData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args =
+          ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+      if (args != null) {
+        setState(() {
+          placeName = args['placeName'];
+          place = args['place'];
+        });
+        fetchSimilarRestaurants();
+      }
+    });
   }
 
-  void getData() {
-    resturantImages1
-        .map(
-          (item) => restuarantImageWidgets1.add(
-            Container(
-              height: 200,
-              clipBehavior: Clip.antiAlias,
-              decoration: ShapeDecoration(
-                image: DecorationImage(
-                  image: AssetImage("assets/images/$item"),
-                  fit: BoxFit.cover,
-                ),
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(8),
-                    topRight: Radius.circular(8),
-                  ),
+  Future<void> fetchSimilarRestaurants() async {
+    try {
+      final token = await storage.read(key: 'userToken');
+      if (token == null) {
+        throw Exception('User token not found');
+      }
+
+      final response = await http.get(
+        Uri.parse(
+            '$baseurl/similer-resturant/${Uri.encodeComponent('$placeName $place')}/$token'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          restaurants = data;
+          restuarantCurrentPos = List<int>.filled(data.length, 0);
+          isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load restaurants: ${response.statusCode}');
+      }
+    } catch (e) {
+      setState(() {
+        errorMessage = 'Failed to load restaurants: ${e.toString()}';
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _openMap(double latitude, double longitude) async {
+    String googleMapsUrl =
+        'geo:$latitude,$longitude?q=$latitude,$longitude'; // Launch Google Maps on Android with geo: scheme
+    String appleMapsUrl =
+        'http://maps.apple.com/?q=$latitude,$longitude'; // Launch Apple Maps on iOS with maps: scheme
+
+    if (Platform.isAndroid) {
+      // Android - Open Google Maps
+      if (await canLaunchUrlString(googleMapsUrl)) {
+        await launchUrlString(googleMapsUrl);
+      } else {
+        throw 'Could not open Google Maps.';
+      }
+    } else if (Platform.isIOS) {
+      // iOS - Open Apple Maps
+      if (await canLaunchUrlString(appleMapsUrl)) {
+        await launchUrlString(appleMapsUrl);
+      } else {
+        throw 'Could not open Apple Maps.';
+      }
+    } else {
+      throw 'Unsupported platform.';
+    }
+  }
+
+  void showOpenCloseInfoBottomSheet(
+      BuildContext context, List<String> weekdayText) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(12),
+          topRight: Radius.circular(12),
+        ),
+      ),
+      builder: (BuildContext context) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Opening Hours',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            ),
-          ),
-        )
-        .toList();
-
-
-    resturantImages2
-        .map(
-          (item) => restuarantImageWidgets2.add(
-            Container(
-              height: 200,
-              clipBehavior: Clip.antiAlias,
-              decoration: ShapeDecoration(
-                image: DecorationImage(
-                  image: AssetImage("assets/images/$item"),
-                  fit: BoxFit.cover,
-                ),
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(8),
-                    topRight: Radius.circular(8),
-                  ),
-                ),
+              const SizedBox(height: 16),
+              ListView.builder(
+                shrinkWrap: true,
+                itemCount: weekdayText.length,
+                itemBuilder: (context, index) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Text(
+                      weekdayText[index],
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  );
+                },
               ),
-            ),
+            ],
           ),
-        )
-        .toList();
+        );
+      },
+    );
+  }
 
+  Future<Map<String, dynamic>> fetchOpenCloseInfo(String placeName) async {
+    const FlutterSecureStorage storage = FlutterSecureStorage();
+    String? userToken = await storage.read(key: 'userToken');
 
+    final String apiUrl = '$baseurl/get-open-close-info/$placeName/$userToken';
 
-    resturantImages3
-        .map(
-          (item) => restuarantImageWidgets3.add(
-            Container(
-              height: 200,
-              clipBehavior: Clip.antiAlias,
-              decoration: ShapeDecoration(
-                image: DecorationImage(
-                  image: AssetImage("assets/images/$item"),
-                  fit: BoxFit.cover,
-                ),
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(8),
-                    topRight: Radius.circular(8),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        )
-        .toList();
-
-
-    resturantImages4
-        .map(
-          (item) => restuarantImageWidgets4.add(
-            Container(
-              height: 200,
-              clipBehavior: Clip.antiAlias,
-              decoration: ShapeDecoration(
-                image: DecorationImage(
-                  image: AssetImage("assets/images/$item"),
-                  fit: BoxFit.cover,
-                ),
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(8),
-                    topRight: Radius.circular(8),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        )
-        .toList();
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+      print('Response: ${response.body}');
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        print('Error: ${response.statusCode}');
+        return {
+          "weekday_text": [
+            "Not available",
+          ]
+        };
+      }
+    } catch (e) {
+      print('Error occurred while fetching data: $e');
+      return {
+        "weekday_text": [
+          "Not available",
+        ]
+      };
+    }
   }
 
   @override
@@ -159,30 +196,80 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
         ),
       ),
       body: Padding(
-        padding: const EdgeInsets.only(left:15,right:15),
-        child: ListView(
-          children: [
-            buildRestuarantWidget(
-                0, 'Mavalli Tiffin Room (MTR)', true, restuarantImageWidgets1),
-                const SizedBox(height: 15,),
-            buildRestuarantWidget(
-                1, 'Indraprastha', false, restuarantImageWidgets2),
-                const SizedBox(height: 15,),
-            buildRestuarantWidget(
-                2, 'Kadamba Veg', false, restuarantImageWidgets3),
-                const SizedBox(height: 15,),
-            buildRestuarantWidget(
-                3 , 'Shanthi Sagar', true, restuarantImageWidgets4),
-                const SizedBox(height: 20,),
-          ],
-        ),
+        padding: const EdgeInsets.only(left: 15, right: 15),
+        child: _buildBodyContent(),
       ),
     );
   }
 
-  Widget buildRestuarantWidget(index, title, open, List<Widget> imageSliders) {
+  Widget _buildBodyContent() {
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (errorMessage.isNotEmpty) {
+      return Center(child: Text(errorMessage));
+    }
+
+    if (restaurants.isEmpty) {
+      return const Center(child: Text('No similar restaurants found'));
+    }
+
+    return ListView.builder(
+      itemCount: restaurants.length,
+      itemBuilder: (context, index) {
+        final restaurant = restaurants[index];
+        return Column(
+          children: [
+            buildRestuarantWidget(index, restaurant),
+            const SizedBox(height: 15),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget buildRestuarantWidget(int index, Map<String, dynamic> restaurant) {
+    final imageSliders = [
+      Container(
+        width: double.infinity,
+        height: 200,
+        clipBehavior: Clip.antiAlias,
+        decoration: const ShapeDecoration(
+          color: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(8),
+              topRight: Radius.circular(8),
+            ),
+          ),
+        ),
+        child: restaurant['image_url'] != null
+            ? ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(8),
+                  topRight: Radius.circular(8),
+                ),
+                child: Image.network(
+                  restaurant['image_url'],
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    color: Colors.grey[200],
+                    child: const Icon(Icons.restaurant, size: 50),
+                  ),
+                ),
+              )
+            : Container(
+                color: Colors.grey[200],
+                child: const Icon(Icons.restaurant, size: 50),
+              ),
+      )
+    ];
+
+    final isExpanded = index == 0; // Expand first item by default
+
     return Container(
-      // height: 590,
       decoration: ShapeDecoration(
         color: Colors.white,
         shape: RoundedRectangleBorder(
@@ -196,19 +283,13 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
             children: [
               CarouselSlider(
                 options: CarouselOptions(
-                  // height: 200,
-                  // aspectRatio: 1,
-                  // enlargeCenterPage: true,
                   viewportFraction: 1,
                   enableInfiniteScroll: false,
                   initialPage: 0,
-                  // autoPlay: true,
                   onPageChanged: (i, reason) {
-                    setState(
-                      () {
-                        restuarantCurrentPos[index] = i;
-                      },
-                    );
+                    setState(() {
+                      restuarantCurrentPos[index] = i;
+                    });
                   },
                 ),
                 items: imageSliders,
@@ -222,35 +303,30 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
                         alignment: Alignment.bottomCenter,
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: imageSliders.map(
-                            (url) {
-                              int indexS = imageSliders.indexOf(url);
-                              return Container(
-                                width: restuarantCurrentPos[index] == indexS
-                                    ? 14
-                                    : 8.0,
-                                height: 8,
-                                margin: const EdgeInsets.symmetric(
-                                    vertical: 10.0, horizontal: 2.0),
-                                decoration: BoxDecoration(
-                                  borderRadius: const BorderRadius.all(
-                                    Radius.circular(50),
-                                  ),
-                                  // shape: BoxShape.circle,
-                                  color: restuarantCurrentPos[index] == indexS
-                                      ? const Color(0xFFFFFFFF)
-                                      : const Color(0xFFA5A5A5),
+                          children: imageSliders.map((url) {
+                            int indexS = imageSliders.indexOf(url);
+                            return Container(
+                              width: restuarantCurrentPos[index] == indexS
+                                  ? 14
+                                  : 8.0,
+                              height: 8,
+                              margin: const EdgeInsets.symmetric(
+                                  vertical: 10.0, horizontal: 2.0),
+                              decoration: BoxDecoration(
+                                borderRadius: const BorderRadius.all(
+                                  Radius.circular(50),
                                 ),
-                              );
-                            },
-                          ).toList(),
+                                color: restuarantCurrentPos[index] == indexS
+                                    ? const Color(0xFFFFFFFF)
+                                    : const Color(0xFFA5A5A5),
+                              ),
+                            );
+                          }).toList(),
                         ),
                       ),
                     ),
             ],
           ),
-          //
-
           Padding(
             padding: const EdgeInsets.fromLTRB(10, 12, 10, 10),
             child: Column(
@@ -259,7 +335,7 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      title,
+                      restaurant['name'] ?? 'Unknown',
                       style: const TextStyle(
                         color: Color(0xFF030917),
                         fontSize: 20,
@@ -271,7 +347,6 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
                       margin: const EdgeInsets.all(10),
                       width: 30,
                       height: 30,
-                      // padding: const EdgeInsets.all(8),
                       decoration: ShapeDecoration(
                         color: const Color(0xFFEFEFEF),
                         shape: RoundedRectangleBorder(
@@ -283,11 +358,15 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
                           padding: const EdgeInsets.all(0),
                           onPressed: () {
                             setState(() {
-                              resturantExpandWidget[index] =
-                                  !resturantExpandWidget[index];
+                              // Toggle expanded state
+                              if (restuarantCurrentPos[index] == 0) {
+                                restuarantCurrentPos[index] = 1;
+                              } else {
+                                restuarantCurrentPos[index] = 0;
+                              }
                             });
                           },
-                          icon: resturantExpandWidget[index]
+                          icon: restuarantCurrentPos[index] == 0
                               ? const Icon(Icons.keyboard_arrow_up_rounded)
                               : const Icon(Icons.keyboard_arrow_down),
                         ),
@@ -295,14 +374,9 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
                     ),
                   ],
                 ),
-                const SizedBox(
-                  height: 10,
-                ),
-
-                //
+                const SizedBox(height: 10),
                 Row(
                   children: [
-                    //
                     Container(
                       margin: const EdgeInsets.only(right: 8),
                       height: 26,
@@ -316,7 +390,7 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
                       ),
                       child: const Center(
                         child: Text(
-                          'Park',
+                          'Restaurant',
                           style: TextStyle(
                             color: Color(0xFF888888),
                             fontSize: 12,
@@ -326,71 +400,15 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
                         ),
                       ),
                     ),
-                    //
-
-                    //
-                    Container(
-                      height: 26,
-                      margin: const EdgeInsets.only(right: 8),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: ShapeDecoration(
-                        color: const Color(0xFFEFEFEF),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(32),
-                        ),
-                      ),
-                      child: const Center(
-                        child: Text(
-                          'Garden',
-                          style: TextStyle(
-                            color: Color(0xFF888888),
-                            fontSize: 12,
-                            fontFamily: themeFontFamily2,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                    //
-                    //
-                    Container(
-                      height: 26,
-                      margin: const EdgeInsets.only(right: 8),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: ShapeDecoration(
-                        color: const Color(0xFFEFEFEF),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(32),
-                        ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          title,
-                          style: const TextStyle(
-                            color: Color(0xFF888888),
-                            fontSize: 12,
-                            fontFamily: themeFontFamily2,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                    //
                   ],
                 ),
-                //
-
                 Visibility(
-                  visible: resturantExpandWidget[index],
+                  visible: restuarantCurrentPos[index] == 0,
                   child: const Column(
                     children: [
-                      SizedBox(
-                        height: 10,
-                      ),
+                      SizedBox(height: 10),
                       Text(
-                        'Simple restaurant serving classic tiffin dishes, such as rava idli, masala dosa & chandrahara.',
+                        'A great place to enjoy delicious food and drinks.',
                         style: TextStyle(
                           color: Color(0xFF0A0A0A),
                           fontSize: 14,
@@ -401,21 +419,14 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
                     ],
                   ),
                 ),
-
-                const SizedBox(
-                  height: 10,
-                ),
-
-                //
+                const SizedBox(height: 10),
                 Row(
                   children: [
                     SvgPicture.asset('assets/icons/star_rating.svg'),
-                    const SizedBox(
-                      width: 10,
-                    ),
-                    const Text(
-                      '4.3 (36,347) • ₹₹',
-                      style: TextStyle(
+                    const SizedBox(width: 10),
+                    Text(
+                      '${restaurant['rating'] ?? 'N/A'} (${restaurant['ratings'] ?? '0'}) • ${_getPriceLevel(restaurant['price_level'])}',
+                      style: const TextStyle(
                         color: Color(0xFF0A0A0A),
                         fontSize: 14,
                         fontFamily: themeFontFamily2,
@@ -424,28 +435,21 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
                     ),
                   ],
                 ),
-                //
-
                 Visibility(
-                  visible: resturantExpandWidget[index],
-                  child: const SizedBox(
-                    height: 10,
-                  ),
+                  visible: restuarantCurrentPos[index] == 0,
+                  child: const SizedBox(height: 10),
                 ),
-
-                //
                 Visibility(
-                  visible: resturantExpandWidget[index],
+                  visible: restuarantCurrentPos[index] == 0,
                   child: Row(
                     children: [
                       SvgPicture.asset('assets/icons/location.svg'),
-                      const SizedBox(
-                        width: 10,
-                      ),
-                      const Expanded(
+                      const SizedBox(width: 10),
+                      Expanded(
                         child: Text(
-                          '14, Lal Bagh Main Rd, Doddamavalli, Sudhama Nagar, Bengaluru, Karnataka 560027',
-                          style: TextStyle(
+                          restaurant['formatted_address'] ??
+                              'Address not available',
+                          style: const TextStyle(
                             color: Color(0xFF0A0A0A),
                             fontSize: 14,
                             fontFamily: themeFontFamily2,
@@ -456,25 +460,16 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
                     ],
                   ),
                 ),
-
-                //
-
                 Visibility(
-                  visible: resturantExpandWidget[index],
-                  child: const SizedBox(
-                    height: 10,
-                  ),
+                  visible: restuarantCurrentPos[index] == 0,
+                  child: const SizedBox(height: 10),
                 ),
-
-                //
                 Visibility(
-                  visible: resturantExpandWidget[index],
+                  visible: restuarantCurrentPos[index] == 0,
                   child: Row(
                     children: [
                       SvgPicture.asset('assets/icons/clock_fill.svg'),
-                      const SizedBox(
-                        width: 10,
-                      ),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Row(
                           children: [
@@ -482,18 +477,21 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
                               TextSpan(
                                 children: [
                                   TextSpan(
-                                    text: open ? 'Open' : 'Closed',
+                                    text: restaurant['currently_open'] == true
+                                        ? 'Open'
+                                        : 'Closed',
                                     style: TextStyle(
-                                      color: open
-                                          ? Color(0xFF54AB6A)
-                                          : Color(0xFFD93025),
+                                      color:
+                                          restaurant['currently_open'] == true
+                                              ? Color(0xFF54AB6A)
+                                              : Color(0xFFD93025),
                                       fontSize: 14,
                                       fontFamily: themeFontFamily2,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
                                   const TextSpan(
-                                    text: ' • Closes 8:30 pm',
+                                    text: ' • Closes 10:00 pm',
                                     style: TextStyle(
                                       color: Color(0xFF0A0A0A),
                                       fontSize: 14,
@@ -504,18 +502,38 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
                                 ],
                               ),
                             ),
-                            const SizedBox(
-                              width: 10,
-                            ),
-                            const Text(
-                              'See hours',
-                              style: TextStyle(
-                                color: Color(0xFF214EB0),
-                                fontSize: 14,
-                                fontFamily: themeFontFamily2,
-                                fontWeight: FontWeight.w500,
-                                decoration: TextDecoration.underline,
-                                decorationColor: Color(0xFF214EB0),
+                            const SizedBox(width: 10),
+                            GestureDetector(
+                              onTap: () async {
+                                print(restaurant['name']);
+                                try {
+                                  final weekData = await fetchOpenCloseInfo(
+                                      restaurant[
+                                          'name']); // Pass placeName (data[0])
+                                  final weekdayText = List<String>.from(
+                                      weekData['weekday_text']);
+                                  showOpenCloseInfoBottomSheet(
+                                      context, weekdayText);
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                          'Failed to load opening hours: $e'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              },
+                              child: const Text(
+                                'See hours',
+                                style: TextStyle(
+                                  color: Color(0xFF214EB0),
+                                  fontSize: 14,
+                                  fontFamily: themeFontFamily2,
+                                  fontWeight: FontWeight.w500,
+                                  decoration: TextDecoration.underline,
+                                  decorationColor: Color(0xFF214EB0),
+                                ),
                               ),
                             ),
                           ],
@@ -524,23 +542,15 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
                     ],
                   ),
                 ),
-                //
-
-                const SizedBox(
-                  height: 10,
-                ),
-
-                //
+                const SizedBox(height: 10),
                 Row(
                   children: [
                     SvgPicture.asset('assets/icons/wallet.svg'),
-                    const SizedBox(
-                      width: 10,
-                    ),
-                    const Expanded(
+                    const SizedBox(width: 10),
+                    Expanded(
                       child: Text(
-                        '₹200-400 per person',
-                        style: TextStyle(
+                        _getPriceRange(restaurant['price_level']),
+                        style: const TextStyle(
                           color: Color(0xFF0A0A0A),
                           fontSize: 14,
                           fontFamily: themeFontFamily2,
@@ -550,24 +560,14 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
                     ),
                   ],
                 ),
-
                 Visibility(
-                  visible: resturantExpandWidget[index],
-                  child: const SizedBox(
-                    height: 10,
-                  ),
-                ),
-
-                Visibility(
-                  visible: !resturantExpandWidget[index],
+                  visible: restuarantCurrentPos[index] != 0,
                   child: Row(
                     children: [
                       Row(
                         children: [
                           SvgPicture.asset('assets/icons/location.svg'),
-                          const SizedBox(
-                            width: 10,
-                          ),
+                          const SizedBox(width: 10),
                           const Text(
                             '2.5 kms away',
                             style: TextStyle(
@@ -580,55 +580,46 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
                         ],
                       ),
                       const Spacer(),
-                      Container(
-                        height: 32,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 4),
-                        decoration: ShapeDecoration(
-                          color: const Color(0xFFECF2FF),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(32),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            SvgPicture.asset('assets/icons/replace.svg'),
-                            const SizedBox(
-                              width: 5,
-                            ),
-                            const Text(
-                              'Replace',
-                              style: TextStyle(
-                                color: Color(0xFF005CE7),
-                                fontSize: 12,
-                                fontFamily: themeFontFamily,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      // Container(
+                      //   height: 32,
+                      //   padding: const EdgeInsets.symmetric(
+                      //       horizontal: 12, vertical: 4),
+                      //   decoration: ShapeDecoration(
+                      //     color: const Color(0xFFECF2FF),
+                      //     shape: RoundedRectangleBorder(
+                      //       borderRadius: BorderRadius.circular(32),
+                      //     ),
+                      //   ),
+                      //   child: Row(
+                      //     mainAxisSize: MainAxisSize.min,
+                      //     children: [
+                      //       SvgPicture.asset('assets/icons/replace.svg'),
+                      //       const SizedBox(width: 5),
+                      //       const Text(
+                      //         'Replace',
+                      //         style: TextStyle(
+                      //           color: Color(0xFF005CE7),
+                      //           fontSize: 12,
+                      //           fontFamily: themeFontFamily,
+                      //           fontWeight: FontWeight.w500,
+                      //         ),
+                      //       ),
+                      //     ],
+                      //   ),
+                      // ),
                     ],
                   ),
                 ),
-
                 Visibility(
-                  visible: resturantExpandWidget[index],
-                  child: const SizedBox(
-                    height: 10,
-                  ),
+                  visible: restuarantCurrentPos[index] == 0,
+                  child: const SizedBox(height: 10),
                 ),
-
-                //
                 Visibility(
-                  visible: resturantExpandWidget[index],
+                  visible: restuarantCurrentPos[index] == 0,
                   child: Row(
                     children: [
                       SvgPicture.asset('assets/icons/sand_timer.svg'),
-                      const SizedBox(
-                        width: 10,
-                      ),
+                      const SizedBox(width: 10),
                       const Expanded(
                         child: Text(
                           'Waiting up to 30 min to 1 hr here',
@@ -643,83 +634,76 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
                     ],
                   ),
                 ),
-                //
-
                 Visibility(
-                  visible: resturantExpandWidget[index],
+                  visible: restuarantCurrentPos[index] == 0,
                   child: Column(
                     children: [
-                      const SizedBox(
-                        height: 20,
-                      ),
-                  
+                      const SizedBox(height: 20),
                       Row(
-                        // mainAxisSize: MainAxisSize.min,
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Container(
-                            height: 32,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 4),
-                            decoration: ShapeDecoration(
-                              color: const Color(0xFFECF2FF),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(32),
+                          GestureDetector(
+                            onTap: () {
+                              _openMap(restaurant['lat'], restaurant['long']);
+                            },
+                            child: Container(
+                              height: 32,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 4),
+                              decoration: ShapeDecoration(
+                                color: const Color(0xFFECF2FF),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(32),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SvgPicture.asset(
+                                      'assets/icons/directions.svg'),
+                                  const SizedBox(width: 5),
+                                  const Text(
+                                    'Directions',
+                                    style: TextStyle(
+                                      color: Color(0xFF005CE7),
+                                      fontSize: 12,
+                                      fontFamily: themeFontFamily,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                SvgPicture.asset('assets/icons/directions.svg'),
-                                const SizedBox(
-                                  width: 5,
-                                ),
-                                const Text(
-                                  'Directions',
-                                  style: TextStyle(
-                                    color: Color(0xFF005CE7),
-                                    fontSize: 12,
-                                    fontFamily: themeFontFamily,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
                           ),
-                  
-                          Container(
-                            height: 32,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 4),
-                            decoration: ShapeDecoration(
-                              color: const Color(0xFFECF2FF),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(32),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                SvgPicture.asset('assets/icons/replace.svg'),
-                                const SizedBox(
-                                  width: 5,
-                                ),
-                                const Text(
-                                  'Replace',
-                                  style: TextStyle(
-                                    color: Color(0xFF005CE7),
-                                    fontSize: 12,
-                                    fontFamily: themeFontFamily,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          //
+                          // Container(
+                          //   height: 32,
+                          //   padding: const EdgeInsets.symmetric(
+                          //       horizontal: 12, vertical: 4),
+                          //   decoration: ShapeDecoration(
+                          //     color: const Color(0xFFECF2FF),
+                          //     shape: RoundedRectangleBorder(
+                          //       borderRadius: BorderRadius.circular(32),
+                          //     ),
+                          //   ),
+                          //   child: Row(
+                          //     mainAxisSize: MainAxisSize.min,
+                          //     children: [
+                          //       SvgPicture.asset('assets/icons/replace.svg'),
+                          //       const SizedBox(width: 5),
+                          //       const Text(
+                          //         'Replace',
+                          //         style: TextStyle(
+                          //           color: Color(0xFF005CE7),
+                          //           fontSize: 12,
+                          //           fontFamily: themeFontFamily,
+                          //           fontWeight: FontWeight.w500,
+                          //         ),
+                          //       ),
+                          //     ],
+                          //   ),
+                          // ),
                         ],
                       ),
-                      //
                     ],
                   ),
                 )
@@ -729,5 +713,29 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
         ],
       ),
     );
+  }
+
+  String _getPriceLevel(dynamic priceLevel) {
+    if (priceLevel == null || priceLevel == 'N/A') return '';
+    if (priceLevel is String) return priceLevel;
+    return '₹' * (priceLevel as int);
+  }
+
+  String _getPriceRange(dynamic priceLevel) {
+    if (priceLevel == null || priceLevel == 'N/A') return 'Price not available';
+    if (priceLevel is String) return priceLevel;
+
+    switch (priceLevel) {
+      case 1:
+        return '₹100-300 per person';
+      case 2:
+        return '₹300-600 per person';
+      case 3:
+        return '₹600-1200 per person';
+      case 4:
+        return '₹1200+ per person';
+      default:
+        return 'Price not available';
+    }
   }
 }

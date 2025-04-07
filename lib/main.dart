@@ -124,7 +124,7 @@ class _MyAppState extends State<MyApp> {
         '/choose_your_interests': (context) => const ChooseYourInterests(),
         '/account_setup': (context) => const AccountSetup(),
         '/welcome_page': (context) => const WelcomePage(),
-        '/home_page': (context) => const HomePage(),
+        '/home_page': (context) => HomePage(),
         '/continue_planning': (context) => const ContinuePlanning(),
         '/create_itinerary': (context) => const CreateItinerary(),
         '/itinerary_generating_screen': (context) =>
@@ -145,6 +145,15 @@ class _MyAppState extends State<MyApp> {
         '/your_profile': (context) => const YourProfile(),
         '/edit_your_interests': (context) => const EditYourInterests(),
       },
+      navigatorObservers: [
+        CustomNavigatorObserver(
+          onPopNext: () {
+            print("Navigated back to HomePage");
+            // Call fetchItineraries when HomePage is shown again
+            homePageKey.currentState?.fetchItineraries();
+          },
+        ),
+      ],
     );
   }
 }
