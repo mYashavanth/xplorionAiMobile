@@ -102,6 +102,13 @@ class _HomePageTripState extends State<HomePageTrip> {
     };
 
     if (itinerarySaved != '1') {
+      // Timeout mechanism
+      Timer timeoutTimer = Timer(const Duration(minutes: 1), () {
+        setState(() {
+          isLoading = false;
+          hasError = true; // Set error state if timeout occurs
+        });
+      });
       final url = Uri.parse('$baseurl/app/generate-itenary');
       print(requestBody);
       try {
@@ -171,6 +178,7 @@ class _HomePageTripState extends State<HomePageTrip> {
 
           print('Itinerary generated successfully: $responseData');
         } else {
+          timeoutTimer.cancel();
           setState(() {
             hasError = true;
             isLoading = false;
@@ -180,6 +188,11 @@ class _HomePageTripState extends State<HomePageTrip> {
         }
       } catch (e) {
         print('Error occurred while generating itinerary: $e');
+        timeoutTimer.cancel();
+        setState(() {
+          hasError = true;
+          isLoading = false;
+        });
       }
     }
 
