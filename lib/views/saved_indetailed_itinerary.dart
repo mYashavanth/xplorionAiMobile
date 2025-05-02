@@ -59,6 +59,7 @@ class _SavedInDetailedItineraryState extends State<SavedInDetailedItinerary>
 
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
+      print('data: ${data.length}');
       return data.map<Widget>((item) {
         var daysData = item[0]['itinerary']['itinerary']['days'];
         int daysDataLen = daysData.length;
@@ -68,7 +69,8 @@ class _SavedInDetailedItineraryState extends State<SavedInDetailedItinerary>
             daysDataLen.toString(),
             item[0]['itinerary']['itinerary']['days'][0]['day'],
             item[0]['itinerary']['travel_companion'],
-            item[0]['itinerary']['image_for_main_place']);
+            item[0]['itinerary']['image_for_main_place'],
+            item[0]['_id']);
       }).toList();
     } else {
       throw Exception('Failed to load itineraries');
@@ -81,6 +83,7 @@ class _SavedInDetailedItineraryState extends State<SavedInDetailedItinerary>
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>;
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         leading: IconButton(
           onPressed: () {
@@ -140,6 +143,7 @@ class _SavedInDetailedItineraryState extends State<SavedInDetailedItinerary>
     fetchIndetailIterneryData(args['collectionId']);
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         leading: IconButton(
           onPressed: () {
@@ -313,7 +317,7 @@ class _SavedInDetailedItineraryState extends State<SavedInDetailedItinerary>
   }*/
 
   Widget singleCardPlanForSavedItinarary(
-      context, cityStateTitle, days, startDate, travelCompanion, imageUrl) {
+      context, cityStateTitle, days, startDate, travelCompanion, imageUrl, id) {
     return Column(
       children: [
         Container(
@@ -525,77 +529,95 @@ class _SavedInDetailedItineraryState extends State<SavedInDetailedItinerary>
                           SizedBox(
                             width: 47,
                             height: 28,
-                            child: Stack(
-                              children: [
-                                Positioned(
-                                  left: 0,
-                                  top: 0,
-                                  child: Container(
-                                    width: 28,
-                                    height: 28,
-                                    decoration: const ShapeDecoration(
-                                      image: DecorationImage(
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.of(context).pushNamed('/friends');
+                              },
+                              child: Stack(
+                                children: [
+                                  Positioned(
+                                    left: 0,
+                                    top: 0,
+                                    child: Container(
+                                      width: 28,
+                                      height: 28,
+                                      decoration: const ShapeDecoration(
+                                        image: DecorationImage(
+                                          image: AssetImage(
+                                              "assets/images/friend_photo.jpeg"),
+                                          fit: BoxFit.fill,
+                                        ),
+                                        shape: OvalBorder(
+                                          side: BorderSide(
+                                            width: 1,
+                                            strokeAlign:
+                                                BorderSide.strokeAlignOutside,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    left: 19,
+                                    top: 0,
+                                    child: Container(
+                                      width: 28,
+                                      height: 28,
+                                      decoration: const ShapeDecoration(
+                                        color: Color(0xFF8B8D98),
+                                        shape: OvalBorder(
+                                          side: BorderSide(
+                                            width: 1,
+                                            strokeAlign:
+                                                BorderSide.strokeAlignOutside,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                      child: const Image(
                                         image: AssetImage(
-                                            "assets/images/friend_photo.jpeg"),
-                                        fit: BoxFit.fill,
-                                      ),
-                                      shape: OvalBorder(
-                                        side: BorderSide(
-                                          width: 1,
-                                          strokeAlign:
-                                              BorderSide.strokeAlignOutside,
-                                          color: Colors.white,
-                                        ),
+                                            'assets/icons/add_person.png'),
                                       ),
                                     ),
                                   ),
-                                ),
-                                Positioned(
-                                  left: 19,
-                                  top: 0,
-                                  child: Container(
-                                    width: 28,
-                                    height: 28,
-                                    decoration: const ShapeDecoration(
-                                      color: Color(0xFF8B8D98),
-                                      shape: OvalBorder(
-                                        side: BorderSide(
-                                          width: 1,
-                                          strokeAlign:
-                                              BorderSide.strokeAlignOutside,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                    child: const Image(
-                                      image: AssetImage(
-                                          'assets/icons/add_person.png'),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                           const Spacer(),
-                          Container(
-                            width: 55,
-                            height: 29,
-                            padding: const EdgeInsets.all(0),
-                            decoration: ShapeDecoration(
-                              color: const Color(0xFFECF2FF),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(32),
+                          InkWell(
+                            onTap: () {
+                              storage.write(
+                                  key: 'selectedPlace', value: cityStateTitle);
+                              print('selectedPlace: $cityStateTitle');
+                              print('itineraryId: $id');
+                              Navigator.of(context)
+                                  .pushNamed('/home_page_trip', arguments: {
+                                'itinerarySavedFlag': 1,
+                                'itineraryId': id,
+                              });
+                            },
+                            child: Container(
+                              width: 55,
+                              height: 29,
+                              padding: const EdgeInsets.all(0),
+                              decoration: ShapeDecoration(
+                                color: const Color(0xFFECF2FF),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(32),
+                                ),
                               ),
-                            ),
-                            child: const Center(
-                              child: Text(
-                                'View',
-                                style: TextStyle(
-                                  color: Color(0xFF005CE7),
-                                  fontSize: 12,
-                                  fontFamily: 'Sora',
-                                  fontWeight: FontWeight.w600,
-                                  // height: 0,
+                              child: const Center(
+                                child: Text(
+                                  'View',
+                                  style: TextStyle(
+                                    color: Color(0xFF005CE7),
+                                    fontSize: 12,
+                                    fontFamily: 'Sora',
+                                    fontWeight: FontWeight.w600,
+                                    // height: 0,
+                                  ),
                                 ),
                               ),
                             ),

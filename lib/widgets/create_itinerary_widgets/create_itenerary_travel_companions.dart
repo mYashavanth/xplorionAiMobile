@@ -106,7 +106,7 @@ class _CreateIteneraryTravelCompanionsState
                     ),
                     const SizedBox(height: 10),
                     Wrap(
-                      spacing: 20,
+                      spacing: 8,
                       runSpacing: 8,
                       children: List.generate(
                         companienSelectBoolList.length,
@@ -187,17 +187,18 @@ class _CreateIteneraryTravelCompanionsState
                 ),
                 child: Center(
                   child: (iconUrl != null && iconUrl.isNotEmpty)
-                      ? ClipOval(
-                          child: Image.network(
-                            iconUrl,
-                            width: 50,
-                            height: 50,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Image.network(
-                                  'https://dummyimage.com/50x50/ccc/ccc');
-                            },
-                          ),
+                      ? Image.network(
+                          iconUrl,
+                          color: companienSelectBoolList[index]
+                              ? Colors.white
+                              : Colors.black54,
+                          width: 40,
+                          height: 40,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Image.network(
+                                'https://dummyimage.com/50x50/ccc/ccc');
+                          },
                         )
                       : ClipOval(
                           child: Image.network(

@@ -124,7 +124,9 @@ class _ChooseYourInterestsState extends State<ChooseYourInterests> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
         centerTitle: true,
         title: const Text(
           'Find your fun',
@@ -251,48 +253,50 @@ class _ChooseYourInterestsState extends State<ChooseYourInterests> {
                 ); // End of Column wrapping FutureBuilder results
               }, // End of FutureBuilder builder
             ),
-            InkWell(
-              onTap: allSelected
-                  ? () {
-                      saveSelectedInterest();
-                    }
-                  : null,
-              child: Opacity(
-                opacity: allSelected ? 1 : 0.5,
-                child: Container(
-                  margin: const EdgeInsets.only(top: 50),
-                  width: double.maxFinite,
-                  height: 56,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
-                  decoration: ShapeDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment(-1.00, 0.06),
-                      end: Alignment(1, -0.06),
-                      colors: [
-                        Color(0xFF0099FF),
-                        Color(0xFF54AB6A),
-                      ],
-                    ),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(32)),
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'Continue',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontFamily: themeFontFamily,
-                        fontWeight: FontWeight.w600,
-                        height: 0.16,
-                      ),
-                    ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: Container(
+        margin: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
+        child: InkWell(
+          onTap: allSelected
+              ? () {
+                  saveSelectedInterest();
+                }
+              : null,
+          child: Opacity(
+            opacity: allSelected ? 1 : 0.5,
+            child: Container(
+              margin: const EdgeInsets.only(top: 50),
+              width: double.maxFinite,
+              height: 56,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+              decoration: ShapeDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment(-1.00, 0.06),
+                  end: Alignment(1, -0.06),
+                  colors: [
+                    Color(0xFF0099FF),
+                    Color(0xFF54AB6A),
+                  ],
+                ),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(32)),
+              ),
+              child: const Center(
+                child: Text(
+                  'Continue',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontFamily: themeFontFamily,
+                    fontWeight: FontWeight.w600,
+                    height: 0.16,
                   ),
                 ),
               ),
             ),
-          ],
+          ),
         ),
       ),
     );

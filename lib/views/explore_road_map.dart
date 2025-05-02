@@ -80,6 +80,9 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
     //LatLng(32.7157, -117.1611), // San Diego
     //LatLng(33.4484, -112.0740), // Phoenix
   ];
+  final List<String> locations = [
+    'San Francisco',
+  ];
   List<Widget> exploreLocationCards = [];
   bool isLoading = true;
   void _updateCameraPosition() {
@@ -112,6 +115,7 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
   // Function to fetch and display shortest route
   Future<void> _getShortestRoute(int tabIndex) async {
     points.clear();
+    locations.clear();
     polylines.clear();
 
     final receivedArgs =
@@ -119,16 +123,15 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
     var itineraryDataForMaps = receivedArgs?['itineraryDataMaps'];
     print(
         '++++++++++++++++++++++++dataToDisplay++++++++++++++++++++++++++++++++++++++');
-    print(itineraryDataForMaps[0]['itinerary']['itinerary']['days']);
+    print(itineraryDataForMaps);
     print(
         '++++++++++++++++++++++++dataToDisplay++++++++++++++++++++++++++++++++++++++');
-    var mapsDataJson =
-        itineraryDataForMaps[0]['itinerary']['itinerary']['days'];
+    var mapsDataJson = itineraryDataForMaps;
     int dataLen = mapsDataJson.length;
 
     for (int i = 0; i < dataLen; i++) {
       if (topTabs.length < dataLen) {
-        topTabs.add(Tab(text: 'Day ${i + 1}'));
+        topTabs.add(Tab(text: 'Day ${mapsDataJson[i]['day_no']}'));
       }
 
       var dayWiseActivityData = mapsDataJson[i]['activities'];
@@ -146,6 +149,10 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
               dayWiseActivityData[d]['long'] != null) {
             points.add(LatLng(
                 dayWiseActivityData[d]['lat'], dayWiseActivityData[d]['long']));
+          }
+          if (dayWiseActivityData[d]['locality_area_place_business'] != null) {
+            locations
+                .add(dayWiseActivityData[d]['locality_area_place_business']);
           }
           print("+++++++++daywiseActivitydata++++++++++++");
           print(points);
@@ -171,6 +178,9 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
           // time: 01:00 PM,
           // two_locations_cordinates: (12.2731672, 76.6707435),(12.3180041, 76.6655541)}
 
+          print(
+              "dayWiseActivityData[d]['ratings'] = ${dayWiseActivityData[d]['ratings']}");
+
           exploreLocationCards.add(popUpExploreWidgets(
             d,
             context,
@@ -181,6 +191,7 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
             dayWiseActivityData[d]['one_line_description_about_place'],
             dayWiseActivityData[d]['lat'],
             dayWiseActivityData[d]['long'],
+            dayWiseActivityData[d]['ratings'],
           ));
           // exploreLocationCards.add(popUpExploreWidgets(
           //     d,
@@ -298,6 +309,7 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
     print(points);
     print("++++++++++exploreLocationCards++++++++");
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         leading: IconButton(
           onPressed: () {
@@ -356,62 +368,58 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
           ,
         ),
       ),
-      body: Container(
-        child: Stack(
-          children: [
-            Container(
-              child: GoogleMap(
-                onMapCreated: (controller) async {
-                  mapController = controller;
-                  await _getShortestRoute(
-                      0); // Fetch and draw the route when the map is created
-                },
-                initialCameraPosition: CameraPosition(
-                  target: points[0],
-                  zoom: 11.0,
+      body: Stack(
+        children: [
+          GoogleMap(
+            onMapCreated: (controller) async {
+              mapController = controller;
+              await _getShortestRoute(
+                  0); // Fetch and draw the route when the map is created
+            },
+            initialCameraPosition: CameraPosition(
+              target: points[0],
+              zoom: 11.0,
+            ),
+            markers: points.map((point) {
+              return Marker(
+                markerId: MarkerId(point.toString()),
+                position: point,
+                infoWindow: InfoWindow(
+                  title: 'point ${points.indexOf(point) + 1}',
+                  snippet: locations[points.indexOf(point)],
                 ),
-                markers: points.map((point) {
-                  return Marker(
-                    markerId: MarkerId(point.toString()),
-                    position: point,
-                    infoWindow: InfoWindow(
-                      title: "Point",
-                      snippet: "${point.latitude}, ${point.longitude}",
+              );
+            }).toSet(),
+            polylines: polylines,
+          ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: FutureBuilder<List<Widget>>(
+              future:
+                  _loadExploreLocationCards(), // Future method to fetch widgets
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return const Center(child: Text("Error loading data"));
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(child: Text("No data available"));
+                } else {
+                  return Container(
+                    height: 200,
+                    padding: EdgeInsets.all(
+                        MediaQuery.of(context).size.width * 0.036),
+                    child: ListView(
+                      shrinkWrap: true,
+                      scrollDirection: Axis.horizontal,
+                      children: snapshot.data!, // Display fetched widgets
                     ),
                   );
-                }).toSet(),
-                polylines: polylines,
-              ),
+                }
+              },
             ),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: FutureBuilder<List<Widget>>(
-                future:
-                    _loadExploreLocationCards(), // Future method to fetch widgets
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return const Center(child: Text("Error loading data"));
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Text("No data available"));
-                  } else {
-                    return Container(
-                      height: 200,
-                      padding: EdgeInsets.all(
-                          MediaQuery.of(context).size.width * 0.036),
-                      child: ListView(
-                        shrinkWrap: true,
-                        scrollDirection: Axis.horizontal,
-                        children: snapshot.data!, // Display fetched widgets
-                      ),
-                    );
-                  }
-                },
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -426,8 +434,10 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
     description,
     lat,
     long,
+    ratings,
   ) {
     // Ensure img has a valid value
+    print('ratings = $ratings');
     img ??=
         'https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png';
 
@@ -547,9 +557,11 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
                               const SizedBox(
                                 width: 4,
                               ),
-                              const Text(
-                                '4.8 (80224)',
-                                style: TextStyle(
+                              Text(
+                                ratings == "N/A" || ratings == null
+                                    ? 'No reviews yet—be the first!'
+                                    : '$ratings ( Google ) • ₹₹',
+                                style: const TextStyle(
                                   color: Color(0xFF888888),
                                   fontSize: 12,
                                   fontFamily: 'IBM Plex Sans',
@@ -561,6 +573,8 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
                           const SizedBox(height: 6),
                           Text(
                             description,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               color: Colors.black,
                               fontSize: 12,

@@ -16,6 +16,7 @@ class _FeedBackState extends State<FeedBack> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         leading: IconButton(
           onPressed: () {
@@ -186,7 +187,8 @@ class _FeedBackState extends State<FeedBack> {
               ],
             ),
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(32),),
+              borderRadius: BorderRadius.circular(32),
+            ),
           ),
           child: const Center(
             child: Text(

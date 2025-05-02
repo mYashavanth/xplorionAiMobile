@@ -66,7 +66,7 @@ class _ContinuePlanningState extends State<ContinuePlanning> {
   Widget build(BuildContext context) {
     var meadiaWidth = MediaQuery.of(context).size.width;
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F8FC),
+      backgroundColor: Colors.white,
       appBar: AppBar(
         // shadowColor: Colors.white,
         surfaceTintColor: Colors.white,

@@ -6,6 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:xplorion_ai/lib_assets/colors.dart';
 import 'package:xplorion_ai/lib_assets/fonts.dart';
 import 'package:xplorion_ai/widgets/bottom_navbar.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class Profile extends StatefulWidget {
   const Profile({super.key});
@@ -17,6 +18,7 @@ class Profile extends StatefulWidget {
 class _ProfileState extends State<Profile> {
   final FlutterSecureStorage storage = const FlutterSecureStorage();
   String? userName;
+  String? email;
 
   @override
   void initState() {
@@ -29,8 +31,11 @@ class _ProfileState extends State<Profile> {
       // Fetch the username from secure storage
       String? username =
           await storage.read(key: 'username'); // Assuming 'username' is the key
+      String? savedEmail =
+          await storage.read(key: 'email'); // Assuming 'email' is the key
       setState(() {
         userName = username; // Update the state with the fetched username
+        email = savedEmail;
       });
     } catch (e) {
       print('Error fetching username from secure storage: $e');
@@ -40,6 +45,7 @@ class _ProfileState extends State<Profile> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
@@ -95,7 +101,7 @@ class _ProfileState extends State<Profile> {
                     children: [
                       userName != null
                           ? Text(
-                              'Welcome\n$userName',
+                              'Welcome $userName',
                               style: const TextStyle(
                                 color: Color(0xFF191B1C),
                                 fontSize: 18,
@@ -104,7 +110,7 @@ class _ProfileState extends State<Profile> {
                               ),
                             )
                           : const Text(
-                              'Hi, Katrina',
+                              'Welcome',
                               style: TextStyle(
                                 color: Color(0xFF191B1C),
                                 fontSize: 18,
@@ -113,19 +119,19 @@ class _ProfileState extends State<Profile> {
                               ),
                             ),
                       // buildlinearProgressBar(),
-                      // const SizedBox(
-                      //   height: 10,
-                      // ),
-                      // const Text(
-                      //   '78% Completed',
-                      //   style: TextStyle(
-                      //     color: Color(0xFF888888),
-                      //     fontSize: 14,
-                      //     fontFamily: 'IBM Plex Sans',
-                      //     fontWeight: FontWeight.w400,
-                      //     // height: 0.10,
-                      //   ),
-                      // ),
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      Text(
+                        email != null ? email! : '',
+                        style: const TextStyle(
+                          color: Color(0xFF888888),
+                          fontSize: 14,
+                          fontFamily: 'IBM Plex Sans',
+                          fontWeight: FontWeight.w400,
+                          // height: 0.10,
+                        ),
+                      ),
                     ],
                   ),
                   const Spacer(),
@@ -158,7 +164,13 @@ class _ProfileState extends State<Profile> {
               height: 5,
             ),
             buildProfileRowWidget('about.svg', 'Edit Preferences', 'es'),
+            const SizedBox(
+              height: 8,
+            ),
             buildProfileRowWidget('save_outline.svg', 'Saved', 'Saved'),
+            const SizedBox(
+              height: 8,
+            ),
             // buildProfileRowWidget('ongoing.svg', 'Ongoing','og'),
             // buildProfileRowWidget('completed.svg', 'Completed','cp'),
             // buildProfileRowWidget('share.svg', 'Shared','sh'),
@@ -196,9 +208,20 @@ class _ProfileState extends State<Profile> {
             const SizedBox(
               height: 5,
             ),
-            buildProfileRowWidget('about.svg', 'About', 'at'),
-            buildProfileRowWidget('terms_of_use.svg', 'Terms of use', 'tu'),
-            buildProfileRowWidget('privacy_policy.svg', 'Privacy Policy', 'pp'),
+            buildProfileRowWidget('about.svg', 'About', 'about'),
+            const SizedBox(
+              height: 8,
+            ),
+            buildProfileRowWidget(
+                'terms_of_use.svg', 'Terms of use', 'terms_and_conditions'),
+            const SizedBox(
+              height: 8,
+            ),
+            buildProfileRowWidget(
+                'privacy_policy.svg', 'Privacy Policy', 'privacy_policy'),
+            const SizedBox(
+              height: 8,
+            ),
             buildProfileRowWidget('log_out.svg', 'Log out', 'LogOut'),
           ],
         ),
@@ -208,24 +231,27 @@ class _ProfileState extends State<Profile> {
   }
 
   Widget buildProfileRowWidget(svg, title, page) {
-    return Container(
-      height: 54,
-      padding: const EdgeInsets.all(10),
-      margin: const EdgeInsets.only(top: 5, bottom: 5),
-      decoration: ShapeDecoration(
-        shape: RoundedRectangleBorder(
-          side: const BorderSide(width: 1, color: Color(0xFFCDCED7)),
-          borderRadius: BorderRadius.circular(32),
+    return InkWell(
+      onTap: () {
+        if (page == 'ru') {
+          _launchURL('https://play.google.com/store/games?hl=en_IN');
+        } else if (page == 'es') {
+          Navigator.of(context).pushNamed('/edit_your_interests');
+        } else {
+          redirect(title, page);
+        }
+      },
+      borderRadius: BorderRadius.circular(32),
+      child: Container(
+        height: 54,
+        padding: const EdgeInsets.all(10),
+        // margin: const EdgeInsets.only(top: 5, bottom: 5),
+        decoration: ShapeDecoration(
+          shape: RoundedRectangleBorder(
+            side: const BorderSide(width: 1, color: Color(0xFFCDCED7)),
+            borderRadius: BorderRadius.circular(32),
+          ),
         ),
-      ),
-      child: InkWell(
-        onTap: () {
-          if (page == 'es') {
-            Navigator.of(context).pushNamed('/edit_your_interests');
-          } else {
-            redirect(title, page);
-          }
-        },
         child: Row(
           children: [
             Container(
@@ -256,7 +282,13 @@ class _ProfileState extends State<Profile> {
             IconButton(
               padding: const EdgeInsets.all(0),
               onPressed: () {
-                redirect(title, page);
+                if (page == 'ru') {
+                  _launchURL('https://play.google.com/store/games?hl=en_IN');
+                } else if (page == 'es') {
+                  Navigator.of(context).pushNamed('/edit_your_interests');
+                } else {
+                  redirect(title, page);
+                }
               },
               icon: const Icon(
                 Icons.arrow_forward_ios_outlined,
@@ -275,6 +307,15 @@ class _ProfileState extends State<Profile> {
       return logOut();
     }
     Navigator.of(context).pushNamed('/$page');
+  }
+
+  void _launchURL(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      throw 'Could not launch $url';
+    }
   }
 
   Widget buildlinearProgressBar() {

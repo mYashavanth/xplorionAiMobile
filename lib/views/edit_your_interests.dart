@@ -10,7 +10,6 @@ import 'package:xplorion_ai/lib_assets/fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:xplorion_ai/views/urlconfig.dart';
 
-
 class EditYourInterests extends StatefulWidget {
   const EditYourInterests({super.key});
 
@@ -26,7 +25,6 @@ class _EditYourInterestsState extends State<EditYourInterests> {
   List selectedInterestsIds = [];
 
   void fetchSelectedInterests() async {
-
     String? userToken = await storage.read(key: 'userToken');
     final String url = '$baseurl/app/mobile/interests/$userToken';
 
@@ -40,15 +38,13 @@ class _EditYourInterestsState extends State<EditYourInterests> {
         final data = json.decode(response.body);
         int len = data.length;
 
-        for(int i = 0;i < len;i++)
-        {
+        for (int i = 0; i < len; i++) {
           selectedInterestsIds.add(data[i]['interest_id']);
         }
 
         print("++++++++");
         print(selectedInterestsIds);
         print("++++++++");
-
       } else {
         print('Request failed with status: ${response.statusCode}');
       }
@@ -56,7 +52,6 @@ class _EditYourInterestsState extends State<EditYourInterests> {
       print('An error occurred: $error');
     }
   }
-
 
   @override
   void initState() {
@@ -68,7 +63,8 @@ class _EditYourInterestsState extends State<EditYourInterests> {
   // Function to fetch categories from the API
   Future<List<Map<String, dynamic>>> fetchCategories() async {
     String? userToken = await storage.read(key: 'userToken');
-    final response = await http.get(Uri.parse('$baseurl/app/sub-category/all/${userToken!}'));
+    final response = await http
+        .get(Uri.parse('$baseurl/app/sub-category/all/${userToken!}'));
 
     if (response.statusCode == 200) {
       // Parse the JSON response
@@ -159,9 +155,10 @@ class _EditYourInterestsState extends State<EditYourInterests> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
         centerTitle: true,
         title: const Text(
           'Find your fun',
@@ -208,7 +205,6 @@ class _EditYourInterestsState extends State<EditYourInterests> {
             const SizedBox(
               height: 20,
             ),
-
             FutureBuilder<List<Map<String, dynamic>>>(
               future: _categoriesFuture,
               builder: (context, snapshot) {
@@ -225,38 +221,40 @@ class _EditYourInterestsState extends State<EditYourInterests> {
                 int subCatLen;
 
                 if (subCategoryList.isEmpty) {
-                      for (int s = 0; s < categories.length; s++) {
-                        subCatLen = (categories[s]['sub_category_data']).length;
-                        subCategoryDataLength += subCatLen;
-                      }
-
-                      for (int c = 0; c <= subCategoryDataLength; c++) {
-                        if (subCategoryList.length <= subCategoryDataLength) {
-                          subCategoryList.add(false);
-                        }
-                      }
-
-                      var selectedInterestBool;
-                      for (int s = 0; s < categories.length; s++) {
-                        subCatLen = (categories[s]['sub_category_data']).length;
-                        var subCategoryDataDL = categories[s]['sub_category_data'];
-
-                        for (int sc = 0; sc < subCatLen; sc++) {
-                          selectedInterestBool = selectedInterestsIds.contains(
-                              subCategoryDataDL[sc]['sub_category_id']);
-
-                          if (selectedInterestBool == true) {
-                            subCategoryList[subCategoryDataDL[sc]['sl']] = true;
-                            selectedSubCategory.add(subCategoryDataDL[sc]['sub_category_id']);
-                          }
-                        }
-                      }
+                  for (int s = 0; s < categories.length; s++) {
+                    subCatLen = (categories[s]['sub_category_data']).length;
+                    subCategoryDataLength += subCatLen;
                   }
+
+                  for (int c = 0; c <= subCategoryDataLength; c++) {
+                    if (subCategoryList.length <= subCategoryDataLength) {
+                      subCategoryList.add(false);
+                    }
+                  }
+
+                  var selectedInterestBool;
+                  for (int s = 0; s < categories.length; s++) {
+                    subCatLen = (categories[s]['sub_category_data']).length;
+                    var subCategoryDataDL = categories[s]['sub_category_data'];
+
+                    for (int sc = 0; sc < subCatLen; sc++) {
+                      selectedInterestBool = selectedInterestsIds
+                          .contains(subCategoryDataDL[sc]['sub_category_id']);
+
+                      if (selectedInterestBool == true) {
+                        subCategoryList[subCategoryDataDL[sc]['sl']] = true;
+                        selectedSubCategory
+                            .add(subCategoryDataDL[sc]['sub_category_id']);
+                      }
+                    }
+                  }
+                }
 
                 return Column(
                   children: categories.map((category) {
                     final primaryCategoryName = category['primaryCategoryName'];
-                    final subCategoryData = category['sub_category_data'] as List<dynamic>;
+                    final subCategoryData =
+                        category['sub_category_data'] as List<dynamic>;
                     final subCategoryLen = subCategoryData.length;
 
                     return Padding(
@@ -282,12 +280,12 @@ class _EditYourInterestsState extends State<EditYourInterests> {
                           const SizedBox(height: 10),
                           subCategoryData.isNotEmpty
                               ? Wrap(
-                            spacing: 12,
-                            runSpacing: 12,
-                            children: subCategoryData.map<Widget>((subCategory) {
-
-                              //final subCategoryId = subCategory['sub_category_id'].toString();
-                              /*final isSelected =
+                                  spacing: 12,
+                                  runSpacing: 12,
+                                  children: subCategoryData
+                                      .map<Widget>((subCategory) {
+                                    //final subCategoryId = subCategory['sub_category_id'].toString();
+                                    /*final isSelected =
                               selectedInterestsIds.contains(subCategoryId);
 
                               if(isSelected == true)
@@ -295,17 +293,18 @@ class _EditYourInterestsState extends State<EditYourInterests> {
                                   subCategoryList[subCategory['sl']] = true;
                               } */
 
-                              return interestsContainer(
-                                  subCategory['sl'].toString(),
-                                  subCategory['sub_category_name'], true,
-                                  subCategoryList, subCategory['sub_category_id']
-                              );
-                            }).toList(),
-                          ) // End of Wrap
+                                    return interestsContainer(
+                                        subCategory['sl'].toString(),
+                                        subCategory['sub_category_name'],
+                                        true,
+                                        subCategoryList,
+                                        subCategory['sub_category_id']);
+                                  }).toList(),
+                                ) // End of Wrap
                               : const Text(
-                            'No subcategories available',
-                            style: TextStyle(color: Colors.grey),
-                          ),
+                                  'No subcategories available',
+                                  style: TextStyle(color: Colors.grey),
+                                ),
                           const SizedBox(height: 20),
                         ],
                       ),
@@ -314,12 +313,11 @@ class _EditYourInterestsState extends State<EditYourInterests> {
                 ); // End of Column wrapping FutureBuilder results
               }, // End of FutureBuilder builder
             ),
-
             InkWell(
               onTap: allSelected
                   ? () {
-                saveSelectedInterest();
-              }
+                      saveSelectedInterest();
+                    }
                   : null,
               child: Opacity(
                 opacity: allSelected ? 1 : 0.5,
@@ -328,7 +326,7 @@ class _EditYourInterestsState extends State<EditYourInterests> {
                   width: double.maxFinite,
                   height: 56,
                   padding:
-                  const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
                   decoration: ShapeDecoration(
                     gradient: const LinearGradient(
                       begin: Alignment(-1.00, 0.06),
@@ -361,21 +359,19 @@ class _EditYourInterestsState extends State<EditYourInterests> {
       ),
     );
   }
+
   //(String id, String interestsText, bool isSelected, String subCatId)
   Widget interestsContainer(id, interestsText, cat, arrayBool, subCatId) {
     var index = int.parse(id);
 
-    return InkWell( // cat
+    return InkWell(
+      // cat
       onTap: () {
-
         //allowInterestcategory();
         setState(() {
-
           arrayBool[index] = !arrayBool[index];
           addSubInterestCat(subCatId);
-
         });
-
       },
       //: null,
       child: Opacity(
@@ -386,8 +382,9 @@ class _EditYourInterestsState extends State<EditYourInterests> {
           padding: const EdgeInsets.all(2),
           clipBehavior: Clip.antiAlias,
           decoration: ShapeDecoration(
-            gradient:
-            arrayBool[index] ? themeGradientColor : noneThemeGradientColor, // arrayBool[index] ||
+            gradient: arrayBool[index]
+                ? themeGradientColor
+                : noneThemeGradientColor, // arrayBool[index] ||
             shape: RoundedRectangleBorder(
               side: BorderSide(
                 width: 1,
@@ -403,13 +400,15 @@ class _EditYourInterestsState extends State<EditYourInterests> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(32),
             ),
-            backgroundColor:
-            arrayBool[index] ? const Color(0xFFEBF2FF) : Colors.white, // arrayBool[index] ||
+            backgroundColor: arrayBool[index]
+                ? const Color(0xFFEBF2FF)
+                : Colors.white, // arrayBool[index] ||
             label: Text(
               interestsText,
               style: TextStyle(
-                color:
-                arrayBool[index] ? const Color(0xFF005CE7) : Colors.black, // arrayBool[index] ||
+                color: arrayBool[index]
+                    ? const Color(0xFF005CE7)
+                    : Colors.black, // arrayBool[index] ||
                 fontSize: 14,
                 fontFamily: themeFontFamily2,
                 fontWeight: FontWeight.w400,
@@ -422,31 +421,30 @@ class _EditYourInterestsState extends State<EditYourInterests> {
     );
   }
 
-  addSubInterestCat(String subCatId){
-    if(selectedSubCategory.contains(subCatId.toString()))
-    {
+  addSubInterestCat(String subCatId) {
+    if (selectedSubCategory.contains(subCatId.toString())) {
       selectedSubCategory.remove(subCatId.toString());
-    }
-    else
-    {
+    } else {
       selectedSubCategory.add(subCatId.toString());
     }
 
     print(selectedSubCategory);
 
-    if(selectedSubCategory.isNotEmpty)
-    {
-      setState(() {allSelected = true;});
-    }
-    else
-    {
-      setState(() {allSelected = false;});
+    if (selectedSubCategory.isNotEmpty) {
+      setState(() {
+        allSelected = true;
+      });
+    } else {
+      setState(() {
+        allSelected = false;
+      });
     }
   }
 
   saveSelectedInterest() async {
     String? userToken = await storage.read(key: 'userToken');
-    List<String> stringSelectedSubCategory = selectedSubCategory.map((e) => '"$e"').toList();
+    List<String> stringSelectedSubCategory =
+        selectedSubCategory.map((e) => '"$e"').toList();
 
     try {
       // Create the body for the POST request
@@ -465,14 +463,13 @@ class _EditYourInterestsState extends State<EditYourInterests> {
         // If the server returns a 200 OK response, parse the response body
         final responseData = jsonDecode(response.body);
 
-        if (responseData['errFlag'] == 0)
-        {
+        if (responseData['errFlag'] == 0) {
           Navigator.of(context).pushNamed('/profile');
         }
-
       } else {
         // If the server did not return a 200 OK response
-        print('Failed to send POST request. Status code: ${response.statusCode}');
+        print(
+            'Failed to send POST request. Status code: ${response.statusCode}');
       }
     } catch (e) {
       print('Error occurred: $e');

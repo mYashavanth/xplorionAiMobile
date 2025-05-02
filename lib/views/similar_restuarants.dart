@@ -98,82 +98,10 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
     }
   }
 
-  void showOpenCloseInfoBottomSheet(
-      BuildContext context, List<String> weekdayText) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(12),
-          topRight: Radius.circular(12),
-        ),
-      ),
-      builder: (BuildContext context) {
-        return Container(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Opening Hours',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              ListView.builder(
-                shrinkWrap: true,
-                itemCount: weekdayText.length,
-                itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Text(
-                      weekdayText[index],
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Future<Map<String, dynamic>> fetchOpenCloseInfo(String placeName) async {
-    const FlutterSecureStorage storage = FlutterSecureStorage();
-    String? userToken = await storage.read(key: 'userToken');
-
-    final String apiUrl = '$baseurl/get-open-close-info/$placeName/$userToken';
-
-    try {
-      final response = await http.get(Uri.parse(apiUrl));
-      print('Response: ${response.body}');
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      } else {
-        print('Error: ${response.statusCode}');
-        return {
-          "weekday_text": [
-            "Not available",
-          ]
-        };
-      }
-    } catch (e) {
-      print('Error occurred while fetching data: $e');
-      return {
-        "weekday_text": [
-          "Not available",
-        ]
-      };
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
@@ -185,7 +113,7 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
         ),
         centerTitle: true,
         title: const Text(
-          'Similar Restaurants',
+          'Similar',
           textAlign: TextAlign.center,
           style: TextStyle(
             color: Color(0xFF1F1F1F),
@@ -503,39 +431,7 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
                               ),
                             ),
                             const SizedBox(width: 10),
-                            GestureDetector(
-                              onTap: () async {
-                                print(restaurant['name']);
-                                try {
-                                  final weekData = await fetchOpenCloseInfo(
-                                      restaurant[
-                                          'name']); // Pass placeName (data[0])
-                                  final weekdayText = List<String>.from(
-                                      weekData['weekday_text']);
-                                  showOpenCloseInfoBottomSheet(
-                                      context, weekdayText);
-                                } catch (e) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                          'Failed to load opening hours: $e'),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                }
-                              },
-                              child: const Text(
-                                'See hours',
-                                style: TextStyle(
-                                  color: Color(0xFF214EB0),
-                                  fontSize: 14,
-                                  fontFamily: themeFontFamily2,
-                                  fontWeight: FontWeight.w500,
-                                  decoration: TextDecoration.underline,
-                                  decorationColor: Color(0xFF214EB0),
-                                ),
-                              ),
-                            ),
+                            SeeHoursWidget(placeName: restaurant['name']),
                           ],
                         ),
                       ),
@@ -737,5 +633,173 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
       default:
         return 'Price not available';
     }
+  }
+}
+
+class SeeHoursWidget extends StatefulWidget {
+  final String placeName;
+
+  const SeeHoursWidget({Key? key, required this.placeName}) : super(key: key);
+
+  @override
+  _SeeHoursWidgetState createState() => _SeeHoursWidgetState();
+}
+
+class _SeeHoursWidgetState extends State<SeeHoursWidget> {
+  bool _isLoading = false;
+
+  Future<Map<String, dynamic>> fetchOpenCloseInfo(String placeName) async {
+    const FlutterSecureStorage storage = FlutterSecureStorage();
+    String? userToken = await storage.read(key: 'userToken');
+
+    final String apiUrl = '$baseurl/get-open-close-info/$placeName/$userToken';
+
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+      print('Response: ${response.body}');
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        print('Error: ${response.statusCode}');
+        return {
+          "weekday_text": [
+            "Not available",
+          ]
+        };
+      }
+    } catch (e) {
+      print('Error occurred while fetching data: $e');
+      return {
+        "weekday_text": [
+          "Not available",
+        ]
+      };
+    }
+  }
+
+  void showOpenCloseInfoBottomSheet(
+      BuildContext context, List<String> weekdayText) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(12),
+          topRight: Radius.circular(12),
+        ),
+      ),
+      builder: (BuildContext context) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[400],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Opening Hours',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'Sora',
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Divider(),
+              const SizedBox(height: 4),
+              ListView.builder(
+                shrinkWrap: true,
+                itemCount: weekdayText.length,
+                itemBuilder: (context, index) {
+                  final parts = weekdayText[index].split(': ');
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          parts[0],
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontFamily: 'Sora',
+                          ),
+                        ),
+                        Text(
+                          parts.length > 1 ? parts[1] : '',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontFamily: 'Sora',
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _loadHours() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final weekData = await fetchOpenCloseInfo(widget.placeName);
+      final weekdayText = List<String>.from(weekData['weekday_text']);
+      showOpenCloseInfoBottomSheet(context, weekdayText);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to load opening hours: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _isLoading ? null : _loadHours,
+      child: _isLoading
+          ? const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF214EB0)),
+              ),
+            )
+          : const Text(
+              'See hours',
+              style: TextStyle(
+                color: Color(0xFF214EB0),
+                fontSize: 14,
+                fontFamily: themeFontFamily2,
+                fontWeight: FontWeight.w500,
+                decoration: TextDecoration.underline,
+                decorationColor: Color(0xFF214EB0),
+              ),
+            ),
+    );
   }
 }

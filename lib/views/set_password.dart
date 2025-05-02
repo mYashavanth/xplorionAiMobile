@@ -21,6 +21,7 @@ class _SetPasswordState extends State<SetPassword> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         leading: IconButton(
           onPressed: () {
@@ -196,7 +197,8 @@ class _SetPasswordState extends State<SetPassword> {
                       shadowColor: Colors.transparent,
                       surfaceTintColor: Colors.transparent),
                   onPressed: () {
-                    Navigator.of(context).pushNamed('/password_reset_successful');
+                    Navigator.of(context)
+                        .pushNamed('/password_reset_successful');
                   },
                   child: const Center(
                     child: Text(

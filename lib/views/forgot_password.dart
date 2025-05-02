@@ -66,6 +66,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         leading: IconButton(
           onPressed: () {
@@ -125,7 +126,6 @@ class _ForgotPasswordState extends State<ForgotPassword> {
               height: 54,
               decoration: inputContainerDecoration,
               child: TextField(
-                // enableInteractiveSelection: false,
                 style: const TextStyle(
                   color: Colors.black,
                   fontSize: 18,
@@ -147,6 +147,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                 onChanged: (value) {},
               ),
             ),
+            const Spacer(),
             Container(
               margin: const EdgeInsets.only(top: 20),
               height: 48,

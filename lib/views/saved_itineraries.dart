@@ -33,6 +33,7 @@ class _SavedItinerariesState extends State<SavedItineraries> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         automaticallyImplyLeading: false,
         centerTitle: true,
@@ -65,6 +66,9 @@ class _SavedItinerariesState extends State<SavedItineraries> {
             }
 
             final collections = snapshot.data as List;
+            print(
+              'Collections: $collections',
+            );
 
             return ListView(
               children: [
@@ -138,7 +142,7 @@ class _SavedItinerariesState extends State<SavedItineraries> {
           ),
         ),
         const SizedBox(
-          height: 10,
+          height: 5,
         ),
         Text(
           title,
@@ -152,24 +156,27 @@ class _SavedItinerariesState extends State<SavedItineraries> {
         // const SizedBox(
         //   height: 5,
         // ),
-        private
-            ? const Row(children: [
-                Icon(
-                  Icons.lock,
-                  size: 12,
-                  color: Color(0xFF888888),
-                ),
-                Text(
-                  'Private',
-                  style: TextStyle(
-                    color: Color(0xFF888888),
-                    fontSize: 12,
-                    fontFamily: themeFontFamily2,
-                    fontWeight: FontWeight.w400,
-                  ),
-                )
-              ])
-            : buildFriends()
+        // private
+        //     ? const Row(children: [
+        //         Icon(
+        //           Icons.lock,
+        //           size: 12,
+        //           color: Color(0xFF888888),
+        //         ),
+        //         Text(
+        //           'Private',
+        //           style: TextStyle(
+        //             color: Color(0xFF888888),
+        //             fontSize: 12,
+        //             fontFamily: themeFontFamily2,
+        //             fontWeight: FontWeight.w400,
+        //           ),
+        //         )
+        //       ])
+        //     : buildFriends()
+        const SizedBox(
+          height: 5,
+        ),
       ],
     );
   }

@@ -10,6 +10,7 @@ import 'package:xplorion_ai/lib_assets/fonts.dart';
 import 'package:xplorion_ai/providers/ci_date_provider.dart';
 import 'package:xplorion_ai/views/create_itinerary.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart'; // Import the intl package
 import '../../views/urlconfig.dart';
 
 class SelectDateRange extends StatefulWidget {
@@ -55,14 +56,21 @@ class _SelectDateRangeState extends State<SelectDateRange> {
 
   // Function to fetch city suggestions from the API
   Future<void> fetchCities(String query) async {
+    print("Fetching cities for query: $query");
     String? userToken = await storage.read(key: 'userToken');
     final String url = "$baseurl/app/city-name/$query/$userToken";
     final response = await http.get(Uri.parse(url));
 
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body);
+      print("City data fetched successfully: $data");
       setState(() {
-        cityList = data.map((city) => city['city'] as String).toList();
+        cityList = data.map((city) {
+          final cityName = city['city'] as String;
+          final stateName = city['state'] as String;
+          final countryName = city['country'] as String;
+          return '$cityName, $stateName, $countryName';
+        }).toList();
       });
     } else {
       print("Failed to load city data");
@@ -87,7 +95,6 @@ class _SelectDateRangeState extends State<SelectDateRange> {
                   }
                   return fetchCities(textEditingValue.text)
                       .then((_) => cityList);
-                  // return cityList;
                 },
                 onSelected: (String selectedCity) {
                   print("Selected city: $selectedCity");
@@ -141,26 +148,40 @@ class _SelectDateRangeState extends State<SelectDateRange> {
                     alignment: Alignment.topLeft,
                     child: Material(
                       child: Container(
-                        width: 300,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 0),
+                        width: MediaQuery.of(context).size.width -
+                            40, // Full width minus padding
                         height:
-                            optionCount * 56.0 < 500 ? optionCount * 56.0 : 500,
-                        color: Colors.white,
+                            optionCount * 50.0 < 500 ? optionCount * 50.0 : 500,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(color: const Color(0xFFCDCED7)),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                         child: ListView.builder(
-                          padding: const EdgeInsets.all(8.0),
+                          padding: const EdgeInsets.symmetric(vertical: 4.0),
                           itemCount: options.length,
                           itemBuilder: (BuildContext context, int index) {
                             final option = options.elementAt(index);
                             return Column(
                               children: [
                                 ListTile(
-                                  title: Text(option),
+                                  title: Text(
+                                    option,
+                                    style: const TextStyle(fontSize: 16),
+                                  ),
                                   onTap: () async {
                                     onSelected(option);
                                     await storage.write(
                                         key: 'selectedPlace', value: option);
                                   },
                                 ),
-                                if (index != optionCount - 1) const Divider(),
+                                if (index != optionCount - 1)
+                                  const Divider(
+                                    height: 1,
+                                    color: Color(0xFFCDCED7),
+                                  ),
                               ],
                             );
                           },
@@ -410,28 +431,29 @@ class _SelectDateRangeState extends State<SelectDateRange> {
                     if (dateProvider
                             .rangeDatePickerValueWithDefaultValue.length >
                         1) {
-                      startDate = splitDate(dateProvider
-                          .rangeDatePickerValueWithDefaultValue[0]
-                          .toString());
-                      endDate = splitDate(dateProvider
-                          .rangeDatePickerValueWithDefaultValue[1]
-                          .toString());
+                      // Format start and end dates
+                      startDate = DateFormat('yyyy-MM-dd').format(
+                        dateProvider.rangeDatePickerValueWithDefaultValue[0]!,
+                      );
+                      endDate = DateFormat('yyyy-MM-dd').format(
+                        dateProvider.rangeDatePickerValueWithDefaultValue[1]!,
+                      );
 
+                      // Save to secure storage
                       await storage.write(key: 'startDate', value: startDate);
-
                       await storage.write(key: 'endDate', value: endDate);
                     } else {
-                      startDate = splitDate(dateProvider
-                          .rangeDatePickerValueWithDefaultValue[0]
-                          .toString());
-                      endDate = splitDate(dateProvider
-                          .rangeDatePickerValueWithDefaultValue[0]
-                          .toString());
+                      // If only one date is selected, use it for both start and end dates
+                      startDate = DateFormat('yyyy-MM-dd').format(
+                        dateProvider.rangeDatePickerValueWithDefaultValue[0]!,
+                      );
+                      endDate = startDate;
 
+                      // Save to secure storage
                       await storage.write(key: 'startDate', value: startDate);
-
                       await storage.write(key: 'endDate', value: endDate);
                     }
+
                     setState(() {
                       Navigator.of(context).pop();
                     });

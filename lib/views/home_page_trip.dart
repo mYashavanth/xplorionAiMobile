@@ -25,6 +25,8 @@ class HomePageTrip extends StatefulWidget {
 }
 
 class _HomePageTripState extends State<HomePageTrip> {
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey tripItineraryKey = GlobalKey();
   final storage = const FlutterSecureStorage();
 
   //  'Day 1',
@@ -44,12 +46,6 @@ class _HomePageTripState extends State<HomePageTrip> {
     //true,
     //false,
     //false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false
   ];
 
   String iterneryTitle = '';
@@ -71,6 +67,207 @@ class _HomePageTripState extends State<HomePageTrip> {
   late final responseData;
   String? itinerarySavedFlag;
 
+  int getDaysBetween(String fromDateStr, String toDateStr) {
+    DateTime parseDate(String dateStr, [int? baseYear]) {
+      // Format: "9 Apr"
+      final shortFormat = RegExp(r'^(\d{1,2}) (\w{3})$');
+      final match = shortFormat.firstMatch(dateStr);
+      if (match != null) {
+        int day = int.parse(match.group(1)!);
+        String monthAbbr = match.group(2)!;
+        int year = baseYear ?? DateTime.now().year;
+
+        Map<String, int> monthMap = {
+          'Jan': 1,
+          'Feb': 2,
+          'Mar': 3,
+          'Apr': 4,
+          'May': 5,
+          'Jun': 6,
+          'Jul': 7,
+          'Aug': 8,
+          'Sep': 9,
+          'Oct': 10,
+          'Nov': 11,
+          'Dec': 12,
+        };
+
+        int? month = monthMap[monthAbbr];
+        if (month == null) {
+          throw FormatException("Invalid month abbreviation: $monthAbbr");
+        }
+
+        return DateTime(year, month, day);
+      }
+
+      // Format: "2025-02-23"
+      try {
+        return DateTime.parse(dateStr);
+      } catch (_) {
+        throw FormatException("Unrecognized date format: $dateStr");
+      }
+    }
+
+    // Try parsing both dates
+    bool isShortFormat(String str) => RegExp(r'^\d{1,2} \w{3}$').hasMatch(str);
+
+    DateTime fromDate;
+    DateTime toDate;
+
+    if (isShortFormat(fromDateStr) && isShortFormat(toDateStr)) {
+      DateTime now = DateTime.now();
+      fromDate = parseDate(fromDateStr, now.year);
+      toDate = parseDate(toDateStr, now.year);
+
+      if (toDate.isBefore(fromDate)) {
+        // Assume toDate is in the next year
+        toDate = parseDate(toDateStr, now.year + 1);
+      }
+    } else {
+      fromDate = parseDate(fromDateStr);
+      toDate = parseDate(toDateStr);
+    }
+
+    return toDate.difference(fromDate).inDays + 1;
+  }
+
+  Future<void> generateItineraryForDay({
+    required int dayNo,
+    bool updateLoadingState = true, // Optional parameter to control isLoading
+  }) async {
+    // Return early if dayNo is less than 2 (no call needed)
+    if (dayNo < 2) {
+      print('Skipping day $dayNo as it is less than 2.');
+      return;
+    }
+
+    print(daysDataDisplay
+        .any((day) => day != null && day["day_no"] == dayNo.toString()));
+    if (daysDataDisplay
+        .any((day) => day != null && day["day_no"] == dayNo.toString())) {
+      print('Skipping day $dayNo as it is already generated.');
+      return;
+    }
+
+    const storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'userToken');
+    final fromDate = await storage.read(key: 'startDate');
+    final toDate = await storage.read(key: 'endDate');
+
+    if (token == null) {
+      print('User token not found.');
+      return;
+    }
+
+    final url = Uri.parse('$baseurl/app/generate-itenary/for-day');
+
+    final body = {
+      'token': token,
+      'itineraryId': resIterneryId,
+      'dayNo': dayNo.toString(),
+      'fromDate': fromDate,
+      'toDate': toDate,
+    };
+
+    try {
+      if (updateLoadingState) {
+        setState(() {
+          isLoading = true;
+        });
+      }
+
+      final response = await http.post(
+        url,
+        body: body,
+      );
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        weatherInfoData[dayNo - 1] = data['weather_info'];
+        setState(() {
+          if (daysDataDisplay.length < dayNo) {
+            daysDataDisplay.length = dayNo; // Extend the list if necessary
+          }
+          daysDataDisplay[dayNo - 1] = data;
+        });
+        print('Itinerary for day $dayNo generated successfully.');
+      } else {
+        print('Failed to generate itinerary for day $dayNo: ${response.body}');
+      }
+    } catch (e) {
+      print('Error generating itinerary for day $dayNo: $e');
+    } finally {
+      if (updateLoadingState) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> generateItineraryForAllDays(int totalDays) async {
+    for (int dayNo = 2; dayNo <= totalDays; dayNo++) {
+      print('Generating itinerary for day $dayNo...');
+      bool success = false;
+
+      while (!success) {
+        try {
+          // Call the generateItineraryForDay function
+          await generateItineraryForDay(
+              dayNo: dayNo, updateLoadingState: false);
+          success = true; // Mark as success if no exception occurs
+          print('Successfully generated itinerary for day $dayNo');
+        } catch (e) {
+          // Log the error and retry
+          print('Error generating itinerary for day $dayNo: $e');
+          await Future.delayed(
+              const Duration(seconds: 1)); // Add a delay before retrying
+        }
+      }
+    }
+  }
+
+  List<dynamic> fillMissingDays(List<dynamic> daysData, {int totalDays = 7}) {
+    // Create a map of day numbers to their data
+    final dayMap = {for (var day in daysData) int.parse(day['day_no']): day};
+
+    // Initialize the result list
+    final filledDays = List<dynamic>.filled(totalDays, null);
+
+    // Fill in the available days
+    for (int dayNum = 1; dayNum <= totalDays; dayNum++) {
+      if (dayMap.containsKey(dayNum)) {
+        filledDays[dayNum - 1] = dayMap[dayNum];
+      }
+    }
+
+    return filledDays;
+  }
+
+  void _scrollToTripItinerary() {
+    // Get the RenderObject of the tripItineraryWidget
+    final RenderBox? renderBox =
+        tripItineraryKey.currentContext?.findRenderObject() as RenderBox?;
+
+    if (renderBox != null) {
+      // Get the position of the widget relative to the ListView
+      final double offset = renderBox.localToGlobal(Offset.zero).dy +
+          _scrollController.offset -
+          kToolbarHeight; // Adjust for AppBar height if necessary
+
+      // Smoothly scroll to the position
+      _scrollController.animateTo(
+        offset,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.ease,
+      );
+    }
+  }
+
+  String fromDate = '';
+  String toDate = '';
+
   Future<void> generateItinerary() async {
     String? userToken = await storage.read(key: 'userToken');
     String? travelCompanion = await storage.read(key: 'travelCompanion');
@@ -78,6 +275,14 @@ class _HomePageTripState extends State<HomePageTrip> {
     String? startDate = await storage.read(key: 'startDate');
     String? endDate = await storage.read(key: 'endDate');
     String? selectedPlace = await storage.read(key: 'selectedPlace');
+    if (startDate != null && endDate != null) {
+      fromDate = startDate;
+      toDate = endDate;
+    } else {
+      fromDate = '';
+      toDate = '';
+      print("Start date or end date is null");
+    }
     //String? itinerarySaved = await storage.read(key: 'itinerarySavedFlag');
     final receivedArgs =
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
@@ -131,8 +336,15 @@ class _HomePageTripState extends State<HomePageTrip> {
           var place = responseData['place'];
           var budgetType = responseData['budget_type'];
           resIterneryId = responseData['itineraryId'];
-          int noOfDays = daysData.length;
-          int r = 0;
+          await storage.write(key: 'itineraryId', value: resIterneryId);
+          int noOfDays;
+          if (startDate != null && endDate != null) {
+            noOfDays = getDaysBetween(startDate, endDate);
+            print('noOfDays $noOfDays, startDate $startDate, endDate $endDate');
+          } else {
+            throw Exception("Start date or end date is null");
+          }
+          // int r = 0;
           daysDataDisplay = daysData;
 
           setState(() {
@@ -145,8 +357,16 @@ class _HomePageTripState extends State<HomePageTrip> {
                 menuBoolList.insert(0, false);
               }
 
-              weatherInfoData.add(daysData[r]['weather_info']);
-              r++;
+              // if (r < daysData.length && daysData[r] != null) {
+              //   weatherInfoData.add(daysData[r]['weather_info']);
+              //   print('r $r, d $d, daysData[r] ${daysData[r]}');
+              // }
+              // r++;
+              if (daysData != null && d - 1 >= 0 && d - 1 < daysData.length) {
+                weatherInfoData.insert(0, daysData[d - 1]['weather_info']);
+              } else {
+                weatherInfoData.insert(0, 'No data available');
+              }
             }
 
             menuItemNames.insert(noOfDays, "Tips");
@@ -177,6 +397,7 @@ class _HomePageTripState extends State<HomePageTrip> {
           });
 
           print('Itinerary generated successfully: $responseData');
+          generateItineraryForAllDays(noOfDays);
         } else {
           // timeoutTimer.cancel();
           setState(() {
@@ -200,7 +421,7 @@ class _HomePageTripState extends State<HomePageTrip> {
       String? itineraryId = receivedArgs?[
           'itineraryId']; //await storage.read(key: 'itineraryId');
       resIterneryId = itineraryId!;
-
+      await storage.write(key: 'itineraryId', value: resIterneryId);
       //print(" |||||||| ");
       //print(resIterneryId);
       //print(" ||||||||| ");
@@ -216,9 +437,9 @@ class _HomePageTripState extends State<HomePageTrip> {
         var place = responseDataS[0]['itinerary']['place'];
         var budgetType = responseDataS[0]['itinerary']['budget_type'];
 
-        int noOfDays = daysData.length;
-        int r = 0;
-        daysDataDisplay = daysData;
+        int noOfDays = responseDataS[0]['itinerary']['no_of_days'];
+        // int r = 0;
+        daysDataDisplay = fillMissingDays(daysData, totalDays: noOfDays);
 
         setState(() {
           for (int d = noOfDays; d >= 1; d--) {
@@ -230,8 +451,11 @@ class _HomePageTripState extends State<HomePageTrip> {
               menuBoolList.insert(0, false);
             }
 
-            weatherInfoData.add(daysData[r]['weather_info']);
-            r++;
+            if (daysData != null && d - 1 >= 0 && d - 1 < daysData.length) {
+              weatherInfoData.insert(0, daysData[d - 1]['weather_info']);
+            } else {
+              weatherInfoData.insert(0, 'No data available');
+            }
           }
 
           menuItemNames.insert(noOfDays, "Tips");
@@ -680,6 +904,7 @@ class _HomePageTripState extends State<HomePageTrip> {
 
   @override
   void dispose() {
+    _scrollController.dispose();
     _pageController.dispose();
     super.dispose();
   }
@@ -706,7 +931,9 @@ class _HomePageTripState extends State<HomePageTrip> {
               // Indeterminate Progress Bar
               SizedBox(
                 width: MediaQuery.of(context).size.width * 0.8,
-                child: const LinearProgressIndicator(),
+                child: const LinearProgressIndicator(
+                  color: Color(0xFF0099FF),
+                ),
               ),
               const SizedBox(height: 160),
 
@@ -745,6 +972,7 @@ class _HomePageTripState extends State<HomePageTrip> {
 
     if (hasError) {
       return Scaffold(
+        backgroundColor: Colors.white,
         body: Center(
           child: Padding(
             padding: const EdgeInsets.symmetric(
@@ -814,10 +1042,12 @@ class _HomePageTripState extends State<HomePageTrip> {
     }
 
     return Scaffold(
+      backgroundColor: Colors.white,
       resizeToAvoidBottomInset: true,
       body: Stack(
         children: [
           ListView(
+            controller: _scrollController, // Attach the ScrollController
             children: [
               Stack(
                 children: [
@@ -955,15 +1185,9 @@ class _HomePageTripState extends State<HomePageTrip> {
                                     Navigator.of(context).pushNamed(
                                         '/explore_road_map',
                                         arguments: {
-                                          'itineraryDataMaps':
-                                              itinerarySavedFlag != '1'
-                                                  ? [
-                                                      {
-                                                        'itinerary':
-                                                            responseData
-                                                      }
-                                                    ]
-                                                  : responseDataS
+                                          'itineraryDataMaps': daysDataDisplay
+                                              .where((day) => day != null)
+                                              .toList()
                                         });
                                   },
                                   child: Container(
@@ -1057,8 +1281,18 @@ class _HomePageTripState extends State<HomePageTrip> {
                                 left: 20,
                                 child: GestureDetector(
                                   onTap: () {
-                                    Share.share(
-                                        'Hey, I just generated a Travel Iteninary using Xplorion Ai. Check it out : www.xplorionai.com');
+                                    Share.share('”Hey everyone,\n'
+                                        "I just generated an amazing travel itinerary with the XplorionAI Travel App – and it's too good not to share:\n"
+                                        "   -Free Travel App\n"
+                                        "   -Personalized Itinerary Generation\n"
+                                        "   -Curated Experiences – Enjoy destination highlights, dining picks, and cultural gems\n"
+                                        "   -Social Sharing & Collaboration\n"
+                                        "   -Optimized for Android and iOS\n"
+                                        "Download now:\n"
+                                        "   -Android: Download on Google Play Store\n"
+                                        "   -iOS: Download on Apple App Store\n\n\n"
+                                        "Discover more at www.xplorionai.com\n"
+                                        "XplorionAI – Personalized journeys that amplify.”\n");
                                   },
                                   child: Container(
                                     width: 92,
@@ -1211,15 +1445,24 @@ class _HomePageTripState extends State<HomePageTrip> {
                         scrollDirection: Axis.horizontal,
                         itemCount: menuItemNames.length,
                         itemBuilder: ((context, index) {
-                          return buildMenuItemsCard(index, menuItemNames[index],
-                              menuBoolList, setState);
+                          return buildMenuItemsCard(
+                            index,
+                            menuItemNames[index],
+                            menuBoolList,
+                            setState,
+                            generateItineraryForDay,
+                            _scrollToTripItinerary,
+                          );
                         }),
                       ),
                     ),
                     const SizedBox(
                       height: 20,
                     ),
-                    tripItineraryWidget
+                    Container(
+                      key: tripItineraryKey,
+                      child: tripItineraryWidget,
+                    ),
                   ],
                 ),
               ),
@@ -1384,7 +1627,13 @@ class _HomePageTripState extends State<HomePageTrip> {
     }
 
     doseImageSliders.clear();
-    int dataLen = daysDataDisplay.length;
+    int dataLen;
+    if (itinerarySavedFlag != '1') {
+      dataLen = getDaysBetween(fromDate, toDate);
+    } else {
+      dataLen = daysDataDisplay.length;
+    }
+    // int dataLen = daysDataDisplay.length;
     int day = menuIndex + 1;
 
     if (day > dataLen) {
@@ -1422,11 +1671,15 @@ class _HomePageTripState extends State<HomePageTrip> {
         return buildLocalFoodAndDrinks(context, foodDrinksArr);
       }
     }
-
+    print('weatherInfoData == $weatherInfoData');
+    print('menuIndex == $menuIndex');
     weatherInfoToSend = weatherInfoData[menuIndex];
 
     List activities = [];
-    for (int j = 0; j < dataLen; j++) {
+    for (int j = 0; j < daysDataDisplay.length; j++) {
+      if (daysDataDisplay[j] == null) {
+        continue; // Skip this iteration if 'day_no' is null
+      }
       var activitiesData = daysDataDisplay[j]['activities'];
       int activitiesDataLen = activitiesData.length;
       if (day.toString() == daysDataDisplay[j]['day_no']) {

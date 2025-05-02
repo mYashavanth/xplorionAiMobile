@@ -441,18 +441,20 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     const Spacer(),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pushNamed('/continue_planning');
-                      },
-                      child: const Text(
-                        'Top 6',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 14,
-                          fontFamily: themeFontFamily2,
-                          fontWeight: FontWeight.w400,
-                          height: 0,
+                    SizedBox(
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pushNamed('/continue_planning');
+                        },
+                        child: const Text(
+                          'Top 6',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 14,
+                            fontFamily: themeFontFamily2,
+                            fontWeight: FontWeight.w400,
+                            height: 0,
+                          ),
                         ),
                       ),
                     ),
@@ -467,12 +469,12 @@ class _HomePageState extends State<HomePage> {
                   height: 144,
                   child: createdIternery.isEmpty
                       ? FutureBuilder(
-                          future: Future.delayed(const Duration(seconds: 30)),
+                          future: Future.delayed(const Duration(seconds: 5)),
                           builder: (context, snapshot) {
                             if (snapshot.connectionState ==
                                 ConnectionState.done) {
                               return const Center(
-                                child: Text('No data available'),
+                                child: Text('Start planning your trip!'),
                               );
                             } else {
                               return ListView.builder(
@@ -480,6 +482,8 @@ class _HomePageState extends State<HomePage> {
                                     MediaQuery.of(context).size.width * 0.92,
                                 scrollDirection: Axis.horizontal,
                                 shrinkWrap: true,
+                                physics:
+                                    const PageScrollPhysics(), // Enables snapping to one card at a time
                                 itemCount:
                                     5, // Number of shimmer cards to display
                                 itemBuilder: (context, index) {
@@ -506,6 +510,8 @@ class _HomePageState extends State<HomePage> {
                           itemExtent: MediaQuery.of(context).size.width * 0.92,
                           scrollDirection: Axis.horizontal,
                           shrinkWrap: true,
+                          physics:
+                              const PageScrollPhysics(), // Enables snapping to one card at a time
                           children: createdIternery,
                         ),
                 ),

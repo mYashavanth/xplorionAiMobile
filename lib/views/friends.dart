@@ -249,7 +249,9 @@ class _FriendsState extends State<Friends> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
         leading: IconButton(
             onPressed: () {
               Navigator.pop(context);
@@ -293,7 +295,7 @@ class _FriendsState extends State<Friends> {
                         ),
                       ),
                       const Text(
-                        'Use the link below to invite friends to edit your trip.',
+                        'Share the adventure! Invite friends to join your itinerary by email.',
                         style: TextStyle(
                           color: Color(0xFF888888),
                           fontSize: 14,
@@ -318,7 +320,7 @@ class _FriendsState extends State<Friends> {
                           // });
                         },
                         child: Container(
-                          padding: const EdgeInsets.all(15),
+                          padding: const EdgeInsets.all(4),
                           decoration: ShapeDecoration(
                             shape: RoundedRectangleBorder(
                               side: const BorderSide(width: 1),

@@ -16,18 +16,13 @@ class ItineraryGeneratingScreen extends StatefulWidget {
 }
 
 class _ItineraryGeneratingScreenState extends State<ItineraryGeneratingScreen> {
-
   final FlutterSecureStorage storage = const FlutterSecureStorage();
 
   @override
   void initState() {
     // TODO: implement initState
     Future.delayed(const Duration(seconds: 3), () {
-
-      storage.write(
-          key: 'itinerarySavedFlag',
-          value: '0'
-      );
+      storage.write(key: 'itinerarySavedFlag', value: '0');
 
       Navigator.of(context).pushNamed('/home_page_trip');
     });
@@ -39,6 +34,7 @@ class _ItineraryGeneratingScreenState extends State<ItineraryGeneratingScreen> {
     var mediaWidth = MediaQuery.of(context).size.width;
     var mediaHeight = MediaQuery.of(context).size.height;
     return Scaffold(
+      backgroundColor: Colors.white,
       body: Container(
         // height: mediaHeight,
         // color: Colors.red,
@@ -101,7 +97,7 @@ class _ItineraryGeneratingScreenState extends State<ItineraryGeneratingScreen> {
                           ),
                         ),
                       ),
-            
+
                       //
                       Align(
                         alignment: Alignment.bottomCenter,
@@ -135,7 +131,7 @@ class _ItineraryGeneratingScreenState extends State<ItineraryGeneratingScreen> {
                       ),
                     ],
                   ),
-            
+
                   //
                   Positioned(
                     left: 30,
@@ -157,7 +153,7 @@ class _ItineraryGeneratingScreenState extends State<ItineraryGeneratingScreen> {
                       child: SvgPicture.asset('assets/icons/globe.svg'),
                     ),
                   ),
-            
+
                   //
                   Positioned(
                     right: 90,
@@ -179,7 +175,7 @@ class _ItineraryGeneratingScreenState extends State<ItineraryGeneratingScreen> {
                       child: SvgPicture.asset('assets/icons/passport.svg'),
                     ),
                   ),
-            
+
                   //
                   Positioned(
                     right: 30,
@@ -201,7 +197,7 @@ class _ItineraryGeneratingScreenState extends State<ItineraryGeneratingScreen> {
                       child: SvgPicture.asset('assets/icons/camera.svg'),
                     ),
                   ),
-            
+
                   //
                   Positioned(
                     left: 50,
@@ -255,7 +251,7 @@ class _ItineraryGeneratingScreenState extends State<ItineraryGeneratingScreen> {
       ),
       bottomNavigationBar: Container(
         height: 120,
-        padding: const EdgeInsets.only(left:20,right: 20,bottom: 20),
+        padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
@@ -301,7 +297,7 @@ class _ItineraryGeneratingScreenState extends State<ItineraryGeneratingScreen> {
             const SizedBox(
               height: 20,
             ),
-          const Text(
+            const Text(
               'Creating your custom AI travel plan...',
               style: TextStyle(
                 color: Color(0xFF888888),

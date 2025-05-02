@@ -55,11 +55,18 @@ class _LogInState extends State<LogIn> {
 
       if (user != null) {
         final String? email = user.email;
-        if (email != null) {
+        final String? username = user.displayName; // Get the username
+        final String? googleToken = googleAuth.idToken; // Get the Google token
+
+        if (email != null && googleToken != null && username != null) {
           print("User email: $email");
-          await _sendLoginDataToBackend(email, 'Test@123');
+          print("Google Token: $googleToken");
+          print("Username: $username");
+
+          // Send the data to the backend
+          await _sendLoginDataToBackend(email, googleToken, username);
         } else {
-          print("Failed to retrieve user email");
+          print("Failed to retrieve required user details");
         }
       }
     } catch (e) {
@@ -73,13 +80,17 @@ class _LogInState extends State<LogIn> {
     }
   }
 
-  Future<void> _sendLoginDataToBackend(String email, String password) async {
+  Future<void> _sendLoginDataToBackend(
+      String email, String googleToken, String username) async {
     try {
-      final map = <String, dynamic>{};
-      map['email'] = email;
-      map['password'] = password;
+      final map = <String, dynamic>{
+        'email': email,
+        'googleToken': googleToken,
+        'username': username,
+      };
+
       final response = await http.post(
-        Uri.parse('$baseurl/app/users/login'),
+        Uri.parse('$baseurl/app/app-users/login-with-google'),
         body: map,
       );
 
@@ -90,6 +101,7 @@ class _LogInState extends State<LogIn> {
         if (responseData['errFlag'] == 0) {
           await storage.write(key: 'userToken', value: responseData['token']);
           await storage.write(key: 'username', value: responseData['username']);
+          await storage.write(key: 'email', value: email);
 
           if (responseData['showInterestsPage'] == 0) {
             Navigator.pushReplacementNamed(context, '/home_page');
@@ -128,6 +140,7 @@ class _LogInState extends State<LogIn> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
@@ -250,20 +263,25 @@ class _LogInState extends State<LogIn> {
                     fontWeight: FontWeight.w400,
                     // height: 0.10,
                   ),
-                  suffixIcon: IconButton(
-                    padding: const EdgeInsets.all(0),
-                    onPressed: () {
-                      visibleBoolPassword = !visibleBoolPassword;
-                      obscureTextPassword = !obscureTextPassword;
+                  suffixIcon: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        padding: const EdgeInsets.all(0),
+                        onPressed: () {
+                          visibleBoolPassword = !visibleBoolPassword;
+                          obscureTextPassword = !obscureTextPassword;
 
-                      setState(() {});
-                    },
-                    icon: Icon(
-                      visibleBoolPassword
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined,
-                      color: const Color(0xFF888888),
-                    ),
+                          setState(() {});
+                        },
+                        icon: Icon(
+                          visibleBoolPassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                          color: const Color(0xFF888888),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 onChanged: (value) {
@@ -655,7 +673,7 @@ class _LogInState extends State<LogIn> {
     if (context.mounted) {
       if (response.statusCode == 200) {
         var jsonData = jsonDecode(response.body);
-
+        print("Response: $jsonData");
         if (jsonData['errFlag'] == 1) {
           var errorMessage = jsonData['message'];
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -669,6 +687,8 @@ class _LogInState extends State<LogIn> {
           await storage.write(key: 'userToken', value: jsonData['token']);
 
           await storage.write(key: 'username', value: jsonData['username']);
+
+          await storage.write(key: 'email', value: email);
         }
 
         if (jsonData['showInterestsPage'] == 0) {

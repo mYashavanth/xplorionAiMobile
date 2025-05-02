@@ -14,8 +14,13 @@ const storage = FlutterSecureStorage();
 
 Widget topBannerCard(status, heading, note, image, fromDate, toDate,
     travelCompanion, budgetType, currentLocation, context) {
+  bool isBannerClickable = true;
   return GestureDetector(
-      onTap: () async {
+    onTap: () async {
+      if (!isBannerClickable) return; // Prevent multiple clicks
+      isBannerClickable = false; // Disable further clicks
+
+      try {
         print(
             "$travelCompanion ---- $budgetType ----- $fromDate ---- $toDate ---- $currentLocation ---- $heading");
         final List<String> words =
@@ -23,7 +28,6 @@ Widget topBannerCard(status, heading, note, image, fromDate, toDate,
         final String location = words.sublist(words.length - 5).join(' ');
 
         print(location);
-        //String? userToken = await storage.read(key: 'userToken');
         await storage.write(key: 'travelCompanion', value: travelCompanion);
         await storage.write(key: 'budgetTier', value: budgetType);
         await storage.write(key: 'startDate', value: fromDate);
@@ -31,145 +35,141 @@ Widget topBannerCard(status, heading, note, image, fromDate, toDate,
         await storage.write(key: 'selectedPlace', value: location);
         storage.write(key: 'itinerarySavedFlag', value: '0');
 
-        Future.delayed(const Duration(seconds: 2), () {
-          Navigator.of(context).pushNamed('/home_page_trip');
-        });
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10, left: 2, right: 2),
-        padding: const EdgeInsets.all(0),
-        // height: 184,
-        width: double.infinity,
-        clipBehavior: Clip.antiAlias,
-        decoration: ShapeDecoration(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
+        // Navigate to the next screen
+        await Navigator.of(context).pushNamed('/home_page_trip');
+      } catch (e) {
+        print("Error during navigation: $e");
+      } finally {
+        isBannerClickable = true; // Re-enable clicks after navigation
+      }
+    },
+    child: Container(
+      margin: const EdgeInsets.only(bottom: 10, left: 2, right: 2),
+      padding: const EdgeInsets.all(0),
+      width: double.infinity,
+      clipBehavior: Clip.antiAlias,
+      decoration: ShapeDecoration(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
+        shadows: const [
+          BoxShadow(
+            color: Color(0x33BCB080),
+            blurRadius: 8,
+            offset: Offset(1, 4),
+            spreadRadius: 0,
+          )
+        ],
+      ),
+      child: Stack(
+        children: [
+          SizedBox(
+            width: double.maxFinite,
+            height: double.maxFinite,
+            child: Stack(
+              children: [
+                Image(
+                  width: double.maxFinite,
+                  height: double.maxFinite,
+                  fit: BoxFit.cover,
+                  image: NetworkImage(
+                      '$baseurl/banner-images/$image'), //AssetImage('assets/images/$image'),
+                ),
+                Positioned.fill(
+                  child: Opacity(
+                    opacity: 0.3,
+                    child: Container(
+                      color: const Color(0xFF000000),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-          shadows: const [
-            BoxShadow(
-              color: Color(0x33BCB080),
-              blurRadius: 8,
-              offset: Offset(1, 4),
-              spreadRadius: 0,
-            )
-          ],
-        ),
-        child: Stack(
-          children: [
-            SizedBox(
-              width: double.maxFinite,
-              height: double.maxFinite,
-              child: Stack(
-                children: [
-                  Image(
-                    width: double.maxFinite,
-                    height: double.maxFinite,
-                    fit: BoxFit.cover,
-                    image: NetworkImage(
-                        '$baseurl/banner-images/$image'), //AssetImage('assets/images/$image'),
-                  ),
-                  Positioned.fill(
-                    child: Opacity(
-                      opacity: 0.3,
-                      child: Container(
-                        color: const Color(0xFF000000),
-                      ),
+          Padding(
+            padding: const EdgeInsets.all(15),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.only(
+                      top: 5, bottom: 5, left: 10, right: 10),
+                  decoration: ShapeDecoration(
+                    color: const Color(0xFF005CE7),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
                     ),
                   ),
-                ],
-              ),
+                  child: Text(
+                    status,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontFamily: themeFontFamily2,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const SizedBox(
+                  height: 8,
+                ),
+                SizedBox(
+                  child: Text(
+                    heading,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontFamily: themeFontFamily,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const SizedBox(
+                  height: 8,
+                ),
+                SizedBox(
+                  width: 240,
+                  child: Text(
+                    note,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xFFEDF2FE),
+                      fontSize: 14,
+                      fontFamily: themeFontFamily2,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  margin: const EdgeInsets.only(top: 10),
+                  width: 60,
+                  height: 30,
+                  decoration: ShapeDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment(-1.00, 0.06),
+                      end: Alignment(1, -0.06),
+                      colors: [
+                        Color(0xFF0099FF),
+                        Color(0xFF54AB6A),
+                      ],
+                    ),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(32)),
+                  ),
+                  child: const Icon(
+                    Icons.arrow_forward,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
             ),
-            Padding(
-              padding: const EdgeInsets.all(15),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.only(
-                        top: 5, bottom: 5, left: 10, right: 10),
-                    decoration: ShapeDecoration(
-                      color: const Color(0xFF005CE7),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                    ),
-                    child: Text(
-                      status,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontFamily: themeFontFamily2,
-                        fontWeight: FontWeight.w700,
-                        // height: 0.15,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  SizedBox(
-                    child: Text(
-                      heading,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontFamily: themeFontFamily,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  SizedBox(
-                    width: 240,
-                    child: Text(
-                      note,
-                      style: const TextStyle(
-                        color: Color(0xFFEDF2FE),
-                        fontSize: 14,
-                        fontFamily: themeFontFamily2,
-                        fontWeight: FontWeight.w400,
-                        // height: 0.12,
-                      ),
-                    ),
-                  ),
-                  const Spacer(),
-                  Container(
-                      margin: const EdgeInsets.only(top: 10),
-                      // padding: const EdgeInsets.all(10),
-                      width: 60,
-                      height: 30,
-                      // padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: ShapeDecoration(
-                        gradient: const LinearGradient(
-                          begin: Alignment(-1.00, 0.06),
-                          end: Alignment(1, -0.06),
-                          colors: [
-                            Color(0xFF0099FF),
-                            Color(0xFF54AB6A),
-                          ],
-                        ),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(32)),
-                      ),
-                      child: const Icon(
-                        Icons.arrow_forward,
-                        color: Colors.white,
-                      )),
-                ],
-              ),
-            ),
-            // const Positioned(
-            //   bottom: 0,
-            //   right: 0,
-            //   child: Image(
-            //     image: AssetImage('assets/icons/robo_girl.png'),
-            //   ),
-            // ),
-          ],
-        ),
-      ));
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 Widget singleCardPlan(context, imageUrl, placeName, noOfDays, dayDate,
@@ -358,6 +358,8 @@ Widget singleCardPlan(context, imageUrl, placeName, noOfDays, dayDate,
                           value: itineraryId
                       ); */
                       storage.write(key: 'selectedPlace', value: placeName);
+                      print("palceName: $placeName");
+                      print("itineraryId: $itineraryId");
                       Navigator.of(context).pushNamed('/home_page_trip',
                           arguments: {
                             'itinerarySavedFlag': 1,
@@ -429,9 +431,9 @@ Widget weekendTripsNearYouCard(
           onTap: () async {
             await storage.write(key: 'selectedPlace', value: cityState);
 
-            // Format and print the weekend dates.
+            // Format and store the weekend dates in yyyy-MM-dd format.
             final weekendDates = getWeekendDates();
-            final formatter = DateFormat('d MMM');
+            final formatter = DateFormat('yyyy-MM-dd'); // Updated format
 
             await storage.write(
                 key: 'startDate', value: formatter.format(weekendDates[0]));
@@ -463,9 +465,9 @@ Widget weekendTripsNearYouCard(
           onTap: () async {
             await storage.write(key: 'selectedPlace', value: cityState);
 
-            // Format and print the weekend dates.
+            // Format and store the weekend dates in yyyy-MM-dd format.
             final weekendDates = getWeekendDates();
-            final formatter = DateFormat('d MMM');
+            final formatter = DateFormat('yyyy-MM-dd'); // Updated format
 
             await storage.write(
                 key: 'startDate', value: formatter.format(weekendDates[0]));
@@ -480,14 +482,18 @@ Widget weekendTripsNearYouCard(
               children: [
                 Row(
                   children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        color: Color(0xFF030917),
-                        fontSize: 16,
-                        fontFamily: 'Public Sans',
-                        fontWeight: FontWeight.w500,
-                        // height: 0.09,
+                    SizedBox(
+                      width: 250,
+                      child: Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFF030917),
+                          fontSize: 16,
+                          fontFamily: 'Public Sans',
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                   ],
@@ -512,7 +518,6 @@ Widget weekendTripsNearYouCard(
                         fontSize: 12,
                         fontFamily: 'Public Sans',
                         fontWeight: FontWeight.w400,
-                        // height: 0,
                       ),
                     ),
                   ],
@@ -537,7 +542,6 @@ Widget weekendTripsNearYouCard(
                         fontSize: 12,
                         fontFamily: 'Public Sans',
                         fontWeight: FontWeight.w400,
-                        // height: 0,
                       ),
                     ),
                   ],
@@ -562,7 +566,6 @@ Widget weekendTripsNearYouCard(
                         fontSize: 12,
                         fontFamily: 'Public Sans',
                         fontWeight: FontWeight.w400,
-                        // height: 0,
                       ),
                     ),
                   ],
@@ -589,7 +592,6 @@ Widget weekendTripsNearYouCard(
                           fontSize: 12,
                           fontFamily: 'Public Sans',
                           fontWeight: FontWeight.w400,
-                          // height: 0,
                         ),
                       ),
                     ),
@@ -604,7 +606,6 @@ Widget weekendTripsNearYouCard(
           height: 43,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: const ShapeDecoration(
-            // color: Color(0xFF005CE7),
             gradient: themeGradientColor,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.only(
@@ -624,13 +625,12 @@ Widget weekendTripsNearYouCard(
               ),
               SizedBox(width: 12),
               Text(
-                'Viewed 14 times today',
+                "Curated by XplorionAI",
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 12,
                   fontFamily: themeFontFamily2,
                   fontWeight: FontWeight.w500,
-                  height: 0,
                 ),
               ),
             ],

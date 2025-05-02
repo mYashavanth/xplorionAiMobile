@@ -16,6 +16,7 @@ class _WelcomePageState extends State<WelcomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SizedBox(
         height: double.maxFinite,
         width: double.maxFinite,
@@ -30,7 +31,8 @@ class _WelcomePageState extends State<WelcomePage> {
                     width: double.maxFinite,
                     height: double.maxFinite,
                     fit: BoxFit.cover,
-                    image: AssetImage('assets/images/welcome_screen_pic_sea.png'),
+                    image:
+                        AssetImage('assets/images/welcome_screen_pic_sea.png'),
                   ),
                   Positioned.fill(
                     child: Opacity(
@@ -51,7 +53,7 @@ class _WelcomePageState extends State<WelcomePage> {
                 Container(
                     padding: const EdgeInsets.all(20),
                     width: MediaQuery.of(context).size.width * 8,
-                    child:  Wrap(
+                    child: Wrap(
                       children: [
                         const Text(
                           'Craft your ',
@@ -124,7 +126,8 @@ class _WelcomePageState extends State<WelcomePage> {
                               //   height: 20.38,
                               //   image: AssetImage('assets/icons/stars.png'),
                               // ),
-                              SvgPicture.asset('assets/icons/star_gradient.svg',color: Colors.white,width:23.8),
+                              SvgPicture.asset('assets/icons/star_gradient.svg',
+                                  color: Colors.white, width: 23.8),
                             ],
                           ),
                         ),
@@ -167,7 +170,11 @@ class _WelcomePageState extends State<WelcomePage> {
                 const Spacer(),
                 InkWell(
                   onTap: () {
-                    Navigator.of(context).pushNamed('/home_page');
+                    Navigator.of(context).pushNamedAndRemoveUntil(
+                      '/home_page', // Target screen
+                      (Route<dynamic> route) =>
+                          false, // Remove all previous routes
+                    );
                   },
                   child: Container(
                     margin: const EdgeInsets.all(20),

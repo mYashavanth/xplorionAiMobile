@@ -1,4 +1,8 @@
+import 'package:xplorion_ai/views/about.dart';
 import 'package:xplorion_ai/views/edit_your_interests.dart';
+import 'package:xplorion_ai/views/privacy_policy.dart';
+import 'package:xplorion_ai/views/splash_screen.dart';
+import 'package:xplorion_ai/views/terms_and_condition.dart';
 import 'package:xplorion_ai/views/your_profile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -23,7 +27,7 @@ import 'package:xplorion_ai/views/saved_itineraries.dart';
 import 'package:xplorion_ai/views/set_password.dart';
 import 'package:xplorion_ai/views/sign_up.dart';
 import 'package:xplorion_ai/views/similar_restuarants.dart';
-import 'package:xplorion_ai/views/splash_screen.dart';
+import 'package:xplorion_ai/views/splash_screen_two.dart';
 import 'package:xplorion_ai/views/trip_settings.dart';
 import 'package:xplorion_ai/views/verify_otp.dart';
 import 'package:xplorion_ai/views/welcome_screen.dart';
@@ -85,7 +89,7 @@ class _MyAppState extends State<MyApp> {
       } else {
         // Navigate back to SplashScreen if online
         _navigatorKey.currentState?.pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const SpalshScreen()),
+          MaterialPageRoute(builder: (context) => SplashScreen()),
           (route) => false,
         );
       }
@@ -98,7 +102,7 @@ class _MyAppState extends State<MyApp> {
       navigatorKey: _navigatorKey,
       title: 'Xplorion AI',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFF0099FF)),
         useMaterial3: true,
       ),
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
@@ -115,10 +119,11 @@ class _MyAppState extends State<MyApp> {
         builder: (context, connectivityProvider, child) {
           return connectivityProvider.isOffline
               ? NoInternetScreen()
-              : const SpalshScreen();
+              : SplashScreen();
         },
       ),
       routes: {
+        '/splash_screen_two': (context) => const SplashScreenTwo(),
         '/login': (context) => const LogIn(),
         '/sign_up': (context) => const SignUp(),
         '/choose_your_interests': (context) => const ChooseYourInterests(),
@@ -144,6 +149,9 @@ class _MyAppState extends State<MyApp> {
         '/similar_restuarant': (context) => const SimilarRestuarants(),
         '/your_profile': (context) => const YourProfile(),
         '/edit_your_interests': (context) => const EditYourInterests(),
+        '/about': (context) => AboutPage(),
+        '/privacy_policy': (context) => PrivacyPolicyPage(),
+        '/terms_and_conditions': (context) => TermsAndConditionsPage(),
       },
       navigatorObservers: [
         CustomNavigatorObserver(
@@ -183,6 +191,7 @@ class NoInternetScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -209,8 +218,7 @@ class NoInternetScreen extends StatelessWidget {
                     .any((result) => result == ConnectivityResult.none)) {
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(
-                        builder: (context) => const SpalshScreen()),
+                    MaterialPageRoute(builder: (context) => SplashScreen()),
                   );
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(

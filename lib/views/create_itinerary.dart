@@ -77,9 +77,10 @@ class _CreateItineraryState extends State<CreateItinerary> {
           ),
         ),
         title: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const SizedBox(
-              width: 104,
+              // width: 104,
               child: Text(
                 'Itinerary for',
                 style: TextStyle(
@@ -258,7 +259,7 @@ class _CreateItineraryState extends State<CreateItinerary> {
               setState(() {
                 location = placeName;
                 if (_curr >= 2) {
-                  Navigator.of(context).pushNamed('/home_page_trip');
+                  Navigator.of(context).pushReplacementNamed('/home_page_trip');
                 }
                 locationTaken = true;
                 _curr += 1;

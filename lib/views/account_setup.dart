@@ -33,6 +33,7 @@ class _AccountSetupState extends State<AccountSetup> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
       ),
@@ -161,10 +162,8 @@ class _AccountSetupState extends State<AccountSetup> {
                   ),
                 ),
               ),
-        
               Container(
                 margin: const EdgeInsets.only(bottom: 20),
-        
                 height: 54,
                 decoration: ShapeDecoration(
                   shape: RoundedRectangleBorder(
@@ -326,13 +325,11 @@ class _AccountSetupState extends State<AccountSetup> {
 
         print(responseData);
 
-        if (responseData['errFlag'] == 0)
-        {
-            Navigator.of(context).pushNamed('/welcome_page');
+        if (responseData['errFlag'] == 0) {
+          Navigator.of(context).pushNamed('/welcome_page');
         }
 
-        if (responseData['errFlag'] == 2)
-        {
+        if (responseData['errFlag'] == 2) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             behavior: SnackBarBehavior.floating,
             padding: EdgeInsets.all(10),
@@ -346,24 +343,22 @@ class _AccountSetupState extends State<AccountSetup> {
             ),
           ));
         }
-
       } else {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            behavior: SnackBarBehavior.floating,
-            padding: EdgeInsets.all(10),
-            margin: EdgeInsets.all(10),
-            content: Text('Couldnot create Username'),
-            duration: Duration(seconds: 3),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(
-                Radius.circular(24),
-              ),
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          behavior: SnackBarBehavior.floating,
+          padding: EdgeInsets.all(10),
+          margin: EdgeInsets.all(10),
+          content: Text('Couldnot create Username'),
+          duration: Duration(seconds: 3),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(
+              Radius.circular(24),
             ),
-          ));
+          ),
+        ));
       }
     } catch (e) {
       print('Error occurred: $e');
     }
-
   }
 }

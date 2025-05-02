@@ -14,6 +14,7 @@ class _PasswordResetSuccessState extends State<PasswordResetSuccess> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

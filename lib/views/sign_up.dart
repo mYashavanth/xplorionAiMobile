@@ -57,15 +57,18 @@ class _SignUpState extends State<SignUp> {
 
       if (user != null) {
         final String? email = user.email;
-        final String? displayName = user.displayName;
+        final String? username = user.displayName; // Get the username
+        final String? googleToken = googleAuth.idToken; // Get the Google token
 
-        if (email != null && displayName != null) {
+        if (email != null && googleToken != null && username != null) {
           print("User email: $email");
-          print("User display name: $displayName");
+          print("Google Token: $googleToken");
+          print("Username: $username");
 
-          await _sendLoginDataToBackend(email, 'Test@123', displayName);
+          // Send the data to the backend
+          await _sendLoginDataToBackend(email, googleToken, username);
         } else {
-          print("Failed to retrieve user email or display name");
+          print("Failed to retrieve required user details");
         }
       }
     } catch (e) {
@@ -80,15 +83,16 @@ class _SignUpState extends State<SignUp> {
   }
 
   Future<void> _sendLoginDataToBackend(
-      String email, String password, String username) async {
+      String email, String googleToken, String username) async {
     try {
-      final map = <String, dynamic>{};
-      map['email'] = email;
-      map['password'] = password;
-      map['username'] = username;
+      final map = <String, dynamic>{
+        'email': email,
+        'googleToken': googleToken,
+        'username': username,
+      };
 
       final response = await http.post(
-        Uri.parse('$baseurl/app/users/register'),
+        Uri.parse('$baseurl/app/app-users/login-with-google'),
         body: map,
       );
 
@@ -99,9 +103,10 @@ class _SignUpState extends State<SignUp> {
         if (responseData['errFlag'] == 0) {
           await storage.write(key: 'userToken', value: responseData['token']);
           await storage.write(key: 'username', value: responseData['username']);
+          await storage.write(key: 'email', value: email);
 
           if (responseData['showInterestsPage'] == 0) {
-            Navigator.of(context).pushNamed('/home_page');
+            Navigator.pushReplacementNamed(context, '/home_page');
           } else {
             Navigator.of(context).pushNamed('/choose_your_interests');
           }
@@ -137,6 +142,7 @@ class _SignUpState extends State<SignUp> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
@@ -273,19 +279,24 @@ class _SignUpState extends State<SignUp> {
                     fontFamily: themeFontFamily2,
                     fontWeight: FontWeight.w400,
                   ),
-                  suffixIcon: IconButton(
-                    onPressed: () {
-                      visibleBoolPassword = !visibleBoolPassword;
-                      obscureTextPassword = !obscureTextPassword;
+                  suffixIcon: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        onPressed: () {
+                          visibleBoolPassword = !visibleBoolPassword;
+                          obscureTextPassword = !obscureTextPassword;
 
-                      setState(() {});
-                    },
-                    icon: Icon(
-                      visibleBoolPassword
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined,
-                      color: const Color(0xFF888888),
-                    ),
+                          setState(() {});
+                        },
+                        icon: Icon(
+                          visibleBoolPassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                          color: const Color(0xFF888888),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 onChanged: (value) {
@@ -330,19 +341,26 @@ class _SignUpState extends State<SignUp> {
                     fontFamily: themeFontFamily2,
                     fontWeight: FontWeight.w400,
                   ),
-                  suffixIcon: IconButton(
-                    onPressed: () {
-                      visibleBoolConfirmPassword = !visibleBoolConfirmPassword;
-                      obscureTextConfirmPassword = !obscureTextConfirmPassword;
+                  suffixIcon: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        onPressed: () {
+                          visibleBoolConfirmPassword =
+                              !visibleBoolConfirmPassword;
+                          obscureTextConfirmPassword =
+                              !obscureTextConfirmPassword;
 
-                      setState(() {});
-                    },
-                    icon: Icon(
-                      visibleBoolConfirmPassword
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined,
-                      color: const Color(0xFF888888),
-                    ),
+                          setState(() {});
+                        },
+                        icon: Icon(
+                          visibleBoolConfirmPassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                          color: const Color(0xFF888888),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 onChanged: (value) {
@@ -623,11 +641,12 @@ class _SignUpState extends State<SignUp> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const SizedBox(height: 30),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      'Safety Sign-Off Form',
+                      'XplorionAI Travel Safety\nSign-Off & Liability Waiver',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -650,31 +669,173 @@ class _SignUpState extends State<SignUp> {
                 ),
                 const SizedBox(height: 10),
                 const Text(
-                  'Before proceeding, please read and acknowledge the following safety guidelines. Your safety is our top priority, and compliance with these guidelines is mandatory for participation.\n',
+                  '1. Service Description & Purpose',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: themeFontFamily,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                const Text(
+                  'XplorionAI is an AI-powered travel advisory tool designed to provide informational travel recommendations, such as travel routes, local attractions, and safety tips. Please note that XplorionAI does not offer or book accommodation options. All advice is generated by automated algorithms for informational purposes only. Users are strongly encouraged to independently verify all travel details and consult professional sources when making travel arrangements or decisions.',
                   style: TextStyle(
                     fontSize: 14,
                     fontFamily: themeFontFamily2,
                     color: Color(0xFF888888),
                   ),
                 ),
+                const SizedBox(height: 15),
                 const Text(
-                  'Safety Agreement',
+                  '2. Assumption of Risk & Due Diligence',
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                     fontFamily: themeFontFamily,
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 5),
                 const Text(
-                  '1. Personal Responsibility: I am responsible for my own safety and will adhere to all instructions provided.\n'
-                  '2. Compliance with Rules: I will follow all safety protocols, regulations, and guidelines outlined for this activity.\n'
-                  '3. Protective Gear: If required, I will wear the necessary protective equipment at all times.\n'
-                  '4. Health & Fitness: I confirm that I am in good health and physically fit to participate. I will inform the organizers of any medical conditions that may affect my participation.\n'
-                  '5. Risk Awareness: I understand that this activity involves inherent risks, and I am participating voluntarily.\n'
-                  '6. Emergency Response: I will immediately report any accidents, injuries, or unsafe conditions to the responsible personnel.\n'
-                  '7. Liability Release: I release the organizers, facilitators, and associated parties from any liability in case of injury, loss, or damage incurred during participation.\n\n'
-                  'By ticking the checkbox on the main page, I confirm that I have read, understood, and agreed to the terms of this safety sign-off form.',
+                  'By using this Service, I acknowledge and agree that:\n\n'
+                  'I am solely responsible for conducting my own comprehensive research and due diligence regarding every aspect of my trip, including travel safety, local laws, environmental conditions, and other critical factors.\n\n'
+                  'I recognize that travel inherently involves numerous risks, which may include—but are not limited to—the following:\n\n'
+                  '• Personal Safety Risks: Incidents such as theft, extortion, kidnapping, crime, or sexual abuse.\n\n'
+                  '• Travel-Related Risks: Situations including loss or theft of personal belongings (such as luggage), flight cancellations or delays, missed connections, itinerary changes, miscommunications, and fraudulent schemes—including currency scams or other fraudulent activities intended to defraud travelers.\n\n'
+                  '• Document & Cyber Risks: Loss or theft of travel documents, or breaches that could lead to identity theft.\n\n'
+                  '• Environmental & External Risks: Adverse weather conditions, natural disasters, political instability, strikes, or other unforeseeable events.\n\n'
+                  '• Transportation & Accident Risks: Road accidents, transportation mishaps, or any incidents occurring during transit.\n\n'
+                  'I understand that certain outcomes—especially those arising from deliberate or intentional actions—fall outside the scope of travel-related incidents covered by this policy. I further acknowledge that the Service does not extend to outcomes resulting from self-initiated or intentional acts.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontFamily: themeFontFamily2,
+                    color: Color(0xFF888888),
+                  ),
+                ),
+                const SizedBox(height: 15),
+                const Text(
+                  '3. Disclaimer of Warranties & Limitation of Liability',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: themeFontFamily,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                const Text(
+                  'The travel information and recommendations provided by XplorionAI are supplied "as is" and without any express or implied warranties. This includes, but is not limited to, any warranties of accuracy, reliability, merchantability, fitness for a particular purpose, or non-infringement.\n\n'
+                  'Under no circumstances shall XplorionAI, its affiliates, or its representatives be liable for any direct, indirect, incidental, consequential, or special damages. This includes, without limitation, damages for injury, death, property loss, or any harm—whether physical, financial, or emotional—that may result from the use of the Service.\n\n'
+                  'I expressly acknowledge that I assume full responsibility for any accident, injury, loss (including loss of luggage, travel documents, or personal belongings), delays, cancellations, or any adverse event occurring during my travel. I hereby waive any right to bring legal action against XplorionAI on the basis of such events.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontFamily: themeFontFamily2,
+                    color: Color(0xFF888888),
+                  ),
+                ),
+                const SizedBox(height: 15),
+                const Text(
+                  '4. Indemnification',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: themeFontFamily,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                const Text(
+                  'I agree to indemnify, defend, and hold harmless XplorionAI and its affiliates from and against any claims, liabilities, damages, losses, or expenses arising directly or indirectly from my use of the Service, my travel decisions, or any incidents related to theft, extortion, kidnapping, crime, sexual abuse, loss of property, or any other travel-related issues.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontFamily: themeFontFamily2,
+                    color: Color(0xFF888888),
+                  ),
+                ),
+                const SizedBox(height: 15),
+                const Text(
+                  '5. Emergency Medical Treatment Consent',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: themeFontFamily,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                const Text(
+                  'Should an emergency occur during my travels, I authorize local emergency medical services to provide any necessary treatment. I understand and accept that all costs related to such emergency care will be solely my responsibility.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontFamily: themeFontFamily2,
+                    color: Color(0xFF888888),
+                  ),
+                ),
+                const SizedBox(height: 15),
+                const Text(
+                  '6. Governing Law and Venue',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: themeFontFamily,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                const Text(
+                  'This Agreement shall be governed by and construed in accordance with the laws of Karnataka, India. Any disputes arising out of or related to this Agreement shall be exclusively resolved in the courts located in Bengaluru, Karnataka, India.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontFamily: themeFontFamily2,
+                    color: Color(0xFF888888),
+                  ),
+                ),
+                const SizedBox(height: 15),
+                const Text(
+                  '7. Severability',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: themeFontFamily,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                const Text(
+                  'If any provision of this Agreement is found to be invalid or unenforceable, the remaining provisions shall continue in full force and effect. Any invalid or unenforceable provision shall be modified only to the extent necessary to preserve the intent of the Agreement.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontFamily: themeFontFamily2,
+                    color: Color(0xFF888888),
+                  ),
+                ),
+                const SizedBox(height: 15),
+                const Text(
+                  '8. Privacy & Minimal Data Collection',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: themeFontFamily,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                const Text(
+                  'During this initial beta phase, XplorionAI collects only your email address for account management and service communications. We do not collect any photographs, videos, or other personally identifiable information (PII) beyond what is necessary. Our data practices strictly adhere to robust privacy standards and comply with all applicable data protection laws, ensuring that your information is handled securely and responsibly.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontFamily: themeFontFamily2,
+                    color: Color(0xFF888888),
+                  ),
+                ),
+                const SizedBox(height: 15),
+                const Text(
+                  '9. Confirmation & Acceptance',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: themeFontFamily,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                const Text(
+                  'By proceeding to use the XplorionAI Travel App, I affirm that I have carefully read, understood, and voluntarily accept the terms of this Travel Safety Sign-Off & Liability Waiver. I acknowledge that:\n\n'
+                  '• It is solely my responsibility to verify all travel-related information and safeguard my personal safety.\n\n'
+                  '• I assume all risks associated with travel, including—but not limited to—the risks outlined above.\n\n'
+                  '• I will not hold XplorionAI, its affiliates, or its agents liable for any negative outcomes resulting from my travel or reliance on the provided information.',
                   style: TextStyle(
                     fontSize: 14,
                     fontFamily: themeFontFamily2,
@@ -810,6 +971,7 @@ class _SignUpState extends State<SignUp> {
           await storage.write(key: 'userToken', value: jsonData['token']);
 
           await storage.write(key: 'username', value: name);
+          await storage.write(key: 'email', value: email);
         }
       } else {
         const snackBar = SnackBar(

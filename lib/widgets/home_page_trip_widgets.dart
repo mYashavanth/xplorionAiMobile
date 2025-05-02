@@ -123,14 +123,26 @@ Future<void> addIterneryToCollection(
   }
 }
 
-Widget buildMenuItemsCard(index, title, menuBoolList, StateSetter setState) {
+Widget buildMenuItemsCard(index, title, menuBoolList, StateSetter setState,
+    generateItineraryForDay, scrollToTripItinerary) {
   return GestureDetector(
     onTap: () {
-      setState(() {
-        for (var i = 0; i < menuBoolList.length; i++) {
-          menuBoolList[i] = i == index;
-        }
-      });
+      print('Clicked on menu item: $title at index: $index');
+      print('boolList: $menuBoolList, ${menuBoolList[index]}');
+      if (index < (menuBoolList.length - 4)) {
+        generateItineraryForDay(dayNo: index + 1).then((_) => setState(() {
+              for (var i = 0; i < menuBoolList.length; i++) {
+                menuBoolList[i] = i == index;
+              }
+            }));
+      } else {
+        setState(() {
+          for (var i = 0; i < menuBoolList.length; i++) {
+            menuBoolList[i] = i == index;
+          }
+        });
+      }
+      scrollToTripItinerary();
     },
     child: Container(
       //  width: 61,
@@ -503,10 +515,22 @@ Widget buildDayActivity(
       height: 32,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: ShapeDecoration(
+        gradient: markAsVisitedList.any((item) =>
+                item["day_no"] == dayNum.toString() &&
+                item["indexId"] == index.toString())
+            ? const LinearGradient(
+                begin: Alignment(-1.00, 0.06),
+                end: Alignment(1, -0.06),
+                colors: [
+                  Color(0xFF0099FF),
+                  Color(0xFF54AB6A),
+                ],
+              )
+            : null,
         color: markAsVisitedList.any((item) =>
                 item["day_no"] == dayNum.toString() &&
                 item["indexId"] == index.toString())
-            ? const Color.fromARGB(255, 0, 189, 16)
+            ? null
             : const Color(0xFFECF2FF),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(32),
@@ -521,7 +545,10 @@ Widget buildDayActivity(
               ? const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.done),
+                    Icon(
+                      Icons.done,
+                      color: Colors.white,
+                    ),
                     SizedBox(width: 5),
                     Text(
                       'Visited',
@@ -565,7 +592,7 @@ Widget buildDayActivity(
             ? [
                 vehicleIcon,
                 Text(
-                  '$duration Mins • $kms Kms',
+                  '$duration Mins • $kms',
                   style: const TextStyle(
                     color: Color(0xFF888888),
                     fontSize: 12,
@@ -1036,7 +1063,7 @@ Widget buildDayActivity(
                         ),
                         Text(
                           // '$ratings ( Google ) • ₹₹',
-                          ratings == "N/A"
+                          ratings == "N/A" || ratings == "null"
                               ? 'No reviews yet—be the first!'
                               : '$ratings ( Google ) • ₹₹',
                           style: const TextStyle(
@@ -1063,7 +1090,7 @@ Widget buildDayActivity(
                         ),
                         Expanded(
                           child: Text(
-                            address == "N/A"
+                            address == "N/A" || address == "null"
                                 ? 'Location unknown—explore!'
                                 : address,
                             style: const TextStyle(
@@ -1121,38 +1148,7 @@ Widget buildDayActivity(
                               const SizedBox(
                                 width: 10,
                               ),
-                              GestureDetector(
-                                onTap: () async {
-                                  print(data[4]);
-                                  try {
-                                    final weekData = await fetchOpenCloseInfo(
-                                        data[4]); // Pass placeName (data[0])
-                                    final weekdayText = List<String>.from(
-                                        weekData['weekday_text']);
-                                    showOpenCloseInfoBottomSheet(
-                                        context, weekdayText);
-                                  } catch (e) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                            'Failed to load opening hours: $e'),
-                                        backgroundColor: Colors.red,
-                                      ),
-                                    );
-                                  }
-                                },
-                                child: const Text(
-                                  'See hours',
-                                  style: TextStyle(
-                                    color: Color(0xFF214EB0),
-                                    fontSize: 14,
-                                    fontFamily: themeFontFamily2,
-                                    fontWeight: FontWeight.w500,
-                                    decoration: TextDecoration.underline,
-                                    decorationColor: Color(0xFF214EB0),
-                                  ),
-                                ),
-                              ),
+                              SeeHoursWidget(placeName: data[4]),
                             ],
                           ),
                         ),
@@ -1174,7 +1170,8 @@ Widget buildDayActivity(
                         Expanded(
                           child: Text(
                             // 'Price Level : $priceDescription',
-                            priceDescription == "N/A"
+                            priceDescription == "N/A" ||
+                                    priceDescription == "null"
                                 ? 'Price Level : Price info missing—discover it!'
                                 : 'Price Level : $priceDescription',
                             style: const TextStyle(
@@ -1363,6 +1360,69 @@ Widget buildDayActivity(
       ),
     ],
   );
+}
+
+class SeeHoursWidget extends StatefulWidget {
+  final String placeName;
+
+  const SeeHoursWidget({Key? key, required this.placeName}) : super(key: key);
+
+  @override
+  _SeeHoursWidgetState createState() => _SeeHoursWidgetState();
+}
+
+class _SeeHoursWidgetState extends State<SeeHoursWidget> {
+  bool _isLoading = false;
+
+  Future<void> _loadHours() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final weekData = await fetchOpenCloseInfo(widget.placeName);
+      final weekdayText = List<String>.from(weekData['weekday_text']);
+      showOpenCloseInfoBottomSheet(context, weekdayText);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to load opening hours: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _isLoading ? null : _loadHours,
+      child: _isLoading
+          ? const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF214EB0)),
+              ),
+            )
+          : const Text(
+              'See hours',
+              style: TextStyle(
+                color: Color(0xFF214EB0),
+                fontSize: 14,
+                fontFamily: themeFontFamily2,
+                fontWeight: FontWeight.w500,
+                decoration: TextDecoration.underline,
+                decorationColor: Color(0xFF214EB0),
+              ),
+            ),
+    );
+  }
 }
 
 class RedoButton extends StatefulWidget {
@@ -2647,24 +2707,56 @@ void showOpenCloseInfoBottomSheet(
         padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Colors.grey[400],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
             const Text(
               'Opening Hours',
               style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                fontFamily: 'Sora',
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
+            const Divider(),
+            const SizedBox(height: 4),
             ListView.builder(
               shrinkWrap: true,
               itemCount: weekdayText.length,
               itemBuilder: (context, index) {
+                final parts = weekdayText[index].split(': ');
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Text(
-                    weekdayText[index],
-                    style: const TextStyle(fontSize: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        parts[0],
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontFamily: 'Sora',
+                        ),
+                      ),
+                      Text(
+                        parts.length > 1 ? parts[1] : '',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontFamily: 'Sora',
+                        ),
+                      ),
+                    ],
                   ),
                 );
               },
@@ -2681,7 +2773,7 @@ Future<Map<String, dynamic>> fetchOpenCloseInfo(String placeName) async {
   String? userToken = await storage.read(key: 'userToken');
 
   final String apiUrl = '$baseurl/get-open-close-info/$placeName/$userToken';
-
+  print('API URL: $apiUrl');
   try {
     final response = await http.get(Uri.parse(apiUrl));
     print('Response: ${response.body}');
@@ -3012,6 +3104,7 @@ Widget buildSavedItineriesBottomSheet(savedItineraryCollectionBool, setState,
       } */
 
       final collections = snapshot.data as List;
+      print('Collections: $collections');
 
       return Container(
         decoration: const ShapeDecoration(
@@ -3140,7 +3233,9 @@ Widget buildSavedItineriesBottomSheet(savedItineraryCollectionBool, setState,
                                         context,
                                         setState,
                                         collection['_id'],
-                                        resIterneryId),
+                                        resIterneryId,
+                                        parseTripIds(collection[
+                                            'trip_ids'])), // Pass the trip_ids set
                                     const SizedBox(height: 16),
                                   ],
                                 ))
@@ -3156,6 +3251,25 @@ Widget buildSavedItineriesBottomSheet(savedItineraryCollectionBool, setState,
       );
     },
   );
+}
+
+Set<String> parseTripIds(dynamic tripIds) {
+  if (tripIds is String) {
+    // Remove curly braces and split the string into individual IDs
+    return tripIds
+        .replaceAll(RegExp(r"[{}']"), '') // Remove curly braces and quotes
+        .split(',') // Split by commas
+        .map((id) => id.trim()) // Trim whitespace
+        .toSet(); // Convert to a Set
+  } else if (tripIds is Iterable) {
+    // If tripIds is already an Iterable, convert it to a Set
+    return tripIds
+        .map((id) => id.toString().replaceAll("'", "").trim())
+        .toSet();
+  } else {
+    // Return an empty Set if tripIds is null or invalid
+    return {};
+  }
 }
 
 /*
@@ -3347,15 +3461,17 @@ Widget buildSavedItineriesBottomSheet(
 } */
 
 Widget buildItineraryCollections(
-    index,
-    img,
-    title,
-    private,
-    savedItineraryCollectionBool,
-    context,
-    setState,
-    collectionDbId,
-    cIterneryId) {
+  int index,
+  String img,
+  String title,
+  bool private,
+  List<bool> savedItineraryCollectionBool,
+  BuildContext context,
+  StateSetter setState,
+  String collectionDbId,
+  String resIterneryId,
+  Set<String> tripIds, // Pass the trip_ids set for the collection
+) {
   Widget privateWidget = const Text(
     'Private',
     style: TextStyle(
@@ -3365,7 +3481,8 @@ Widget buildItineraryCollections(
       fontWeight: FontWeight.w400,
     ),
   );
-  if (private != true) {
+
+  if (!private) {
     privateWidget = SizedBox(
       width: MediaQuery.of(context).size.width * 0.54,
       child: Row(
@@ -3384,7 +3501,7 @@ Widget buildItineraryCollections(
                     decoration: const ShapeDecoration(
                       image: DecorationImage(
                         image: NetworkImage(
-                            "https://img.freepik.com/free-vector/travel-tourism-label-with-attractions_1284-52995.jpg"), //AssetImage("assets/images/friend_photo.jpeg"),
+                            "https://img.freepik.com/free-vector/travel-tourism-label-with-attractions_1284-52995.jpg"),
                         fit: BoxFit.fill,
                       ),
                       shape: OvalBorder(
@@ -3426,6 +3543,11 @@ Widget buildItineraryCollections(
     );
   }
 
+  // Check if the resIterneryId exists in the tripIds set
+  bool isChecked = tripIds.contains(resIterneryId.toString());
+  print('resIterneryId: ${resIterneryId.toString()}, isChecked: $isChecked');
+  print('tripIds: $tripIds');
+
   return SizedBox(
     child: Row(
       children: [
@@ -3436,7 +3558,7 @@ Widget buildItineraryCollections(
           decoration: ShapeDecoration(
             image: const DecorationImage(
               image: NetworkImage(
-                  "https://img.freepik.com/free-vector/travel-tourism-label-with-attractions_1284-52995.jpg"), //AssetImage("assets/images/$img"),
+                  "https://img.freepik.com/free-vector/travel-tourism-label-with-attractions_1284-52995.jpg"),
               fit: BoxFit.fill,
             ),
             shape: RoundedRectangleBorder(
@@ -3467,7 +3589,7 @@ Widget buildItineraryCollections(
           ],
         ),
         const Spacer(),
-        savedItineraryCollectionBool[index]
+        isChecked
             ? const IconButton(
                 onPressed: null,
                 icon: Icon(
@@ -3485,13 +3607,13 @@ Widget buildItineraryCollections(
 
                   print("++++++++++");
                   print(collectionDbId);
-                  print(cIterneryId);
+                  print(resIterneryId);
                   print("++++++++++");
 
                   const FlutterSecureStorage storage = FlutterSecureStorage();
                   String? userToken = await storage.read(key: 'userToken');
-                  addIterneryToCollection(
-                      collectionDbId, cIterneryId, userToken!);
+                  await addIterneryToCollection(
+                      collectionDbId, resIterneryId, userToken!);
 
                   setState(() {});
                 },
@@ -3857,7 +3979,8 @@ Widget buildNewCollectionBottomSheet(
                                       userToken!,
                                       context);
                                   Navigator.pop(context);
-
+                                  final itineraryId =
+                                      await storage.read(key: 'itineraryId');
                                   if (context.mounted) {
                                     showModalBottomSheet(
                                       // isScrollControlled: true,
@@ -3867,21 +3990,22 @@ Widget buildNewCollectionBottomSheet(
                                         return StatefulBuilder(
                                           builder: (context, modalSetState) {
                                             return buildSavedItineriesBottomSheet(
-                                                [
-                                                  false,
-                                                  false,
-                                                  false,
-                                                  false,
-                                                  false,
-                                                  false,
-                                                  false,
-                                                  false,
-                                                  false
-                                                ],
-                                                modalSetState,
-                                                context,
-                                                collectionNameController,
-                                                null);
+                                              [
+                                                false,
+                                                false,
+                                                false,
+                                                false,
+                                                false,
+                                                false,
+                                                false,
+                                                false,
+                                                false
+                                              ],
+                                              modalSetState,
+                                              context,
+                                              collectionNameController,
+                                              itineraryId!,
+                                            );
                                           },
                                         );
                                       },
