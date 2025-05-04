@@ -19,59 +19,45 @@ class ContinuePlanning extends StatefulWidget {
 
 class _ContinuePlanningState extends State<ContinuePlanning> {
   final FlutterSecureStorage storage = const FlutterSecureStorage();
-  List<Widget> createdIternery = [];
 
-  Future<void> fetchItineraries() async {
+  Future<List<Map<String, dynamic>>> fetchItineraries() async {
     String? userToken = await storage.read(key: 'userToken');
     final response =
         await http.get(Uri.parse('$baseurl/itinerary/all/${userToken!}'));
 
     if (response.statusCode == 200) {
-      var data = jsonDecode(response.body);
-      int dataLen = data.length;
-
-      setState(() {
-        createdIternery = [];
-
-        for (int i = 0; i < dataLen; i++) {
-          var place = data[i]['cityStateCountry'];
-          var itineraryString = data[i]['itinerary'];
-          var travelCompanion = data[i]['travelCompanion'];
-          int noOfDays = itineraryString['itinerary']['days'].length;
-          String dayWithDate = itineraryString['itinerary']['days'][0]['day'];
-
-          createdIternery.add(singleCardPlan(
-              context,
-              itineraryString['image_for_main_place'],
-              place,
-              noOfDays,
-              dayWithDate,
-              travelCompanion,
-              data[i]['_id']));
-          createdIternery.add(const SizedBox(
-            height: 14,
-          ));
-        }
-      });
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((itinerary) {
+        return {
+          'place': itinerary['cityStateCountry'],
+          'image': itinerary['itinerary']['image_for_main_place'],
+          'travelCompanion': itinerary['travelCompanion'],
+          'noOfDays': itinerary['itinerary']['itinerary']['days'].length,
+          'dayWithDate': itinerary['itinerary']['itinerary']['days'][0]['day'],
+          'id': itinerary['_id'],
+        };
+      }).toList();
+    } else {
+      throw Exception('Failed to load itineraries');
     }
   }
 
   @override
-  void initState() {
-    fetchItineraries();
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    var meadiaWidth = MediaQuery.of(context).size.width;
+    var mediaWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        // shadowColor: Colors.white,
         surfaceTintColor: Colors.white,
         backgroundColor: Colors.white,
         centerTitle: true,
+        leading: IconButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          icon: const Icon(Icons.arrow_back_ios_new),
+        ),
         title: const Text(
           'Continue planning',
           textAlign: TextAlign.center,
@@ -80,36 +66,63 @@ class _ContinuePlanningState extends State<ContinuePlanning> {
             fontSize: 20,
             fontFamily: 'Public Sans',
             fontWeight: FontWeight.w600,
-            // height: 0,
           ),
         ),
-        // actions: [
-        //   Container(
-        //     width: 33,
-        //     height: 33,
-        //     decoration: const ShapeDecoration(
-        //       image: DecorationImage(
-        //         image: AssetImage("assets/images/profile_photo.jpeg"),
-        //         fit: BoxFit.fill,
-        //       ),
-        //       shape: OvalBorder(),
-        //     ),
-        //   ),
-        //   const SizedBox(
-        //     width: 10,
-        //   )
-        // ],
       ),
       body: Padding(
         padding:
-            EdgeInsets.fromLTRB(meadiaWidth * 0.04, 0, meadiaWidth * 0.04, 0),
-        child: SingleChildScrollView(
-          child: Column(
-            children: createdIternery,
-          ),
+            EdgeInsets.fromLTRB(mediaWidth * 0.04, 0, mediaWidth * 0.04, 0),
+        child: FutureBuilder<List<Map<String, dynamic>>>(
+          future: fetchItineraries(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(
+                child: Text(
+                  'Failed to load itineraries: ${snapshot.error}',
+                  style: const TextStyle(color: Colors.red),
+                ),
+              );
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const Center(
+                child: Text(
+                  'No itineraries found.',
+                  style: TextStyle(
+                    color: Color(0xFF888888),
+                    fontSize: 16,
+                    fontFamily: 'Public Sans',
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              );
+            } else {
+              final itineraries = snapshot.data!;
+              return SingleChildScrollView(
+                child: Column(
+                  children: itineraries.map((itinerary) {
+                    // print('Image URL: ${itinerary['image']}');
+                    return Column(
+                      children: [
+                        singleCardPlan(
+                          context,
+                          itinerary['image'],
+                          itinerary['place'],
+                          itinerary['noOfDays'],
+                          itinerary['dayWithDate'],
+                          itinerary['travelCompanion'],
+                          itinerary['id'],
+                        ),
+                        const SizedBox(height: 14),
+                      ],
+                    );
+                  }).toList(),
+                ),
+              );
+            }
+          },
         ),
       ),
-      // bottomNavigationBar: const TripssistNavigationBar(0),
     );
   }
 

@@ -72,8 +72,8 @@ Widget topBannerCard(status, heading, note, image, fromDate, toDate,
                   width: double.maxFinite,
                   height: double.maxFinite,
                   fit: BoxFit.cover,
-                  image: NetworkImage(
-                      '$baseurl/banner-images/$image'), //AssetImage('assets/images/$image'),
+                  image:
+                      NetworkImage(image), //AssetImage('assets/images/$image'),
                 ),
                 Positioned.fill(
                   child: Opacity(
@@ -194,18 +194,22 @@ Widget singleCardPlan(context, imageUrl, placeName, noOfDays, dayDate,
       children: [
         Container(
           width: MediaQuery.of(context).size.width * 0.240,
-          // height: 116,
+          height: 116,
           clipBehavior: Clip.antiAlias,
-          decoration: ShapeDecoration(
-            image: DecorationImage(
-              image: imageUrl != null && imageUrl.isNotEmpty
-                  ? NetworkImage(imageUrl)
-                  : const AssetImage("assets/images/panjim_goa.jpeg")
-                      as ImageProvider,
-              fit: BoxFit.fill,
-            ),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: imageUrl != null && imageUrl.isNotEmpty
+                ? Image.network(
+                    imageUrl,
+                    fit: BoxFit.fill,
+                  )
+                : Image.asset(
+                    "assets/images/panjim_goa.jpeg",
+                    fit: BoxFit.fill,
+                  ),
           ),
         ),
         const SizedBox(width: 20),

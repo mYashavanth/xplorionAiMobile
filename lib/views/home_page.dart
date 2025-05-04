@@ -123,7 +123,8 @@ class _HomePageState extends State<HomePage> {
           var travelCompanion = data[i]['travelCompanion'];
           int noOfDays = itineraryString['itinerary']['days'].length;
           String dayWithDate = itineraryString['itinerary']['days'][0]['day'];
-
+          // print(
+          //     'itinerary image:------- ${itineraryString['image_for_main_place']}');
           createdIternery.add(singleCardPlan(
               context,
               itineraryString['image_for_main_place'],
@@ -235,6 +236,8 @@ class _HomePageState extends State<HomePage> {
     if (response.statusCode == 200) {
       var data = jsonDecode(response.body);
       int dataLen = data.length;
+      print(
+          'bannerData:+++++++++++++++++++++++++++++++++++++++++++++++++++ $data');
 
       for (int i = 0; i < dataLen; i++) {
         imageSliders.add(

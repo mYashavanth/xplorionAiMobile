@@ -7,6 +7,12 @@ class AboutPage extends StatelessWidget {
       appBar: AppBar(
         elevation: 0, // No background color
         centerTitle: true,
+        leading: IconButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          icon: const Icon(Icons.arrow_back_ios_new),
+        ),
         title: const Text(
           'About Us',
           style: TextStyle(

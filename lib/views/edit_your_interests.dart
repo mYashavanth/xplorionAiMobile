@@ -160,6 +160,12 @@ class _EditYourInterestsState extends State<EditYourInterests> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         centerTitle: true,
+        leading: IconButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          icon: const Icon(Icons.arrow_back_ios_new),
+        ),
         title: const Text(
           'Find your fun',
           textAlign: TextAlign.center,

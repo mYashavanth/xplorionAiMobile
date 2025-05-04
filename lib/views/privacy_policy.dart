@@ -7,6 +7,12 @@ class PrivacyPolicyPage extends StatelessWidget {
       appBar: AppBar(
         elevation: 0,
         centerTitle: true,
+        leading: IconButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          icon: const Icon(Icons.arrow_back_ios_new),
+        ),
         title: const Text(
           'Privacy Policy',
           style: TextStyle(
