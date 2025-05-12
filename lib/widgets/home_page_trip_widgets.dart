@@ -473,6 +473,7 @@ Widget buildDayActivity(
   String originDestination = data[13].toString();
   String priceDescription = data[14].toString();
   String currentlyOpen = data[15].toString();
+  String distance_units = data[16].toString();
 
   if (currentlyOpen == 'true') {
     open = true;
@@ -592,7 +593,7 @@ Widget buildDayActivity(
             ? [
                 vehicleIcon,
                 Text(
-                  '$duration Mins • $kms',
+                  '$duration Mins • $kms $distance_units',
                   style: const TextStyle(
                     color: Color(0xFF888888),
                     fontSize: 12,
@@ -1004,29 +1005,31 @@ Widget buildDayActivity(
                         ),
                         //
                         //
-                        Container(
-                          height: 26,
-                          margin: const EdgeInsets.only(right: 8),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
-                          decoration: ShapeDecoration(
-                            color: const Color(0xFFEFEFEF),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(32),
-                            ),
-                          ),
-                          child: Center(
-                            child: SizedBox(
-                              width: 165,
-                              child: Text(
-                                data[4],
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: Color(0xFF888888),
-                                  fontSize: 12,
-                                  fontFamily: themeFontFamily2,
-                                  fontWeight: FontWeight.w500,
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 190),
+                          child: IntrinsicWidth(
+                            child: Container(
+                              height: 26,
+                              margin: const EdgeInsets.only(right: 8),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
+                              decoration: ShapeDecoration(
+                                color: const Color(0xFFEFEFEF),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(32),
+                                ),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  data[4],
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Color(0xFF888888),
+                                    fontSize: 12,
+                                    fontFamily: themeFontFamily2,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
                               ),
                             ),
@@ -1948,7 +1951,7 @@ Widget buildLocalFoodAndDrinksCard(img, svg, title, desc, context) {
                 ),
                 Text(
                   desc,
-                  maxLines: 4,
+                  maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Color(0xFF484848),
@@ -2057,13 +2060,13 @@ Widget showFoodBottomSheet(img, svg, title, description) {
               ),
               Row(
                 children: [
-                  SvgPicture.asset(
-                    'assets/icons/$svg',
-                    width: 21,
-                  ),
-                  const SizedBox(
-                    width: 10,
-                  ),
+                  // SvgPicture.asset(
+                  //   'assets/icons/$svg',
+                  //   width: 21,
+                  // ),
+                  // const SizedBox(
+                  //   width: 10,
+                  // ),
                   Container(
                     // height: 16,
                     padding:

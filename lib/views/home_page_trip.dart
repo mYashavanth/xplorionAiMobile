@@ -428,6 +428,7 @@ class _HomePageTripState extends State<HomePageTrip> {
 
       final responseS = await http
           .get(Uri.parse('$baseurl/itinerary/$itineraryId/$userToken'));
+      print('$baseurl/itinerary/$itineraryId/$userToken');
 
       if (responseS.statusCode == 200) {
         responseDataS = json.decode(responseS.body);
@@ -1707,6 +1708,7 @@ class _HomePageTripState extends State<HomePageTrip> {
             ),
           );
           //itineraryImages.add(activitiesData[k]['place_image_url']);
+          print('activitiesData[k], : ${activitiesData[k]}');
 
           // Add elements to the sublist
           activitiesSubList.add('car');
@@ -1729,6 +1731,7 @@ class _HomePageTripState extends State<HomePageTrip> {
           activitiesSubList.add(activitiesData[k]['two_locations_cordinates']);
           activitiesSubList.add(activitiesData[k]['price_level_description']);
           activitiesSubList.add(activitiesData[k]['currently_open']);
+          activitiesSubList.add(activitiesData[k]['distance_unit']);
 
           // Add the sublist to the main activities list
           activities.add(activitiesSubList);

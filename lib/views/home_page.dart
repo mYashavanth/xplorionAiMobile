@@ -431,94 +431,67 @@ class _HomePageState extends State<HomePage> {
                                 ),
                         ],
                       ),
-                Row(
-                  children: [
-                    const Text(
-                      'Continue planning',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Color(0xFF1F1F1F),
-                        fontSize: 20,
-                        fontFamily: themeFontFamily,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const Spacer(),
-                    SizedBox(
-                      child: TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pushNamed('/continue_planning');
-                        },
-                        child: const Text(
-                          'Top 6',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 14,
-                            fontFamily: themeFontFamily2,
-                            fontWeight: FontWeight.w400,
-                            height: 0,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const Text(
-                    'Pick up where you left off, Keep your adventures rolling!'),
-                const SizedBox(
-                  height: 10,
-                ),
-                SizedBox(
-                  height: 144,
-                  child: createdIternery.isEmpty
-                      ? FutureBuilder(
-                          future: Future.delayed(const Duration(seconds: 5)),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.done) {
-                              return const Center(
-                                child: Text('Start planning your trip!'),
-                              );
-                            } else {
-                              return ListView.builder(
-                                itemExtent:
-                                    MediaQuery.of(context).size.width * 0.92,
-                                scrollDirection: Axis.horizontal,
-                                shrinkWrap: true,
-                                physics:
-                                    const PageScrollPhysics(), // Enables snapping to one card at a time
-                                itemCount:
-                                    5, // Number of shimmer cards to display
-                                itemBuilder: (context, index) {
-                                  return Shimmer.fromColors(
-                                    baseColor: Colors.grey.shade300,
-                                    highlightColor: Colors.grey.shade100,
-                                    child: Container(
-                                      width: MediaQuery.of(context).size.width *
-                                          0.92,
-                                      margin: const EdgeInsets.symmetric(
-                                          horizontal: 8),
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey,
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
+                createdIternery.isEmpty
+                    ? const SizedBox.shrink()
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Text(
+                                'Continue planning',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Color(0xFF1F1F1F),
+                                  fontSize: 20,
+                                  fontFamily: themeFontFamily,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const Spacer(),
+                              SizedBox(
+                                child: TextButton(
+                                  onPressed: () {
+                                    Navigator.of(context)
+                                        .pushNamed('/continue_planning');
+                                  },
+                                  child: const Text(
+                                    'Top 6',
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontSize: 14,
+                                      fontFamily: themeFontFamily2,
+                                      fontWeight: FontWeight.w400,
+                                      height: 0,
                                     ),
-                                  );
-                                },
-                              );
-                            }
-                          },
-                        )
-                      : ListView(
-                          itemExtent: MediaQuery.of(context).size.width * 0.92,
-                          scrollDirection: Axis.horizontal,
-                          shrinkWrap: true,
-                          physics:
-                              const PageScrollPhysics(), // Enables snapping to one card at a time
-                          children: createdIternery,
-                        ),
-                ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Text(
+                              'Pick up where you left off, Keep your adventures rolling!'),
+                          const SizedBox(
+                            height: 10,
+                          ),
+                          SizedBox(
+                            height: 144,
+                            child: ListView(
+                              itemExtent:
+                                  MediaQuery.of(context).size.width * 0.92,
+                              scrollDirection: Axis.horizontal,
+                              shrinkWrap: true,
+                              physics:
+                                  const PageScrollPhysics(), // Enables snapping to one card at a time
+                              children: createdIternery,
+                            ),
+                          ),
+                        ],
+                      ),
                 // singleCardPlan(context),
+                const SizedBox(
+                  height: 20,
+                ),
               ],
             ),
           ),
@@ -629,7 +602,7 @@ class _HomePageState extends State<HomePage> {
           // ),
 
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

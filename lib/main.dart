@@ -33,9 +33,11 @@ import 'package:xplorion_ai/views/verify_otp.dart';
 import 'package:xplorion_ai/views/welcome_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter_microsoft_clarity/flutter_microsoft_clarity.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  FlutterMicrosoftClarity().init(projectId: 'ri7ug1xgjk');
   await Firebase.initializeApp();
   runApp(
     MultiProvider(
@@ -57,12 +59,15 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+  String _platformVersion = 'Unknown';
+  final _flutterMicrosoftClarityPlugin = FlutterMicrosoftClarity();
 
   @override
   void initState() {
     super.initState();
     _initConnectivity();
     _setupConnectivityListener();
+    initPlatformState();
   }
 
   Future<void> _initConnectivity() async {
@@ -94,6 +99,26 @@ class _MyAppState extends State<MyApp> {
         );
       }
     });
+  }
+
+  Future<void> initPlatformState() async {
+    String platformVersion;
+
+    try {
+      platformVersion =
+          await _flutterMicrosoftClarityPlugin.getPlatformVersion() ??
+              'Unknown platform version';
+    } catch (e) {
+      print('Error: $e');
+      platformVersion = 'Failed to get platform version.';
+    }
+    if (!mounted) return;
+
+    setState(() {
+      _platformVersion = platformVersion;
+    });
+    print(
+        'Platform version: $_platformVersion +++++++++++++++++++++++++++++++++++++++++++++++++++++++');
   }
 
   @override

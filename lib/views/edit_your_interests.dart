@@ -353,7 +353,6 @@ class _EditYourInterestsState extends State<EditYourInterests> {
                         fontSize: 16,
                         fontFamily: themeFontFamily,
                         fontWeight: FontWeight.w600,
-                        height: 0.16,
                       ),
                     ),
                   ),
@@ -369,34 +368,29 @@ class _EditYourInterestsState extends State<EditYourInterests> {
   //(String id, String interestsText, bool isSelected, String subCatId)
   Widget interestsContainer(id, interestsText, cat, arrayBool, subCatId) {
     var index = int.parse(id);
+    bool isSelected = selectedSubCategory.contains(subCatId.toString());
 
     return InkWell(
-      // cat
       onTap: () {
-        //allowInterestcategory();
-        setState(() {
-          arrayBool[index] = !arrayBool[index];
-          addSubInterestCat(subCatId);
-        });
+        addSubInterestCat(subCatId.toString());
       },
-      //: null,
       child: Opacity(
         opacity: cat ? 1 : 0.5,
         child: Container(
           height: 42,
-          // padding: const EdgeInsets.only(top: 0, left: 2, bottom: 0, right: 2),
           padding: const EdgeInsets.all(2),
           clipBehavior: Clip.antiAlias,
           decoration: ShapeDecoration(
-            gradient: arrayBool[index]
+            gradient: isSelected
                 ? themeGradientColor
-                : noneThemeGradientColor, // arrayBool[index] ||
+                : noneThemeGradientColor, // Use `isSelected` to determine the style
             shape: RoundedRectangleBorder(
               side: BorderSide(
                 width: 1,
-                color: arrayBool[index] // arrayBool[index] ||
+                color: isSelected
                     ? Colors.transparent
-                    : const Color(0xFFCDCED7),
+                    : const Color(
+                        0xFFCDCED7), // Use `isSelected` to determine the border color
               ),
               borderRadius: BorderRadius.circular(32),
             ),
@@ -406,19 +400,20 @@ class _EditYourInterestsState extends State<EditYourInterests> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(32),
             ),
-            backgroundColor: arrayBool[index]
+            backgroundColor: isSelected
                 ? const Color(0xFFEBF2FF)
-                : Colors.white, // arrayBool[index] ||
+                : Colors
+                    .white, // Use `isSelected` to determine the background color
             label: Text(
               interestsText,
               style: TextStyle(
-                color: arrayBool[index]
+                color: isSelected
                     ? const Color(0xFF005CE7)
-                    : Colors.black, // arrayBool[index] ||
+                    : Colors
+                        .black, // Use `isSelected` to determine the text color
                 fontSize: 14,
                 fontFamily: themeFontFamily2,
                 fontWeight: FontWeight.w400,
-                // height: 0.12,
               ),
             ),
           ),
@@ -428,23 +423,28 @@ class _EditYourInterestsState extends State<EditYourInterests> {
   }
 
   addSubInterestCat(String subCatId) {
-    if (selectedSubCategory.contains(subCatId.toString())) {
-      selectedSubCategory.remove(subCatId.toString());
-    } else {
-      selectedSubCategory.add(subCatId.toString());
-    }
+    setState(() {
+      if (selectedSubCategory.contains(subCatId.toString())) {
+        // If the subcategory is already selected, remove it
+        selectedSubCategory.remove(subCatId.toString());
+      } else {
+        // If the total selected subcategories are less than 6, allow adding
+        if (selectedSubCategory.length < 6) {
+          selectedSubCategory.add(subCatId.toString());
+        } else {
+          // Show a message if the user tries to select more than 6
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('You can select up to 6 interests only.'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
 
-    print(selectedSubCategory);
-
-    if (selectedSubCategory.isNotEmpty) {
-      setState(() {
-        allSelected = true;
-      });
-    } else {
-      setState(() {
-        allSelected = false;
-      });
-    }
+      // Update the `allSelected` state based on whether any subcategories are selected
+      allSelected = selectedSubCategory.isNotEmpty;
+    });
   }
 
   saveSelectedInterest() async {
@@ -470,7 +470,7 @@ class _EditYourInterestsState extends State<EditYourInterests> {
         final responseData = jsonDecode(response.body);
 
         if (responseData['errFlag'] == 0) {
-          Navigator.of(context).pushNamed('/profile');
+          Navigator.of(context).pushReplacementNamed('/profile');
         }
       } else {
         // If the server did not return a 200 OK response

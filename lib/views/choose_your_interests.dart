@@ -302,24 +302,19 @@ class _ChooseYourInterestsState extends State<ChooseYourInterests> {
     );
   }
 
-  //(String id, String interestsText, bool isSelected, String subCatId)
   Widget interestsContainer(id, interestsText, cat, arrayBool, subCatId) {
     var index = int.parse(id);
     return InkWell(
       onTap: () {
-        //cat ?
-        arrayBool[index] = !arrayBool[index];
         addSubInterestCat(subCatId);
-        //allowInterestcategory();
-        //cat = true;
-        setState(() {});
+        setState(() {
+          arrayBool[index] = selectedSubCategory.contains(subCatId.toString());
+        });
       },
-      //: null,
       child: Opacity(
         opacity: arrayBool[index] ? 1 : 0.5,
         child: Container(
           height: 42,
-          // padding: const EdgeInsets.only(top: 0, left: 2, bottom: 0, right: 2),
           padding: const EdgeInsets.all(2),
           clipBehavior: Clip.antiAlias,
           decoration: ShapeDecoration(
@@ -360,21 +355,28 @@ class _ChooseYourInterestsState extends State<ChooseYourInterests> {
   }
 
   addSubInterestCat(String subCatId) {
-    if (selectedSubCategory.contains(subCatId.toString())) {
-      selectedSubCategory.remove(subCatId.toString());
-    } else {
-      selectedSubCategory.add(subCatId.toString());
-    }
+    setState(() {
+      if (selectedSubCategory.contains(subCatId.toString())) {
+        // If the subcategory is already selected, remove it
+        selectedSubCategory.remove(subCatId.toString());
+      } else {
+        // If the total selected subcategories are less than 6, allow adding
+        if (selectedSubCategory.length < 6) {
+          selectedSubCategory.add(subCatId.toString());
+        } else {
+          // Show a message if the user tries to select more than 6
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('You can select up to 6 interests only.'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
 
-    if (selectedSubCategory.isNotEmpty) {
-      setState(() {
-        allSelected = true;
-      });
-    } else {
-      setState(() {
-        allSelected = false;
-      });
-    }
+      // Update the `allSelected` state based on whether any subcategories are selected
+      allSelected = selectedSubCategory.isNotEmpty;
+    });
   }
 
   saveSelectedInterest() async {
