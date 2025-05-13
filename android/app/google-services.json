@@ -1,41 +1,41 @@
 {
   "project_info": {
-    "project_number": "721009628448",
-    "project_id": "xplorionai-9bd88",
-    "storage_bucket": "xplorionai-9bd88.firebasestorage.app"
+    "project_number": "374790515855",
+    "project_id": "xplorionai-274d9",
+    "storage_bucket": "xplorionai-274d9.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:721009628448:android:a2298a1de111f112c8b345",
+        "mobilesdk_app_id": "1:374790515855:android:c148d4e56d05ae4abf14fa",
         "android_client_info": {
-          "package_name": "com.example.xplorion_ai"
+          "package_name": "com.yourname.xplorionai"
         }
       },
       "oauth_client": [
         {
-          "client_id": "721009628448-l1o97b3op014eq8mroco1rovfrtqne38.apps.googleusercontent.com",
+          "client_id": "374790515855-9o7iqorc7809iacdna2ubjimh4dorr2b.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.xplorion_ai",
+            "package_name": "com.yourname.xplorionai",
             "certificate_hash": "2468dec711655f0d60d81d01c5b17d2b95c46fbd"
           }
         },
         {
-          "client_id": "721009628448-j1g4aou1tub10n75outbt6gnefejq351.apps.googleusercontent.com",
+          "client_id": "374790515855-52t07pq4jk0a2a04em59qheijlaepnqc.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyBENi0kmmpzAPX3aJnGAoSgZ_RMLqwf3QY"
+          "current_key": "AIzaSyCXLSx2ucRaA7aSexEVISHIRWJtof1hjsA"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "721009628448-j1g4aou1tub10n75outbt6gnefejq351.apps.googleusercontent.com",
+              "client_id": "374790515855-52t07pq4jk0a2a04em59qheijlaepnqc.apps.googleusercontent.com",
               "client_type": 3
             }
           ]
