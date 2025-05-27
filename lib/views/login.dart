@@ -12,6 +12,7 @@ import 'package:http/http.dart' as http;
 import 'urlconfig.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class LogIn extends StatefulWidget {
@@ -38,6 +39,8 @@ class _LogInState extends State<LogIn> {
 
   Future<void> _signInWithGoogle() async {
     try {
+      await _googleSignIn.signOut();
+
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
       if (googleUser == null) return;
 
@@ -62,6 +65,14 @@ class _LogInState extends State<LogIn> {
           print("User email: $email");
           print("Google Token: $googleToken");
           print("Username: $username");
+
+          await FirebaseAnalytics.instance.logLogin(
+              loginMethod: 'google',
+              parameters: {
+                'email': email,
+                'googleToken': googleToken,
+                'username': username
+              });
 
           // Send the data to the backend
           await _sendLoginDataToBackend(email, googleToken, username);

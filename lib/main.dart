@@ -32,6 +32,8 @@ import 'package:xplorion_ai/views/trip_settings.dart';
 import 'package:xplorion_ai/views/verify_otp.dart';
 import 'package:xplorion_ai/views/welcome_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_analytics/observer.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_microsoft_clarity/flutter_microsoft_clarity.dart';
 
@@ -61,6 +63,7 @@ class _MyAppState extends State<MyApp> {
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   String _platformVersion = 'Unknown';
   final _flutterMicrosoftClarityPlugin = FlutterMicrosoftClarity();
+  final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
 
   @override
   void initState() {
@@ -186,6 +189,7 @@ class _MyAppState extends State<MyApp> {
             homePageKey.currentState?.fetchItineraries();
           },
         ),
+        FirebaseAnalyticsObserver(analytics: analytics),
       ],
     );
   }

@@ -189,7 +189,7 @@ class _SplashScreenTwoState extends State<SplashScreenTwo> {
                   const SizedBox(
                     height: 40,
                     child: Text(
-                      'Welcome to XplorionAI',
+                      'Welcome to XplorionAi',
                       style: TextStyle(
                         color: Color(0xFF005CE7),
                         fontSize: 24,

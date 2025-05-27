@@ -40,6 +40,8 @@ class _SignUpState extends State<SignUp> {
 
   Future<void> _signInWithGoogle() async {
     try {
+      await _googleSignIn.signOut();
+
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
       if (googleUser == null) return;
 
