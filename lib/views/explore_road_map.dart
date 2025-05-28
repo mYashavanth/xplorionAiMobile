@@ -22,16 +22,23 @@ class ExploreRoadMap extends StatefulWidget {
 }
 
 class _ExploreRoadMapState extends State<ExploreRoadMap>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   late TabController mapTabController;
 
   List<bool> showPopUpWidgetsBool = [true, true, true, true, true];
   List<bool> itineraryDatesRowBool = [true, false, false, false, false];
   int tablength = 2;
 
+  late PageController _pageController; // Controls card scrolling
+  int _currentPage = 0; // Tracks visible card index
+  int? selectedMarkerIndex; // Tracks highlighted marker
+  @override
+  bool get wantKeepAlive => true;
+
   @override
   void initState() {
     super.initState();
+    exploreLocationCards = [];
     // TODO: implement initState
     mapTabController = TabController(length: tablength, vsync: this);
     mapTabController.addListener(() {
@@ -41,6 +48,7 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
         });
       }
     });
+    _pageController = PageController(viewportFraction: 0.95); // Card width
   }
 
   final List<Tab> topTabs = [];
@@ -114,160 +122,120 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
 
   // Function to fetch and display shortest route
   Future<void> _getShortestRoute(int tabIndex) async {
+    // Clear previous data
     points.clear();
     locations.clear();
     polylines.clear();
 
     final receivedArgs =
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    var itineraryDataForMaps = receivedArgs?['itineraryDataMaps'];
-    print(
-        '++++++++++++++++++++++++dataToDisplay++++++++++++++++++++++++++++++++++++++');
-    print(itineraryDataForMaps);
-    print(
-        '++++++++++++++++++++++++dataToDisplay++++++++++++++++++++++++++++++++++++++');
-    var mapsDataJson = itineraryDataForMaps;
-    int dataLen = mapsDataJson.length;
+    final itineraryDataForMaps = receivedArgs?['itineraryDataMaps'];
+    final mapsDataJson = itineraryDataForMaps;
+    final dataLen = mapsDataJson.length;
 
-    for (int i = 0; i < dataLen; i++) {
-      if (topTabs.length < dataLen) {
+    // Generate tabs if needed
+    if (topTabs.length < dataLen) {
+      for (int i = 0; i < dataLen; i++) {
         topTabs.add(Tab(text: 'Day ${mapsDataJson[i]['day_no']}'));
       }
+    }
 
-      var dayWiseActivityData = mapsDataJson[i]['activities'];
-      if (tabIndex == i) {
-        exploreLocationCards = [];
-        for (int d = 0; d < dayWiseActivityData.length; d++) {
-          // print(
-          //     '+++++++++++++++++++++++++++++++++++++++++++++daywiseData$d++++++++++++++++++++++++++++++++++++++++++++++++++++');
-          // print(dayWiseActivityData[d]);
-          // print(
-          //     "dayWiseActivityData-length ${dayWiseActivityData.length} d $d exploreLocationCards-length ${exploreLocationCards.length}");
-          // print(
-          //     '+++++++++++++++++++++++++++++++++++++++++++++daywiseData$d++++++++++++++++++++++++++++++++++++++++++++++++++++');
-          if (dayWiseActivityData[d]['lat'] != null &&
-              dayWiseActivityData[d]['long'] != null) {
-            points.add(LatLng(
-                dayWiseActivityData[d]['lat'], dayWiseActivityData[d]['long']));
+    // Process activities for current tab
+    final dayWiseActivityData = mapsDataJson[tabIndex]['activities'];
+    final newExploreCards = <Widget>[];
+
+    for (int d = 0; d < dayWiseActivityData.length; d++) {
+      final activity = dayWiseActivityData[d];
+
+      // Add location points
+      if (activity['lat'] != null && activity['long'] != null) {
+        points.add(LatLng(activity['lat'], activity['long']));
+      }
+
+      // Add location names
+      if (activity['locality_area_place_business'] != null) {
+        locations.add(activity['locality_area_place_business']);
+      }
+
+      // Create card widget
+      newExploreCards.add(popUpExploreWidgets(
+        d,
+        context,
+        setState,
+        activity['place_image_url'],
+        activity['locality_area_place_business'],
+        activity['time'],
+        activity['one_line_description_about_place'],
+        activity['lat'],
+        activity['long'],
+        activity['ratings'],
+      ));
+    }
+
+    // Update tab controller if needed
+    if (mapTabController.length != dataLen) {
+      mapTabController.dispose();
+      mapTabController = TabController(length: dataLen, vsync: this);
+      mapTabController.addListener(() {
+        if (mapTabController.indexIsChanging) {
+          _getShortestRoute(mapTabController.index);
+        }
+      });
+    }
+
+    // Get route from Google Maps API
+    if (points.length > 1) {
+      final origin = '${points.first.latitude},${points.first.longitude}';
+      final destination = '${points.last.latitude},${points.last.longitude}';
+      final waypoints = points
+          .sublist(1, points.length - 1)
+          .map((point) => '${point.latitude},${point.longitude}')
+          .join('|');
+
+      final url =
+          'https://maps.googleapis.com/maps/api/directions/json?origin=$origin&destination=$destination&waypoints=$waypoints&key=$googleApiKey';
+
+      try {
+        final response = await http.get(Uri.parse(url));
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          if (data['routes'].isNotEmpty) {
+            final polylinePoints =
+                data['routes'][0]['overview_polyline']['points'];
+            final decodedPolyline = _decodePolyline(polylinePoints);
+
+            polylines.add(
+              Polyline(
+                polylineId: const PolylineId('shortest_route'),
+                points: decodedPolyline,
+                color: Colors.blue,
+                width: 10,
+              ),
+            );
           }
-          if (dayWiseActivityData[d]['locality_area_place_business'] != null) {
-            locations
-                .add(dayWiseActivityData[d]['locality_area_place_business']);
-          }
-          print("+++++++++daywiseActivitydata++++++++++++");
-          print(points);
-          print(dayWiseActivityData[d]);
-          print("+++++++++daywiseActivitydata++++++++++++");
+        }
+      } catch (e) {
+        print('Failed to fetch directions: $e');
+      }
+    }
 
-          //   creating exploreLocationCards
+    // Update state in a single setState call
+    setState(() {
+      exploreLocationCards = newExploreCards;
+      tablength = dataLen;
+      _currentPage = 0;
+    });
 
-          //   {
-          // activity: Lunch at a fine Chinese restaurant,
-          // currently_open: true,
-          // distance_km: 11.75,
-          // duration_min: 24.67,
-          // formatted_address: Unit No. SFFC 04, Second Floor, Muncipal no. 8 (old) 5, Forum Centre City Mall, New, Hyderali Rd, Mohalla, Jyothi Nagar, Nazarbad, Mysuru, Karnataka 570010, India,
-          // lat: 12.3180041,
-          // locality_area_place_business: China Town,
-          // long: 76.6655541,
-          // one_line_description_about_place: China Town is renowned for its authentic Chinese cuisine.,
-          // place_image_url: https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=AWYs27zb3nr9cG-KSjNRY41R5vDfyTxyM2duV0EZP08b-tzy-Y4xJncTG4xBJrjji35Ug16CKyS91IbAF37N-qVlFCDx7pWSJABaF1zd7WDETFh9ffCZTmQ5dFEqG9p7RfpWAFuiXY1dqiokI1aKy1h8TQhQtvSu6Mm9bTyy3EHggzqYA3Fn&key=AIzaSyDEJx-EbYbqRixjZ0DvwuPd3FKVKtvv_OY,
-          // price_level: N/A,
-          // price_level_description: N/A,
-          // ratings: 4.5,
-          // time: 01:00 PM,
-          // two_locations_cordinates: (12.2731672, 76.6707435),(12.3180041, 76.6655541)}
-
-          print(
-              "dayWiseActivityData[d]['ratings'] = ${dayWiseActivityData[d]['ratings']}");
-
-          exploreLocationCards.add(popUpExploreWidgets(
-            d,
-            context,
-            setState,
-            dayWiseActivityData[d]['place_image_url'],
-            dayWiseActivityData[d]['locality_area_place_business'],
-            dayWiseActivityData[d]['time'],
-            dayWiseActivityData[d]['one_line_description_about_place'],
-            dayWiseActivityData[d]['lat'],
-            dayWiseActivityData[d]['long'],
-            dayWiseActivityData[d]['ratings'],
-          ));
-          // exploreLocationCards.add(popUpExploreWidgets(
-          //     d,
-          //     context,
-          //     showPopUpWidgetsBool,
-          //     setState,
-          //     dayWiseActivityData[d]['place_image_url'],
-          //     dayWiseActivityData[d]['locality_area_place_business'],
-          //     true,
-          //     true,
-          //     i + 1,
-          //     false,
-          //     false,
-          //     false));
+    // Update map and scroll position
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mapController != null && points.isNotEmpty) {
+        _updateCameraPosition();
+        _showMarkerInfoWindow(0);
+        if (_pageController.hasClients) {
+          _pageController.jumpToPage(0);
         }
       }
-    }
-    print('+++++++++++++++++++topTabs++++++++++++++++++++++++++');
-    print(topTabs);
-    print('+++++++++++++++++++topTabs++++++++++++++++++++++++++');
-    setState(() {
-      tablength = topTabs.length;
-      if (mapTabController.length != tablength) {
-        mapTabController.dispose();
-        mapTabController = TabController(length: tablength, vsync: this);
-        mapTabController.addListener(() {
-          if (mapTabController.indexIsChanging) {
-            setState(() {
-              _getShortestRoute(mapTabController.index);
-            });
-          }
-        });
-      }
     });
-    _updateCameraPosition();
-    final String origin = '${points.first.latitude},${points.first.longitude}';
-    final String destination =
-        '${points.last.latitude},${points.last.longitude}';
-
-    // Format waypoints by skipping the first and last points
-    final String waypoints = points
-        .sublist(1, points.length - 1)
-        .map((point) => '${point.latitude},${point.longitude}')
-        .join('|');
-
-    final String url =
-        'https://maps.googleapis.com/maps/api/directions/json?origin=$origin&destination=$destination&waypoints=$waypoints&key=$googleApiKey';
-    //final String url = 'https://maps.googleapis.com/maps/api/directions/json?origin=$origin&destination=$destination&key=$googleApiKey';
-    //print(url);
-
-    final response = await http.get(Uri.parse(url));
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-
-      if (data['routes'].isNotEmpty) {
-        final polylinePoints = data['routes'][0]['overview_polyline']['points'];
-        final decodedPolyline = _decodePolyline(polylinePoints);
-
-        setState(() {
-          polylines.add(
-            Polyline(
-              polylineId: const PolylineId('shortest_route'),
-              points: decodedPolyline,
-              color: Colors.blue,
-              width: 10,
-            ),
-          );
-        });
-      }
-    } else {
-      print('Failed to fetch directions');
-    }
-    // print("++++++++++exploreLocationCards++++++++");
-    // print(exploreLocationCards);
-    // print("++++++++++exploreLocationCards++++++++");
   }
 
 // Function to decode the polyline
@@ -300,6 +268,43 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
     }
 
     return decodedPoints;
+  }
+
+  // Call this when the visible card changes
+  void _onPageChanged(int index) {
+    if (_currentPage != index) {
+      // Only update if page actually changed
+      _showMarkerInfoWindow(index); // Update marker without setState
+      setState(() {
+        _currentPage = index; // Only update UI if needed
+      });
+    }
+  }
+
+// Programmatically show the marker's infoWindow
+  void _showMarkerInfoWindow(int index) {
+    if (mapController != null && index < points.length) {
+      final LatLng point = points[index];
+
+      // Show info window
+      mapController!.showMarkerInfoWindow(MarkerId(point.toString()));
+
+      // Center the map with smooth animation
+      mapController!.animateCamera(
+        CameraUpdate.newLatLngZoom(point, 8.0),
+      );
+
+      // Update UI state
+      setState(() {
+        selectedMarkerIndex = index;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   @override
@@ -373,52 +378,65 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
           GoogleMap(
             onMapCreated: (controller) async {
               mapController = controller;
-              await _getShortestRoute(
-                  0); // Fetch and draw the route when the map is created
+              await _getShortestRoute(0);
+              if (points.isNotEmpty) {
+                _showMarkerInfoWindow(0);
+              }
             },
             initialCameraPosition: CameraPosition(
               target: points[0],
               zoom: 11.0,
             ),
-            markers: points.map((point) {
+            markers: points.asMap().entries.map((entry) {
+              final index = entry.key;
+              final point = entry.value;
               return Marker(
                 markerId: MarkerId(point.toString()),
                 position: point,
                 infoWindow: InfoWindow(
-                  title: 'point ${points.indexOf(point) + 1}',
-                  snippet: locations[points.indexOf(point)],
+                  title: locations[index],
+                  snippet: 'Point ${index + 1}',
                 ),
+                // Highlight the active marker
+                icon: selectedMarkerIndex == index
+                    ? BitmapDescriptor.defaultMarkerWithHue(
+                        BitmapDescriptor.hueCyan,
+                      )
+                    : BitmapDescriptor.defaultMarker,
+                onTap: () {
+                  // Snap to card when marker is clicked
+                  _pageController.animateToPage(
+                    index,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                  );
+                },
               );
             }).toSet(),
             polylines: polylines,
           ),
           Align(
             alignment: Alignment.bottomCenter,
-            child: FutureBuilder<List<Widget>>(
-              future:
-                  _loadExploreLocationCards(), // Future method to fetch widgets
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return const Center(child: Text("Error loading data"));
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text("No data available"));
-                } else {
-                  return Container(
-                    height: 200,
-                    padding: EdgeInsets.all(
-                        MediaQuery.of(context).size.width * 0.036),
-                    child: ListView(
-                      shrinkWrap: true,
-                      scrollDirection: Axis.horizontal,
-                      children: snapshot.data!, // Display fetched widgets
+            child: Container(
+              height: 200,
+              padding: EdgeInsets.only(
+                  bottom: (MediaQuery.of(context).size.width * 0.03)),
+              child: exploreLocationCards.isEmpty
+                  ? const Center(child: CircularProgressIndicator())
+                  : PageView.builder(
+                      key: ValueKey('pageview_${mapTabController.index}'),
+                      controller: _pageController,
+                      onPageChanged: _onPageChanged,
+                      itemCount: exploreLocationCards.length,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          child: exploreLocationCards[index],
+                        );
+                      },
                     ),
-                  );
-                }
-              },
             ),
-          ),
+          )
         ],
       ),
     );
@@ -448,7 +466,7 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           Container(
-            width: MediaQuery.of(context).size.width * 0.9,
+            // width: MediaQuery.of(context).size.width * 0.9,
             padding: const EdgeInsets.all(10),
             decoration: ShapeDecoration(
               color: Colors.white,
