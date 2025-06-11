@@ -573,7 +573,7 @@ class _LogInState extends State<LogIn> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Text(
-                  'New to XplorionAI?',
+                  'New to XplorionAi?',
                   style: TextStyle(
                     color: Color(0xFF888888),
                     fontSize: 14,

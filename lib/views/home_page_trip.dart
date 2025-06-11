@@ -940,7 +940,7 @@ class _HomePageTripState extends State<HomePageTrip> {
 
               // Auto-scrolling Carousel Text
               SizedBox(
-                height: 60,
+                height: 70,
                 child: PageView.builder(
                   controller: _pageController,
                   itemCount: loadingTexts.length,
@@ -1283,7 +1283,7 @@ class _HomePageTripState extends State<HomePageTrip> {
                                 child: GestureDetector(
                                   onTap: () {
                                     Share.share('”Hey everyone,\n'
-                                        "I just generated an amazing travel itinerary with the XplorionAI Travel App – and it's too good not to share:\n"
+                                        "I just generated an amazing travel itinerary with the XplorionAi Travel App – and it's too good not to share:\n"
                                         "   -Free Travel App\n"
                                         "   -Personalized Itinerary Generation\n"
                                         "   -Curated Experiences – Enjoy destination highlights, dining picks, and cultural gems\n"
@@ -1293,7 +1293,7 @@ class _HomePageTripState extends State<HomePageTrip> {
                                         "   -Android: Download on Google Play Store\n"
                                         "   -iOS: Download on Apple App Store\n\n\n"
                                         "Discover more at www.xplorionai.com\n"
-                                        "XplorionAI – Personalized journeys that amplify.”\n");
+                                        "XplorionAi – Personalized journeys that amplify.”\n");
                                   },
                                   child: Container(
                                     width: 92,

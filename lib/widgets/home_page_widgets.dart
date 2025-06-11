@@ -629,7 +629,7 @@ Widget weekendTripsNearYouCard(
               ),
               SizedBox(width: 12),
               Text(
-                "Curated by XplorionAI",
+                "Curated by XplorionAi",
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 12,

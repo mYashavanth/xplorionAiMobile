@@ -282,17 +282,28 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
   }
 
 // Programmatically show the marker's infoWindow
-  void _showMarkerInfoWindow(int index) {
+  void _showMarkerInfoWindow(int index) async {
     if (mapController != null && index < points.length) {
       final LatLng point = points[index];
 
       // Show info window
       mapController!.showMarkerInfoWindow(MarkerId(point.toString()));
 
-      // Center the map with smooth animation
-      mapController!.animateCamera(
-        CameraUpdate.newLatLngZoom(point, 8.0),
-      );
+      // Get current zoom level
+      final zoomLevel = await mapController!.getZoomLevel();
+      debugPrint('Current zoom level: $zoomLevel');
+
+      if (zoomLevel < 11.0) {
+        // First zoom in, then move to the point
+        await mapController!.animateCamera(
+          CameraUpdate.newLatLngZoom(point, 11.0),
+        );
+      } else {
+        // Just move to the point, keep current zoom
+        await mapController!.animateCamera(
+          CameraUpdate.newLatLng(point),
+        );
+      }
 
       // Update UI state
       setState(() {

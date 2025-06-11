@@ -31,7 +31,7 @@ class TermsAndConditionsPage extends StatelessWidget {
           children: [
             const SizedBox(height: 20),
             const Text(
-              'Xplorion AI – Terms and Conditions',
+              'Xplorion Ai – Terms and Conditions',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -50,7 +50,7 @@ class TermsAndConditionsPage extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             const Text(
-              'Welcome to Xplorion AI! These Terms and Conditions (“Terms”) govern your use of the Xplorion AI mobile application (“App”, “we”, “our”, or “us”). By accessing or using the App, you agree to be bound by these Terms.',
+              'Welcome to Xplorion Ai! These Terms and Conditions (“Terms”) govern your use of the Xplorion Ai mobile application (“App”, “we”, “our”, or “us”). By accessing or using the App, you agree to be bound by these Terms.',
               style: TextStyle(
                 height: 1.5,
                 color: Color(0xFF333333),
@@ -67,7 +67,7 @@ class TermsAndConditionsPage extends StatelessWidget {
             const SizedBox(height: 20),
             _buildSectionTitle('2. Location Access'),
             const Text(
-              'To offer personalized suggestions, Xplorion AI accesses your device’s location. By using the App, you consent to this access. You may disable location services via your device settings, but some features may not function properly.',
+              'To offer personalized suggestions, Xplorion Ai accesses your device’s location. By using the App, you consent to this access. You may disable location services via your device settings, but some features may not function properly.',
               style: TextStyle(
                 height: 1.5,
                 color: Color(0xFF333333),
@@ -77,7 +77,7 @@ class TermsAndConditionsPage extends StatelessWidget {
             const SizedBox(height: 20),
             _buildSectionTitle('3. AI-Generated Content'),
             _buildBulletPoints([
-              'Xplorion AI does not guarantee the accuracy, completeness, or suitability of any suggestion.',
+              'Xplorion Ai does not guarantee the accuracy, completeness, or suitability of any suggestion.',
               'Always verify travel information independently before acting on suggestions.',
               'We are not liable for any loss or issue arising from reliance on AI-generated content.',
             ]),
@@ -104,7 +104,7 @@ class TermsAndConditionsPage extends StatelessWidget {
             const SizedBox(height: 20),
             _buildSectionTitle('6. Intellectual Property'),
             const Text(
-              'All content in the App, including logos, text, design, and AI models, is owned by Xplorion AI and protected by applicable intellectual property laws.',
+              'All content in the App, including logos, text, design, and AI models, is owned by Xplorion Ai and protected by applicable intellectual property laws.',
               style: TextStyle(
                 height: 1.5,
                 color: Color(0xFF333333),
@@ -124,7 +124,7 @@ class TermsAndConditionsPage extends StatelessWidget {
             const SizedBox(height: 20),
             _buildSectionTitle('8. Limitation of Liability'),
             const Text(
-              'Xplorion AI is provided “as is” without warranties of any kind. We are not liable for any indirect, incidental, or consequential damages arising from your use of the App.',
+              'Xplorion Ai is provided “as is” without warranties of any kind. We are not liable for any indirect, incidental, or consequential damages arising from your use of the App.',
               style: TextStyle(
                 height: 1.5,
                 color: Color(0xFF333333),

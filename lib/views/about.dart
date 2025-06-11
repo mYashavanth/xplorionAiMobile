@@ -41,7 +41,7 @@ class AboutPage extends StatelessWidget {
             // ),
             const SizedBox(height: 20),
             const Text(
-              'At Xplorion AI, we believe that the best trips aren’t always the ones you spend months planning—they’re the ones you stumble upon, guided by curiosity, spontaneity, and just the right recommendation at the right moment.',
+              'At Xplorion Ai, we believe that the best trips aren’t always the ones you spend months planning—they’re the ones you stumble upon, guided by curiosity, spontaneity, and just the right recommendation at the right moment.',
               style: TextStyle(
                 height: 1.5,
                 color: Color(0xFF333333),

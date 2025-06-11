@@ -86,7 +86,7 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
             ),
             const Spacer(),
-            // Welcome text and XplorionAI text with star
+            // Welcome text and XplorionAi text with star
             Column(
               children: [
                 const Text(

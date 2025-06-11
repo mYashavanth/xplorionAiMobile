@@ -1,5 +1,5 @@
 name: xplorion_ai
-description: "Xplorion AI Mobile"
+description: "Xplorion Ai Mobile"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: "none" # Remove this line if you wish to publish to pub.dev
@@ -59,6 +59,7 @@ dependencies:
   intl: ^0.19.0
   flutter_microsoft_clarity: ^1.0.0
   change_app_package_name: ^1.1.0
+  permission_handler: ^12.0.0+1
 
 dev_dependencies:
   flutter_test:

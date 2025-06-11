@@ -15,8 +15,18 @@ import 'package:xplorion_ai/views/urlconfig.dart';
 import 'package:xplorion_ai/widgets/bottom_navbar.dart';
 import 'package:xplorion_ai/widgets/gradient_text.dart';
 import 'package:http/http.dart' as http;
+import 'package:permission_handler/permission_handler.dart';
 
 import '../widgets/home_page_widgets.dart';
+
+enum LocationStatus {
+  loading,
+  serviceDisabled,
+  permissionDenied,
+  permissionPermanentlyDenied,
+  granted,
+  error
+}
 
 final GlobalKey<_HomePageState> homePageKey = GlobalKey<_HomePageState>();
 
@@ -29,44 +39,174 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   static const apiKey = 'AIzaSyDEJx-EbYbqRixjZ0DvwuPd3FKVKtvv_OY';
-  String currentLocation = 'No Location Selected';
+  LocationStatus _locationStatus = LocationStatus.loading;
+  String currentLocation = 'Loading location...';
+  String? errorMessage;
   List<Widget> createdIternery = [];
   List<Widget> popularDestination = [];
   List<Widget> weekendTrips = [];
 
   // Get Co Ordinates
   Future<void> _determinePosition() async {
-    bool serviceEnabled;
-    LocationPermission permission;
+    setState(() {
+      _locationStatus = LocationStatus.loading;
+      errorMessage = null;
+    });
 
-    // Check if location services are enabled.
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      // Location services are not enabled, request to enable them.
-      return Future.error('Location services are disabled.');
-    }
-
-    // Check for location permission.
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        // Permissions are denied, you can prompt the user for permission again.
-        return Future.error('Location permissions are denied.');
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        setState(() {
+          _locationStatus = LocationStatus.serviceDisabled;
+          errorMessage = 'Location services are disabled.';
+        });
+        return;
       }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          setState(() {
+            _locationStatus = LocationStatus.permissionDenied;
+            errorMessage = 'Location permissions are denied.';
+          });
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        setState(() {
+          _locationStatus = LocationStatus.permissionPermanentlyDenied;
+          errorMessage = 'Location permissions are permanently denied.';
+        });
+        return;
+      }
+
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      // If we get here, permissions are granted
+      setState(() {
+        _locationStatus = LocationStatus.granted;
+      });
+
+      _getAddressFromLatLng(position);
+    } catch (e) {
+      setState(() {
+        _locationStatus = LocationStatus.error;
+        errorMessage = 'Failed to get location: ${e.toString()}';
+      });
     }
+  }
 
-    if (permission == LocationPermission.deniedForever) {
-      // Permissions are denied forever.
-      return Future.error('Location permissions are permanently denied.');
+  Widget _buildLocationUI() {
+    switch (_locationStatus) {
+      case LocationStatus.loading:
+        return const Text(
+          'Loading location...',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 12,
+            fontFamily: themeFontFamily,
+            fontWeight: FontWeight.w100,
+          ),
+        );
+      case LocationStatus.serviceDisabled:
+        return Column(
+          children: [
+            const Text(
+              'Location services are disabled. Please enable them in settings.',
+              style: TextStyle(
+                color: Colors.red,
+                fontSize: 12,
+                fontFamily: themeFontFamily,
+                fontWeight: FontWeight.w300,
+              ),
+            ),
+            TextButton(
+              onPressed: _determinePosition,
+              child: const Text('Retry'),
+            ),
+          ],
+        );
+      case LocationStatus.permissionDenied:
+        return Column(
+          children: [
+            const Text(
+              'Please enable Location for Personalised Travel Itineraries',
+              style: TextStyle(
+                color: Colors.red,
+                fontSize: 12,
+                fontFamily: themeFontFamily,
+                fontWeight: FontWeight.w300,
+              ),
+            ),
+            TextButton(
+              onPressed: _determinePosition,
+              child: const Text('Enable Location'),
+            ),
+          ],
+        );
+      case LocationStatus.permissionPermanentlyDenied:
+        return Column(
+          children: [
+            const Text(
+              'Location permissions are permanently denied. Please enable them in app settings.',
+              style: TextStyle(
+                color: Colors.red,
+                fontSize: 12,
+                fontFamily: themeFontFamily,
+                fontWeight: FontWeight.w300,
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                bool opened = await openAppSettings();
+                if (!opened) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                          'Could not open app settings. Please open them manually.'),
+                    ),
+                  );
+                }
+                // _determinePosition();
+              },
+              child: const Text('Open Settings'),
+            ),
+          ],
+        );
+      case LocationStatus.granted:
+        return Text(
+          currentLocation,
+          style: const TextStyle(
+            color: Colors.black,
+            fontSize: 12,
+            fontFamily: themeFontFamily,
+            fontWeight: FontWeight.w300,
+          ),
+        );
+      case LocationStatus.error:
+        return Column(
+          children: [
+            Text(
+              errorMessage ?? 'Unknown error occurred',
+              style: const TextStyle(
+                color: Colors.red,
+                fontSize: 12,
+                fontFamily: themeFontFamily,
+                fontWeight: FontWeight.w300,
+              ),
+            ),
+            TextButton(
+              onPressed: _determinePosition,
+              child: const Text('Retry'),
+            ),
+          ],
+        );
     }
-
-    // Get the current position.
-    Position position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-    );
-
-    _getAddressFromLatLng(position);
   }
 
   // get Name From Lat and Long
@@ -286,9 +426,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    print("+++++++");
-    print(createdIternery);
-    print("+++++++");
+    bool blockUI = _locationStatus != LocationStatus.granted;
 
     return SafeArea(
       child: Scaffold(
@@ -361,142 +499,139 @@ class _HomePageState extends State<HomePage> {
                       // ),
                     ],
                   ),
-
-                  const SizedBox(
-                    height: 5,
-                  ),
-
+                  const SizedBox(height: 5),
                   Align(
                     alignment: Alignment.centerLeft,
-                    child: Text(
-                      currentLocation,
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 12,
-                        fontFamily: themeFontFamily,
-                        fontWeight: FontWeight.w100,
-                      ),
-                    ),
+                    child: _buildLocationUI(),
                   ),
-
-                  const SizedBox(
-                    height: 20,
-                  ),
-                  imageSliders.isEmpty
-                      ? Shimmer.fromColors(
-                          baseColor: Colors.grey.shade300,
-                          highlightColor: Colors.grey.shade100,
-                          child: Container(
-                            width: double.infinity,
-                            height: 200,
-                            decoration: BoxDecoration(
-                              color: Colors.grey,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        )
-                      : Column(
-                          children: [
-                            CarouselSlider(
-                              options: CarouselOptions(
-                                  viewportFraction: 1,
-                                  enableInfiniteScroll: false,
-                                  initialPage: 0,
-                                  onPageChanged: (index, reason) {
-                                    setState(() {
-                                      currentPos = index;
-                                    });
-                                  }),
-                              items: imageSliders,
-                            ),
-                            imageSliders.length == 1
-                                ? const Text('')
-                                : Align(
-                                    alignment: Alignment.bottomCenter,
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: imageSliders.map((url) {
-                                        int index = imageSliders.indexOf(url);
-                                        return Container(
-                                          width: currentPos == index ? 14 : 8.0,
-                                          height: 8,
-                                          margin: const EdgeInsets.symmetric(
-                                              vertical: 10.0, horizontal: 2.0),
-                                          decoration: BoxDecoration(
-                                            borderRadius:
-                                                const BorderRadius.all(
-                                                    Radius.circular(50)),
-                                            color: currentPos == index
-                                                ? const Color(0xFF8B8D98)
-                                                : const Color(0xFFCDCED7),
-                                          ),
-                                        );
-                                      }).toList(),
-                                    ),
-                                  ),
-                          ],
-                        ),
-                  createdIternery.isEmpty
-                      ? const SizedBox.shrink()
-                      : Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                const Text(
-                                  'Continue planning',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: Color(0xFF1F1F1F),
-                                    fontSize: 20,
-                                    fontFamily: themeFontFamily,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                  const SizedBox(height: 20),
+                  // Only allow interaction if permission is granted
+                  Column(
+                    children: [
+                      // ...existing code for banners, itineraries, etc...
+                      imageSliders.isEmpty
+                          ? Shimmer.fromColors(
+                              baseColor: Colors.grey.shade300,
+                              highlightColor: Colors.grey.shade100,
+                              child: Container(
+                                width: double.infinity,
+                                height: 200,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey,
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                                const Spacer(),
-                                SizedBox(
-                                  child: TextButton(
-                                    onPressed: () {
-                                      Navigator.of(context)
-                                          .pushNamed('/continue_planning');
-                                    },
-                                    child: const Text(
-                                      'Top 6',
+                              ),
+                            )
+                          : Column(
+                              children: [
+                                CarouselSlider(
+                                  options: CarouselOptions(
+                                      viewportFraction: 1,
+                                      enableInfiniteScroll: false,
+                                      initialPage: 0,
+                                      onPageChanged: (index, reason) {
+                                        setState(() {
+                                          currentPos = index;
+                                        });
+                                      }),
+                                  items: imageSliders,
+                                ),
+                                imageSliders.length == 1
+                                    ? const Text('')
+                                    : Align(
+                                        alignment: Alignment.bottomCenter,
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: imageSliders.map((url) {
+                                            int index =
+                                                imageSliders.indexOf(url);
+                                            return Container(
+                                              width: currentPos == index
+                                                  ? 14
+                                                  : 8.0,
+                                              height: 8,
+                                              margin:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 10.0,
+                                                      horizontal: 2.0),
+                                              decoration: BoxDecoration(
+                                                borderRadius:
+                                                    const BorderRadius.all(
+                                                        Radius.circular(50)),
+                                                color: currentPos == index
+                                                    ? const Color(0xFF8B8D98)
+                                                    : const Color(0xFFCDCED7),
+                                              ),
+                                            );
+                                          }).toList(),
+                                        ),
+                                      ),
+                              ],
+                            ),
+                      createdIternery.isEmpty
+                          ? const SizedBox.shrink()
+                          : Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Text(
+                                      'Continue planning',
+                                      textAlign: TextAlign.center,
                                       style: TextStyle(
-                                        color: Colors.black,
-                                        fontSize: 14,
-                                        fontFamily: themeFontFamily2,
-                                        fontWeight: FontWeight.w400,
-                                        height: 0,
+                                        color: Color(0xFF1F1F1F),
+                                        fontSize: 20,
+                                        fontFamily: themeFontFamily,
+                                        fontWeight: FontWeight.w600,
                                       ),
                                     ),
+                                    const Spacer(),
+                                    SizedBox(
+                                      child: TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context)
+                                              .pushNamed('/continue_planning');
+                                        },
+                                        child: const Text(
+                                          'Top 6',
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                            fontSize: 14,
+                                            fontFamily: themeFontFamily2,
+                                            fontWeight: FontWeight.w400,
+                                            height: 0,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const Text(
+                                    'Pick up where you left off, Keep your adventures rolling!'),
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                                SizedBox(
+                                  height: 144,
+                                  child: ListView(
+                                    itemExtent:
+                                        MediaQuery.of(context).size.width *
+                                            0.92,
+                                    scrollDirection: Axis.horizontal,
+                                    shrinkWrap: true,
+                                    physics:
+                                        const PageScrollPhysics(), // Enables snapping to one card at a time
+                                    children: createdIternery,
                                   ),
                                 ),
                               ],
                             ),
-                            const Text(
-                                'Pick up where you left off, Keep your adventures rolling!'),
-                            const SizedBox(
-                              height: 10,
-                            ),
-                            SizedBox(
-                              height: 144,
-                              child: ListView(
-                                itemExtent:
-                                    MediaQuery.of(context).size.width * 0.92,
-                                scrollDirection: Axis.horizontal,
-                                shrinkWrap: true,
-                                physics:
-                                    const PageScrollPhysics(), // Enables snapping to one card at a time
-                                children: createdIternery,
-                              ),
-                            ),
-                          ],
-                        ),
-                  // singleCardPlan(context),
-                  const SizedBox(
-                    height: 20,
+                      // singleCardPlan(context),
+                      const SizedBox(
+                        height: 20,
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -679,66 +814,73 @@ class _HomePageState extends State<HomePage> {
                   SizedBox(
                     height: 10,
                   ),
-                  SizedBox(
-                    height: 240,
-                    child: popularDestination.isEmpty
-                        ? Column(
-                            children: [
-                              Expanded(
-                                child: ListView.builder(
-                                  padding:
-                                      const EdgeInsets.only(top: 4, bottom: 4),
-                                  scrollDirection: Axis.horizontal,
-                                  itemCount:
-                                      5, // Number of shimmer cards to display
-                                  itemBuilder: (context, index) {
-                                    return Shimmer.fromColors(
-                                      baseColor: Colors.grey.shade300,
-                                      highlightColor: Colors.grey.shade100,
-                                      child: Container(
-                                        width: 200,
-                                        height: 240,
-                                        margin: const EdgeInsets.symmetric(
-                                            horizontal: 8),
-                                        decoration: BoxDecoration(
-                                          color: Colors.grey,
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                              if (showReload)
-                                Center(
-                                  child: Container(
-                                    width: 60,
-                                    height: 60,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.8),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: IconButton(
-                                      icon: const Icon(Icons.refresh,
-                                          color: Colors.blue),
-                                      iconSize: 32,
-                                      onPressed: () {
-                                        setState(() {
-                                          showReload = false;
-                                        });
-                                        fetchPopularDestination(); // Reload data
+                  AbsorbPointer(
+                    absorbing: blockUI,
+                    child: Opacity(
+                      opacity: blockUI ? 0.4 : 1.0,
+                      child: SizedBox(
+                        height: 240,
+                        child: popularDestination.isEmpty
+                            ? Column(
+                                children: [
+                                  Expanded(
+                                    child: ListView.builder(
+                                      padding: const EdgeInsets.only(
+                                          top: 4, bottom: 4),
+                                      scrollDirection: Axis.horizontal,
+                                      itemCount:
+                                          5, // Number of shimmer cards to display
+                                      itemBuilder: (context, index) {
+                                        return Shimmer.fromColors(
+                                          baseColor: Colors.grey.shade300,
+                                          highlightColor: Colors.grey.shade100,
+                                          child: Container(
+                                            width: 200,
+                                            height: 240,
+                                            margin: const EdgeInsets.symmetric(
+                                                horizontal: 8),
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey,
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                          ),
+                                        );
                                       },
                                     ),
                                   ),
-                                ),
-                            ],
-                          )
-                        : ListView(
-                            padding: const EdgeInsets.only(top: 4, bottom: 4),
-                            scrollDirection: Axis.horizontal,
-                            children: popularDestination,
-                          ),
+                                  if (showReload)
+                                    Center(
+                                      child: Container(
+                                        width: 60,
+                                        height: 60,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withOpacity(0.8),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: IconButton(
+                                          icon: const Icon(Icons.refresh,
+                                              color: Colors.blue),
+                                          iconSize: 32,
+                                          onPressed: () {
+                                            setState(() {
+                                              showReload = false;
+                                            });
+                                            fetchPopularDestination(); // Reload data
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              )
+                            : ListView(
+                                padding:
+                                    const EdgeInsets.only(top: 4, bottom: 4),
+                                scrollDirection: Axis.horizontal,
+                                children: popularDestination,
+                              ),
+                      ),
+                    ),
                   ),
                   const SizedBox(
                     height: 10,
@@ -748,7 +890,13 @@ class _HomePageState extends State<HomePage> {
             )
           ],
         ),
-        bottomNavigationBar: const TripssistNavigationBar(0),
+        bottomNavigationBar: AbsorbPointer(
+          absorbing: blockUI,
+          child: Opacity(
+            opacity: blockUI ? 0.4 : 1.0,
+            child: const TripssistNavigationBar(0),
+          ),
+        ),
       ),
     );
   }

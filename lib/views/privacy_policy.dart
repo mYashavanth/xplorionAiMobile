@@ -31,7 +31,7 @@ class PrivacyPolicyPage extends StatelessWidget {
           children: [
             const SizedBox(height: 20),
             const Text(
-              'Xplorion AI – Privacy Policy',
+              'Xplorion Ai – Privacy Policy',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -50,7 +50,7 @@ class PrivacyPolicyPage extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             const Text(
-              'We at Xplorion AI care about your privacy—after all, it’s your adventure, your data. This Privacy Policy explains how we collect, use, and protect your information when you use our app. By using Xplorion AI, you agree to this policy.',
+              'We at Xplorion Ai care about your privacy—after all, it’s your adventure, your data. This Privacy Policy explains how we collect, use, and protect your information when you use our app. By using Xplorion Ai, you agree to this policy.',
               style: TextStyle(
                 height: 1.5,
                 color: Color(0xFF333333),
@@ -117,7 +117,7 @@ class PrivacyPolicyPage extends StatelessWidget {
             const SizedBox(height: 20),
             _buildSectionTitle('6. Kids’ Privacy'),
             const Text(
-              'Xplorion AI is not designed for children under 13. We don’t knowingly collect their data. If we do, we’ll delete it.',
+              'Xplorion Ai is not designed for children under 13. We don’t knowingly collect their data. If we do, we’ll delete it.',
               style: TextStyle(
                 height: 1.5,
                 color: Color(0xFF333333),

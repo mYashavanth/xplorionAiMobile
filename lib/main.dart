@@ -128,7 +128,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       navigatorKey: _navigatorKey,
-      title: 'Xplorion AI',
+      title: 'Xplorion Ai',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFF0099FF)),
         useMaterial3: true,
