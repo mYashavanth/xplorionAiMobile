@@ -143,7 +143,19 @@ class _HomePageState extends State<HomePage> {
                 fontWeight: FontWeight.w300,
               ),
             ),
+            const SizedBox(height: 10),
             TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.blue,
+                textStyle: const TextStyle(
+                  decoration: TextDecoration.underline,
+                  fontFamily: themeFontFamily,
+                  fontWeight: FontWeight.w700,
+                ),
+                padding: EdgeInsets.zero,
+                minimumSize: Size(0, 0),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
               onPressed: _determinePosition,
               child: const Text('Enable Location'),
             ),
@@ -161,7 +173,19 @@ class _HomePageState extends State<HomePage> {
                 fontWeight: FontWeight.w300,
               ),
             ),
+            const SizedBox(height: 10),
             TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.blue,
+                textStyle: const TextStyle(
+                  decoration: TextDecoration.underline,
+                  fontFamily: themeFontFamily,
+                  fontWeight: FontWeight.w700,
+                ),
+                padding: EdgeInsets.zero,
+                minimumSize: Size(0, 0),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
               onPressed: () async {
                 bool opened = await openAppSettings();
                 if (!opened) {
