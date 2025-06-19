@@ -396,7 +396,8 @@ class _HomePageTripState extends State<HomePageTrip> {
             hasError = false;
           });
 
-          print('Itinerary generated successfully: $responseData');
+          print(
+              '+++++++++++++++++++++++++++++++++++++++++++Itinerary generated successfully: $responseData');
           generateItineraryForAllDays(noOfDays);
         } else {
           // timeoutTimer.cancel();
@@ -405,10 +406,11 @@ class _HomePageTripState extends State<HomePageTrip> {
             isLoading = false;
           });
           print(
-              'Failed to generate itinerary. Status code: ${response.statusCode}');
+              '++++++++++++++++++++++++++++++++++++Failed to generate itinerary. Status code: ${response.statusCode}');
         }
       } catch (e) {
-        print('Error occurred while generating itinerary: $e');
+        print(
+            '#################################################Error occurred while generating itinerary: $e');
         // timeoutTimer.cancel();
         setState(() {
           hasError = true;
