@@ -1609,6 +1609,12 @@ class _HomePageTripState extends State<HomePageTrip> {
   var tripTipsArr;
   var bestTimeToVisitArr;
   var foodDrinksArr;
+  List tipsResponseData = [];
+  List bestTimeToVisitResponseData = [];
+  List foodDrinksResponseData = [];
+  bool hasErrortips = false;
+  bool hasErrorBestTimeToVisit = false;
+  bool hasErrorFoodAndDrinks = false;
   Widget changeTripItineraryMenuView() {
     if (daysDataDisplay == null || isLoading) {
       // Display a loading indicator if data is not yet available iternery_loading.gif
@@ -1641,37 +1647,64 @@ class _HomePageTripState extends State<HomePageTrip> {
 
     if (day > dataLen) {
       if (day == (dataLen + 1)) {
-        print(tripTipsArr);
-        if (tripTipsArr == null || tripTipsArr == '') {
+        if (tipsResponseData.isEmpty && !hasErrortips) {
           tripTipsArr = getTipsData(); // Assign value if null or invalid
         } else {
           tripTipsArr = tripTipsArr;
         }
-        return buildTips(tripTipsArr);
+        return buildTips(
+            tripTipsArr,
+            hasErrortips,
+            () => {
+                  setState(() {
+                    hasErrortips = false;
+                  }),
+                });
       }
 
       if (day == (dataLen + 2)) {
-        if (bestTimeToVisitArr == null || bestTimeToVisitArr == '') {
+        if (bestTimeToVisitResponseData.isEmpty && !hasErrorBestTimeToVisit) {
           bestTimeToVisitArr = getBestTimeToVisit();
         } else {
           bestTimeToVisitArr = bestTimeToVisitArr;
         }
 
-        return buildBestTimeToVisit(bestTimeToVisitArr);
+        return buildBestTimeToVisit(
+            bestTimeToVisitArr,
+            hasErrorBestTimeToVisit,
+            () => {
+                  setState(() {
+                    hasErrorBestTimeToVisit = false;
+                  }),
+                });
       }
 
       if (day == (dataLen + 3)) {
+        if (holiday.isEmpty) {
+          fetchNationalHolidays();
+          print('fetching national holidays');
+        } else {
+          print('holiday is not empty');
+        }
         return buildNationalHolidays(holiday);
       }
 
       if (day == (dataLen + 4)) {
-        if (foodDrinksArr == null || foodDrinksArr == '') {
+        if (foodDrinksResponseData.isEmpty && !hasErrorFoodAndDrinks) {
           foodDrinksArr = getFoodAndDrink();
         } else {
           foodDrinksArr = foodDrinksArr;
         }
 
-        return buildLocalFoodAndDrinks(context, foodDrinksArr);
+        return buildLocalFoodAndDrinks(
+            context,
+            foodDrinksArr,
+            hasErrorFoodAndDrinks,
+            () => {
+                  setState(() {
+                    hasErrorFoodAndDrinks = false;
+                  }),
+                });
       }
     }
     print('weatherInfoData == $weatherInfoData');
@@ -1752,13 +1785,14 @@ class _HomePageTripState extends State<HomePageTrip> {
 
     menuIndex = menuIndex + 1;
     fetchNationalHolidays();
-    if (tripTipsArr == null || tripTipsArr == '') {
+    if (tipsResponseData.isEmpty && !hasErrortips) {
+      print('++++++++++++++++++++++++++++++++++Fetching tips data1');
       tripTipsArr = getTipsData(); // Assign value if null or invalid
     }
-    if (bestTimeToVisitArr == null || bestTimeToVisitArr == '') {
+    if (bestTimeToVisitResponseData.isEmpty && !hasErrorBestTimeToVisit) {
       bestTimeToVisitArr = getBestTimeToVisit();
     }
-    if (foodDrinksArr == null || foodDrinksArr == '') {
+    if (foodDrinksResponseData.isEmpty && !hasErrorFoodAndDrinks) {
       foodDrinksArr = getFoodAndDrink();
     }
     print('markAsVisitedList == $markAsVisitedList');
@@ -1818,6 +1852,9 @@ class _HomePageTripState extends State<HomePageTrip> {
     const storage = FlutterSecureStorage();
 
     try {
+      setState(() {
+        hasErrortips = false;
+      });
       // Read the user token and selected place from secure storage
       String? userToken = await storage.read(key: 'userToken');
       String? selectedPlace = await storage.read(key: 'selectedPlace');
@@ -1858,6 +1895,8 @@ class _HomePageTripState extends State<HomePageTrip> {
           }
         }
 
+        tipsResponseData = tipsArray;
+
         List<Widget> tips = tipsArray.map((item) {
           String tipText = item["tip"] as String;
           return buildTipsWidgetCard('lightbulb.svg', tipText);
@@ -1866,10 +1905,18 @@ class _HomePageTripState extends State<HomePageTrip> {
         return tips;
       } else {
         print("Failed to load tips. Status code: ${response.statusCode}");
+        tipsResponseData = [];
+        setState(() {
+          hasErrortips = true;
+        });
         return [];
       }
     } catch (e) {
       print("An error occurred: $e");
+      tipsResponseData = [];
+      setState(() {
+        hasErrortips = true;
+      });
       return [];
     }
   }
@@ -1880,6 +1927,9 @@ class _HomePageTripState extends State<HomePageTrip> {
     const storage = FlutterSecureStorage();
 
     try {
+      setState(() {
+        hasErrorBestTimeToVisit = false;
+      });
       // Read the user token and selected place from secure storage
       String? userToken = await storage.read(key: 'userToken');
       String? selectedPlace = await storage.read(key: 'selectedPlace');
@@ -1923,6 +1973,7 @@ class _HomePageTripState extends State<HomePageTrip> {
             tipsArray = json.decode(fallbackResponse.body);
           }
         }
+        bestTimeToVisitResponseData = tipsArray;
 
         List<Widget> tips = tipsArray.map((item) {
           String tipText = item["tip"] as String;
@@ -1932,10 +1983,18 @@ class _HomePageTripState extends State<HomePageTrip> {
         return tips;
       } else {
         print("Failed to load tips. Status code: ${response.statusCode}");
+        bestTimeToVisitResponseData = [];
+        setState(() {
+          hasErrorBestTimeToVisit = true;
+        });
         return [];
       }
     } catch (e) {
       print("An error occurred: $e");
+      bestTimeToVisitResponseData = [];
+      setState(() {
+        hasErrorBestTimeToVisit = true;
+      });
       return [];
     }
   }
@@ -1987,6 +2046,9 @@ class _HomePageTripState extends State<HomePageTrip> {
     const storage = FlutterSecureStorage();
 
     try {
+      setState(() {
+        hasErrorFoodAndDrinks = false;
+      });
       // Read the user token and selected place from secure storage
       String? userToken = await storage.read(key: 'userToken');
       String? selectedPlace = await storage.read(key: 'selectedPlace');
@@ -2027,6 +2089,7 @@ class _HomePageTripState extends State<HomePageTrip> {
             FoodAndDrinksArray = json.decode(fallbackResponse.body);
           }
         }
+        foodDrinksResponseData = FoodAndDrinksArray;
 
         List<Widget> foodDrinksArr = FoodAndDrinksArray.map((item) {
           String foodDrinkDescription =
@@ -2049,10 +2112,18 @@ class _HomePageTripState extends State<HomePageTrip> {
         return foodDrinksArr;
       } else {
         print("Failed to load tips. Status code: ${response.statusCode}");
+        foodDrinksResponseData = [];
+        setState(() {
+          hasErrorFoodAndDrinks = true;
+        });
         return [];
       }
     } catch (e) {
       print("An error occurred: $e");
+      foodDrinksResponseData = [];
+      setState(() {
+        hasErrorFoodAndDrinks = true;
+      });
       return [];
     }
   }

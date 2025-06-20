@@ -1710,7 +1710,8 @@ Widget buildTranspotationWidget(index, transpotationModeBool, modalSetState) {
   );
 }
 
-Widget buildLocalFoodAndDrinks(context, Future<List<Widget>> foodDrinkArr) {
+Widget buildLocalFoodAndDrinks(context, Future<List<Widget>> foodDrinkArr,
+    hasErrorFoodAndDrinks, setState) {
   return Column(children: [
     FutureBuilder<List<Widget>>(
       future: foodDrinkArr,
@@ -1723,7 +1724,19 @@ Widget buildLocalFoodAndDrinks(context, Future<List<Widget>> foodDrinkArr) {
           return Text('Error: ${snapshot.error}');
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
           // Handle the case where no data is available
-          return const Text('No Records available');
+          return Center(
+              child: Column(
+            children: [
+              const Text('No Records available'),
+              const SizedBox(height: 10),
+              TextButton.icon(
+                onPressed: setState,
+                icon: SvgPicture.asset('assets/icons/redo.svg',
+                    width: 16, height: 16),
+                label: const Text('Refresh'),
+              ),
+            ],
+          ));
         } else {
           // Build the list of widgets with SizedBox spacing
           List<Widget> spacedWidgetsFD = [
@@ -2193,7 +2206,8 @@ Widget showFoodBottomSheet(img, svg, title, description) {
   );
 }
 
-Widget buildBestTimeToVisit(Future<List<Widget>> bestTimeToVisitArr) {
+Widget buildBestTimeToVisit(Future<List<Widget>> bestTimeToVisitArr,
+    hasErrorBestTimeToVisit, setState) {
   return Column(
     children: [
       Row(
@@ -2232,7 +2246,19 @@ Widget buildBestTimeToVisit(Future<List<Widget>> bestTimeToVisitArr) {
             return Text('Error: ${snapshot.error}');
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
             // Handle the case where no data is available
-            return const Text('No tips available');
+            return Center(
+                child: Column(
+              children: [
+                const Text('No tips available'),
+                const SizedBox(height: 10),
+                TextButton.icon(
+                  onPressed: setState,
+                  icon: SvgPicture.asset('assets/icons/redo.svg',
+                      width: 16, height: 16),
+                  label: const Text('Refresh'),
+                ),
+              ],
+            ));
           } else {
             // Build the list of widgets with SizedBox spacing
             List<Widget> spacedWidgets = [];
@@ -2828,7 +2854,7 @@ Widget createList(text) {
   );
 }
 
-Widget buildTips(Future<List<Widget>> tripTipsFuture) {
+Widget buildTips(Future<List<Widget>> tripTipsFuture, hasErrortips, setState) {
   return Column(
     children: [
       Row(
@@ -2867,7 +2893,19 @@ Widget buildTips(Future<List<Widget>> tripTipsFuture) {
             return Text('Error: ${snapshot.error}');
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
             // Handle the case where no data is available
-            return const Text('No tips available');
+            return Center(
+                child: Column(
+              children: [
+                const Text('No tips available'),
+                const SizedBox(height: 10),
+                TextButton.icon(
+                  onPressed: setState,
+                  icon: SvgPicture.asset('assets/icons/redo.svg',
+                      width: 16, height: 16),
+                  label: const Text('Refresh'),
+                ),
+              ],
+            ));
           } else {
             // Build the list of widgets with SizedBox spacing
             List<Widget> spacedWidgets = [];
