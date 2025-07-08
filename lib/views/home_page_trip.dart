@@ -131,11 +131,13 @@ class _HomePageTripState extends State<HomePageTrip> {
     return toDate.difference(fromDate).inDays + 1;
   }
 
+  bool _hasDayGenerationError = false;
+  int _failedDayNumber = 0;
+
   Future<void> generateItineraryForDay({
     required int dayNo,
-    bool updateLoadingState = true, // Optional parameter to control isLoading
+    bool updateLoadingState = true,
   }) async {
-    // Return early if dayNo is less than 2 (no call needed)
     if (dayNo < 2) {
       print('Skipping day $dayNo as it is less than 2.');
       return;
@@ -160,7 +162,6 @@ class _HomePageTripState extends State<HomePageTrip> {
     }
 
     final url = Uri.parse('$baseurl/app/generate-itenary/for-day');
-
     final body = {
       'token': token,
       'itineraryId': resIterneryId,
@@ -169,41 +170,210 @@ class _HomePageTripState extends State<HomePageTrip> {
       'toDate': toDate,
     };
 
-    try {
-      if (updateLoadingState) {
-        setState(() {
-          isLoading = true;
-        });
-      }
+    bool keepTrying = true;
+    int retryCount = 0;
+    const maxRetries = 10;
+    const retryDelay = Duration(seconds: 2);
 
-      final response = await http.post(
-        url,
-        body: body,
-      );
-      print('Response body: ${response.body}');
+    if (updateLoadingState) {
+      setState(() {
+        isLoading = true;
+      });
+    }
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        weatherInfoData[dayNo - 1] = data['weather_info'];
-        setState(() {
-          if (daysDataDisplay.length < dayNo) {
-            daysDataDisplay.length = dayNo; // Extend the list if necessary
+    while (keepTrying && retryCount < maxRetries) {
+      try {
+        final response = await http.post(url, body: body);
+        print(
+            '---------------------------------------------Response body: ${response.body}');
+
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+
+          if (data['errFlag'] == 2) {
+            // Data is being processed - show loading and retry
+            print(
+                'Data not ready for day $dayNo - retrying (${retryCount + 1}/$maxRetries)');
+
+            await Future.delayed(retryDelay);
+            retryCount++;
+          } else {
+            // Data is ready - process it
+            weatherInfoData[dayNo - 1] = data['weather_info'];
+            setState(() {
+              if (daysDataDisplay.length < dayNo) {
+                daysDataDisplay.length = dayNo;
+              }
+              daysDataDisplay[dayNo - 1] = data;
+            });
+            print('Itinerary for day $dayNo generated successfully.');
+            keepTrying = false; // Success, stop retrying
           }
-          daysDataDisplay[dayNo - 1] = data;
-        });
-        print('Itinerary for day $dayNo generated successfully.');
-      } else {
-        print('Failed to generate itinerary for day $dayNo: ${response.body}');
-      }
-    } catch (e) {
-      print('Error generating itinerary for day $dayNo: $e');
-    } finally {
-      if (updateLoadingState) {
-        setState(() {
-          isLoading = false;
-        });
+        } else {
+          print(
+              'Failed to generate itinerary for day $dayNo: ${response.body}');
+          keepTrying = false;
+        }
+      } catch (e) {
+        print('Error generating itinerary for day $dayNo: $e');
+        keepTrying = false;
       }
     }
+
+    if (retryCount >= maxRetries) {
+      print('Max retries reached for day $dayNo');
+      _failedDayNumber = dayNo;
+      setState(() {
+        _hasDayGenerationError = true;
+      });
+    }
+
+    if (updateLoadingState) {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Widget _buildDayGenerationError() {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        automaticallyImplyLeading: false,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: TextButton(
+              onPressed: () {
+                Navigator.of(context).popUntil((route) => route.isFirst);
+              },
+              child: const Text(
+                'Back to Home',
+                style: TextStyle(
+                  color: Color(0xFF0099FF),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SvgPicture.asset('assets/icons/itinerary_failure.svg'),
+              const SizedBox(height: 20),
+              Text(
+                'Day $_failedDayNumber is taking longer than expected',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Please try refreshing to continue.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Color(0xFF888888),
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF0099FF), Color(0xFF54AB6A)],
+                    ),
+                    borderRadius: BorderRadius.circular(50),
+                  ),
+                  child: TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _hasDayGenerationError = false;
+                        isLoading = true;
+                      });
+                      generateItineraryForDay(dayNo: _failedDayNumber);
+                    },
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(50),
+                      ),
+                      backgroundColor: Colors.transparent,
+                    ),
+                    child: Text('Refresh Day $_failedDayNumber',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w600, fontSize: 16)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              InkWell(
+                onTap: () {
+                  setState(() {
+                    _hasDayGenerationError = false;
+
+                    for (var i = 0; i < menuBoolList.length; i++) {
+                      menuBoolList[i] = i == 0;
+                    }
+                  });
+                },
+                child: Container(
+                  height: 52,
+                  width: double.infinity,
+                  decoration: ShapeDecoration(
+                    shape: RoundedRectangleBorder(
+                      side:
+                          const BorderSide(width: 1, color: Color(0xFF005CE7)),
+                      borderRadius: BorderRadius.circular(32),
+                    ),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'Back to Day 1',
+                      style: TextStyle(
+                        color: Color(0xFF005CE7),
+                        fontSize: 16,
+                        fontFamily: themeFontFamily,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // OutlinedButton(
+              //   onPressed: () {
+              //     setState(() {
+              //       _hasDayGenerationError = false;
+
+              //       for (var i = 0; i < menuBoolList.length; i++) {
+              //         menuBoolList[i] = i == 0;
+              //       }
+              //     });
+              //   },
+              //   child: const Text(
+              //     'Back to Day 1',
+              //     style: TextStyle(
+              //       color: Color(0xFF0099FF),
+              //       fontWeight: FontWeight.w600,
+              //     ),
+              //   ),
+              // ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> generateItineraryForAllDays(int totalDays) async {
@@ -398,7 +568,7 @@ class _HomePageTripState extends State<HomePageTrip> {
 
           print(
               '+++++++++++++++++++++++++++++++++++++++++++Itinerary generated successfully: $responseData');
-          generateItineraryForAllDays(noOfDays);
+          // generateItineraryForAllDays(noOfDays);
         } else {
           // timeoutTimer.cancel();
           setState(() {
@@ -915,6 +1085,9 @@ class _HomePageTripState extends State<HomePageTrip> {
   @override
   Widget build(BuildContext context) {
     tripItineraryWidget = changeTripItineraryMenuView();
+    if (_hasDayGenerationError) {
+      return _buildDayGenerationError();
+    }
 
     if (isLoading) {
       return Scaffold(
@@ -2072,26 +2245,26 @@ class _HomePageTripState extends State<HomePageTrip> {
       // Check if response is successful
       if (response.statusCode == 200) {
         // Parse JSON response
-        List<dynamic> FoodAndDrinksArray =
+        List<dynamic> foodAndDrinksArray =
             itinerarySavedFlag == '1' && response.body != '[]'
                 ? json.decode(response.body)[0]['foodAndDrinkJsonData']
                 : json.decode(response.body);
 
         // If the response body is an empty array and itinerarySavedFlag is '1',
         // make another call with a different URL
-        if (itinerarySavedFlag == '1' && FoodAndDrinksArray.isEmpty) {
+        if (itinerarySavedFlag == '1' && foodAndDrinksArray.isEmpty) {
           final fallbackUrl =
               '$baseurl/food-drinks/$selectedPlace/$resIterneryId/$userToken';
           final fallbackResponse = await http.get(Uri.parse(fallbackUrl));
           print(fallbackResponse.body);
 
           if (fallbackResponse.statusCode == 200) {
-            FoodAndDrinksArray = json.decode(fallbackResponse.body);
+            foodAndDrinksArray = json.decode(fallbackResponse.body);
           }
         }
-        foodDrinksResponseData = FoodAndDrinksArray;
+        foodDrinksResponseData = foodAndDrinksArray;
 
-        List<Widget> foodDrinksArr = FoodAndDrinksArray.map((item) {
+        List<Widget> foodDrinksArr = foodAndDrinksArray.map((item) {
           String foodDrinkDescription =
               item["food_drink_description"] as String;
           String foodDrinkName = item["food_drink_name"] as String;
