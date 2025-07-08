@@ -9,6 +9,7 @@ import 'package:xplorion_ai/lib_assets/colors.dart';
 import 'package:xplorion_ai/lib_assets/fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:xplorion_ai/views/urlconfig.dart';
+import 'dart:math';
 
 const storage = FlutterSecureStorage();
 
@@ -404,17 +405,52 @@ Widget singleCardPlan(context, imageUrl, placeName, noOfDays, dayDate,
   );
 }
 
-Widget weekendTripsNearYouCard(
-    image, title, noOfDays, cityState, distanceFromPlace, activities, context) {
+Widget weekendTripsNearYouCard(image, title, noOfDays, cityState,
+    distanceFromPlace, activities, context, category) {
+  // List of fallback images
+  final List<String> fallbackImages = [
+    'assets/images/weekendTrips/21.jpg',
+    'assets/images/weekendTrips/1500.jpg',
+    'assets/images/weekendTrips/7353.jpg',
+    'assets/images/weekendTrips/9109.jpg',
+    'assets/images/weekendTrips/9115.jpg',
+    'assets/images/weekendTrips/18468.jpg',
+    'assets/images/weekendTrips/2149417763.jpg',
+  ];
+
+  // Function to get a random fallback image
+  String getRandomFallbackImage() {
+    final random = Random();
+    print(
+        "##################################  Fallback images: $fallbackImages, $random");
+    return fallbackImages[random.nextInt(fallbackImages.length)];
+  }
+
+  // Function to check if image is dummy
+  bool isDummyImage(String imageUrl) {
+    return imageUrl.contains('dummy') ||
+        imageUrl.contains('placeholder') ||
+        imageUrl.isEmpty;
+  }
+
   List<DateTime> getWeekendDates() {
     final now = DateTime.now();
-    // Find the first day of the week (Monday).
     final firstDayOfWeek = now.subtract(Duration(days: now.weekday - 1));
-    // Calculate Saturday and Sunday.
     final saturday = firstDayOfWeek.add(const Duration(days: 5));
     final sunday = firstDayOfWeek.add(const Duration(days: 6));
-
     return [saturday, sunday];
+  }
+
+  Color getCategoryColor(String category) {
+    final colors = {
+      'Adventure': const Color(0xFF4CAF50),
+      'Relaxation': const Color(0xFF2196F3),
+      'Cultural': const Color(0xFF9C27B0),
+      'Food': const Color(0xFFF44336),
+      'Nature': const Color(0xFF8BC34A),
+    };
+    // return colors[category] ?? const Color(0xFF607D8B);
+    return const Color(0xFF4CAF50); // Default color if not found
   }
 
   return Container(
@@ -431,53 +467,78 @@ Widget weekendTripsNearYouCard(
     ),
     child: Column(
       children: [
-        InkWell(
-          onTap: () async {
-            await storage.write(key: 'selectedPlace', value: cityState);
-
-            // Format and store the weekend dates in yyyy-MM-dd format.
-            final weekendDates = getWeekendDates();
-            final formatter = DateFormat('yyyy-MM-dd'); // Updated format
-
-            await storage.write(
-                key: 'startDate', value: formatter.format(weekendDates[0]));
-            await storage.write(
-                key: 'endDate', value: formatter.format(weekendDates[1]));
-
-            Navigator.of(context).pushNamed('/create_itinerary');
-          },
-          child: Container(
-            padding: EdgeInsets.all(0),
-            clipBehavior: Clip.antiAlias,
-            decoration: const ShapeDecoration(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(23),
-                  topRight: Radius.circular(23),
+        Stack(
+          children: [
+            InkWell(
+              onTap: () async {
+                await storage.write(key: 'selectedPlace', value: cityState);
+                final weekendDates = getWeekendDates();
+                final formatter = DateFormat('yyyy-MM-dd');
+                await storage.write(
+                    key: 'startDate', value: formatter.format(weekendDates[0]));
+                await storage.write(
+                    key: 'endDate', value: formatter.format(weekendDates[1]));
+                Navigator.of(context).pushNamed('/create_itinerary');
+              },
+              child: Container(
+                padding: EdgeInsets.all(0),
+                clipBehavior: Clip.antiAlias,
+                decoration: const ShapeDecoration(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(23),
+                      topRight: Radius.circular(23),
+                    ),
+                  ),
+                ),
+                width: double.infinity,
+                height: 186,
+                child: Image(
+                  fit: BoxFit.fill,
+                  image: isDummyImage(image)
+                      ? AssetImage(getRandomFallbackImage())
+                      : NetworkImage(image),
+                  errorBuilder: (context, error, stackTrace) {
+                    return Image.asset(
+                      getRandomFallbackImage(),
+                      fit: BoxFit.fill,
+                    );
+                  },
                 ),
               ),
             ),
-            width: double.infinity,
-            height: 186,
-            child: Image(
-              fit: BoxFit.fill,
-              image: NetworkImage(image),
+            Positioned(
+              top: 10,
+              right: 10,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: getCategoryColor(category),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  category,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontFamily: 'Public Sans',
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
             ),
-          ),
+          ],
         ),
+        // Rest of your widget code remains the same...
         InkWell(
           onTap: () async {
             await storage.write(key: 'selectedPlace', value: cityState);
-
-            // Format and store the weekend dates in yyyy-MM-dd format.
             final weekendDates = getWeekendDates();
-            final formatter = DateFormat('yyyy-MM-dd'); // Updated format
-
+            final formatter = DateFormat('yyyy-MM-dd');
             await storage.write(
                 key: 'startDate', value: formatter.format(weekendDates[0]));
             await storage.write(
                 key: 'endDate', value: formatter.format(weekendDates[1]));
-
             Navigator.of(context).pushNamed('/create_itinerary');
           },
           child: Padding(
@@ -502,9 +563,7 @@ Widget weekendTripsNearYouCard(
                     ),
                   ],
                 ),
-                const SizedBox(
-                  height: 10,
-                ),
+                const SizedBox(height: 10),
                 Row(
                   children: [
                     SvgPicture.asset(
@@ -512,9 +571,7 @@ Widget weekendTripsNearYouCard(
                       height: 13,
                       width: 13,
                     ),
-                    const SizedBox(
-                      width: 10,
-                    ),
+                    const SizedBox(width: 10),
                     Text(
                       '$noOfDays Day',
                       style: const TextStyle(
@@ -526,9 +583,7 @@ Widget weekendTripsNearYouCard(
                     ),
                   ],
                 ),
-                const SizedBox(
-                  height: 10,
-                ),
+                const SizedBox(height: 10),
                 Row(
                   children: [
                     SvgPicture.asset(
@@ -536,9 +591,7 @@ Widget weekendTripsNearYouCard(
                       height: 13,
                       width: 13,
                     ),
-                    const SizedBox(
-                      width: 10,
-                    ),
+                    const SizedBox(width: 10),
                     Text(
                       cityState,
                       style: const TextStyle(
@@ -550,9 +603,7 @@ Widget weekendTripsNearYouCard(
                     ),
                   ],
                 ),
-                const SizedBox(
-                  height: 10,
-                ),
+                const SizedBox(height: 10),
                 Row(
                   children: [
                     SvgPicture.asset(
@@ -560,9 +611,7 @@ Widget weekendTripsNearYouCard(
                       height: 13,
                       width: 13,
                     ),
-                    const SizedBox(
-                      width: 10,
-                    ),
+                    const SizedBox(width: 10),
                     Text(
                       distanceFromPlace,
                       style: const TextStyle(
@@ -574,9 +623,7 @@ Widget weekendTripsNearYouCard(
                     ),
                   ],
                 ),
-                const SizedBox(
-                  height: 10,
-                ),
+                const SizedBox(height: 10),
                 Row(
                   children: [
                     SvgPicture.asset(
@@ -584,9 +631,7 @@ Widget weekendTripsNearYouCard(
                       height: 13,
                       width: 13,
                     ),
-                    const SizedBox(
-                      width: 10,
-                    ),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         activities,
@@ -623,10 +668,7 @@ Widget weekendTripsNearYouCard(
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Icon(
-                Icons.flash_on,
-                color: Colors.white,
-              ),
+              Icon(Icons.flash_on, color: Colors.white),
               SizedBox(width: 12),
               Text(
                 "Curated by XplorionAi",
@@ -646,6 +688,29 @@ Widget weekendTripsNearYouCard(
 }
 
 Widget popularDestinationsNearby(image, title, context) {
+  // List of fallback images
+  final List<String> fallbackImages = [
+    'assets/images/popularDestinations/354.jpg',
+    'assets/images/popularDestinations/39550.jpg',
+    'assets/images/popularDestinations/2149211337.jpg',
+    'assets/images/popularDestinations/2150456198.jpg',
+  ];
+
+  // Function to get a random fallback image
+  String getRandomFallbackImage() {
+    final random = Random();
+    print(
+        "##################################  Fallback images: $fallbackImages, $random");
+    return fallbackImages[random.nextInt(fallbackImages.length)];
+  }
+
+  // Function to check if image is missing or invalid
+  bool isInvalidImage(String imageUrl) {
+    return imageUrl.isEmpty ||
+        imageUrl.contains('dummy') ||
+        imageUrl.contains('placeholder');
+  }
+
   return Container(
     clipBehavior: Clip.antiAlias,
     decoration: ShapeDecoration(
@@ -656,26 +721,48 @@ Widget popularDestinationsNearby(image, title, context) {
       alignment: Alignment.center,
       children: [
         InkWell(
-            onTap: () async {
-              await storage.write(key: 'selectedPlace', value: title);
-
-              Navigator.of(context).pushNamed('/create_itinerary');
-            },
-            borderRadius: BorderRadius.circular(8),
-            child: Container(
-              width: 152,
-              height: 230,
-              clipBehavior: Clip.antiAlias,
-              decoration: ShapeDecoration(
-                image: DecorationImage(
-                  image: NetworkImage("$image"),
-                  fit: BoxFit.cover,
-                ),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
+          onTap: () async {
+            await storage.write(key: 'selectedPlace', value: title);
+            Navigator.of(context).pushNamed('/create_itinerary');
+          },
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            width: 152,
+            height: 230,
+            clipBehavior: Clip.antiAlias,
+            decoration: ShapeDecoration(
+              image: DecorationImage(
+                image: isInvalidImage(image)
+                    ? AssetImage(getRandomFallbackImage())
+                    : NetworkImage(image),
+                fit: BoxFit.cover,
               ),
-              child: const Text(''),
-            )),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: Builder(
+              builder: (context) {
+                if (isInvalidImage(image)) {
+                  return Image.asset(
+                    getRandomFallbackImage(),
+                    fit: BoxFit.cover,
+                  );
+                }
+                return Image.network(
+                  image,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Image.asset(
+                      getRandomFallbackImage(),
+                      fit: BoxFit.cover,
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ),
         Align(
           alignment: Alignment.bottomCenter,
           child: Container(
@@ -686,22 +773,14 @@ Widget popularDestinationsNearby(image, title, context) {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.black.withOpacity(0.0), // Fully transparent
-                  Colors.black.withOpacity(0.1), // Light white
-                  Colors.black.withOpacity(0.3), // Light white
-                  Colors.black.withOpacity(0.5), // Light white
-                  Colors.black.withOpacity(0.7), // Light white
-                  Colors.black.withOpacity(0.9), // Light white
-                  // Fully white
+                  Colors.black.withOpacity(0.0),
+                  Colors.black.withOpacity(0.1),
+                  Colors.black.withOpacity(0.3),
+                  Colors.black.withOpacity(0.5),
+                  Colors.black.withOpacity(0.7),
+                  Colors.black.withOpacity(0.9),
                 ],
-                stops: const [
-                  0.0,
-                  0.1,
-                  0.2,
-                  0.3,
-                  0.5,
-                  1.0,
-                ], // Adjusts the position of the color stops
+                stops: const [0.0, 0.1, 0.2, 0.3, 0.5, 1.0],
               ),
             ),
           ),
@@ -711,25 +790,22 @@ Widget popularDestinationsNearby(image, title, context) {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Split the title into two parts based on space
               Text(
-                title.split(" ")[0], // First part (bold)
+                title.split(" ")[0],
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 14,
                   fontFamily: themeFontFamily,
-                  fontWeight: FontWeight.w600, // Bold
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               Text(
-                title.split(" ").length > 1
-                    ? title.split(" ")[1]
-                    : "", // Second part (normal)
+                title.split(" ").length > 1 ? title.split(" ")[1] : "",
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 14,
                   fontFamily: themeFontFamily,
-                  fontWeight: FontWeight.w400, // Normal
+                  fontWeight: FontWeight.w400,
                 ),
               ),
             ],

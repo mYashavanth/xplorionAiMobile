@@ -93,6 +93,8 @@ flutter:
   assets:
     - assets/images/
     - assets/images/sps/
+    - assets/images/weekendTrips/
+    - assets/images/popularDestinations/
     - assets/icons/
     - assets/fonts/
 

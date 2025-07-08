@@ -306,6 +306,8 @@ class _HomePageState extends State<HomePage> {
     String? userToken = await storage.read(key: 'userToken');
     final response = await http.get(Uri.parse(
         '$baseurl/popular-destination-nearby/$currentLocation/${userToken!}'));
+    print(
+        'url:------------------------------ $baseurl/popular-destination-nearby/$currentLocation/${userToken!}');
 
     if (response.statusCode == 200) {
       var data = jsonDecode(response.body);
@@ -332,6 +334,8 @@ class _HomePageState extends State<HomePage> {
     final response = await http.get(Uri.parse(
         '$baseurl/weekend-trips-nearby/$currentLocation/${userToken!}'));
 
+    print(
+        'url:------------------------------ $baseurl/weekend-trips-nearby/$currentLocation/${userToken!}');
     if (response.statusCode == 200) {
       var data = jsonDecode(response.body);
       int dataLen = data.length;
@@ -350,10 +354,25 @@ class _HomePageState extends State<HomePage> {
           var cityState = data[i]['city_state'];
           var distanceFromPlace = data[i]['distance_from_place'];
           var activities = data[i]['activities'];
+          String category;
+          if (data[i]["theme"] != null &&
+              data[i]["theme"].toString().isNotEmpty) {
+            category = data[i]["theme"].toString();
+          } else {
+            category = i == 0
+                ? 'Adventure'
+                : i == 1
+                    ? 'Relaxation'
+                    : i == 2
+                        ? 'Cultural'
+                        : i == 3
+                            ? 'Historical'
+                            : 'Nature';
+          }
 
           if (imageURL != '') {
             weekendTrips.add(weekendTripsNearYouCard(imageURL, title, noOfDays,
-                cityState, distanceFromPlace, activities, context));
+                cityState, distanceFromPlace, activities, context, category));
           }
         }
       });
