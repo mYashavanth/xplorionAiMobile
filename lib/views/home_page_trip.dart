@@ -2266,7 +2266,7 @@ class _HomePageTripState extends State<HomePageTrip> {
 
         List<Widget> foodDrinksArr = foodAndDrinksArray.map((item) {
           String foodDrinkDescription =
-              item["food_drink_description"] as String;
+              item["food_drink_description"].join(',') as String;
           String foodDrinkName = item["food_drink_name"] as String;
           String foodDrinkImage = item["food_drink_image"] as String;
           String foodType = item["food_drink_type"] as String;
