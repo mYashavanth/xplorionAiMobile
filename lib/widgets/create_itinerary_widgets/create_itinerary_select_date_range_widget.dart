@@ -333,166 +333,169 @@ class _SelectDateRangeState extends State<SelectDateRange> {
       },
     );
 
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.86,
-      padding: const EdgeInsets.only(top: 5, left: 20, right: 20, bottom: 10),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
+    return SafeArea(
+      bottom: true,
+      child: Container(
+        height: MediaQuery.of(context).size.height * 0.86,
+        padding: const EdgeInsets.only(top: 5, left: 20, right: 20, bottom: 10),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
         ),
-      ),
-      child: Column(
-        children: [
-          Align(
-            alignment: Alignment.topCenter,
-            child: Container(
-              width: 80,
-              height: 6,
-              clipBehavior: Clip.antiAlias,
-              decoration: ShapeDecoration(
-                color: const Color(0x7F959FA3),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(
-            height: 10,
-          ),
-          const Text(
-            'Select dates',
-            style: TextStyle(
-              color: Color(0xFF030917),
-              fontSize: 20,
-              fontFamily: themeFontFamily,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          SizedBox(
-            height: MediaQuery.of(context).size.height * 0.7,
-            child: CalendarDatePicker2(
-                config: config,
-                value: dateProvider.rangeDatePickerValueWithDefaultValue,
-                onValueChanged: (dates) {
-                  if (dates.isNotEmpty) {
-                    setState(() {
-                      selectedStartDate = dates[0];
-                      dateProvider.changeDate(dates);
-                    });
-                  }
-                }),
-          ),
-          const SizedBox(
-            height: 10,
-          ),
-          Row(
-            children: [
-              Expanded(
-                child: InkWell(
-                  onTap: () {
-                    startDate = 'Start Date';
-                    endDate = 'End Date';
-                    dateProvider.resetDate();
-                    setState(() {
-                      selectedStartDate = null;
-                    });
-                    modalSetState(() {});
-                  },
-                  child: Container(
-                    height: MediaQuery.of(context).size.height * 0.07,
-                    decoration: ShapeDecoration(
-                      shape: RoundedRectangleBorder(
-                        side: const BorderSide(
-                            width: 1, color: Color(0xFF2C64E3)),
-                        borderRadius: BorderRadius.circular(32),
-                      ),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'Reset',
-                        style: TextStyle(
-                          color: Color(0xFF2C64E3),
-                          fontSize: 16,
-                          fontFamily: themeFontFamily,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
+        child: Column(
+          children: [
+            Align(
+              alignment: Alignment.topCenter,
+              child: Container(
+                width: 80,
+                height: 6,
+                clipBehavior: Clip.antiAlias,
+                decoration: ShapeDecoration(
+                  color: const Color(0x7F959FA3),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
                   ),
                 ),
               ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: InkWell(
-                  onTap: () async {
-                    if (dateProvider
-                            .rangeDatePickerValueWithDefaultValue.length >
-                        1) {
-                      // Format start and end dates
-                      startDate = DateFormat('yyyy-MM-dd').format(
-                        dateProvider.rangeDatePickerValueWithDefaultValue[0]!,
-                      );
-                      endDate = DateFormat('yyyy-MM-dd').format(
-                        dateProvider.rangeDatePickerValueWithDefaultValue[1]!,
-                      );
-
-                      // Save to secure storage
-                      await storage.write(key: 'startDate', value: startDate);
-                      await storage.write(key: 'endDate', value: endDate);
-                    } else {
-                      // If only one date is selected, use it for both start and end dates
-                      startDate = DateFormat('yyyy-MM-dd').format(
-                        dateProvider.rangeDatePickerValueWithDefaultValue[0]!,
-                      );
-                      endDate = startDate;
-
-                      // Save to secure storage
-                      await storage.write(key: 'startDate', value: startDate);
-                      await storage.write(key: 'endDate', value: endDate);
+            ),
+            const SizedBox(
+              height: 10,
+            ),
+            const Text(
+              'Select dates',
+              style: TextStyle(
+                color: Color(0xFF030917),
+                fontSize: 20,
+                fontFamily: themeFontFamily,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.7,
+              child: CalendarDatePicker2(
+                  config: config,
+                  value: dateProvider.rangeDatePickerValueWithDefaultValue,
+                  onValueChanged: (dates) {
+                    if (dates.isNotEmpty) {
+                      setState(() {
+                        selectedStartDate = dates[0];
+                        dateProvider.changeDate(dates);
+                      });
                     }
-
-                    setState(() {
-                      Navigator.of(context).pop();
-                    });
-                  },
-                  child: Container(
-                    width: double.maxFinite,
-                    height: 56,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
-                    decoration: ShapeDecoration(
-                      gradient: const LinearGradient(
-                        begin: Alignment(-1.00, 0.06),
-                        end: Alignment(1, -0.06),
-                        colors: [
-                          Color(0xFF0099FF),
-                          Color(0xFF54AB6A),
-                        ],
+                  }),
+            ),
+            const SizedBox(
+              height: 10,
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    onTap: () {
+                      startDate = 'Start Date';
+                      endDate = 'End Date';
+                      dateProvider.resetDate();
+                      setState(() {
+                        selectedStartDate = null;
+                      });
+                      modalSetState(() {});
+                    },
+                    child: Container(
+                      height: MediaQuery.of(context).size.height * 0.07,
+                      decoration: ShapeDecoration(
+                        shape: RoundedRectangleBorder(
+                          side: const BorderSide(
+                              width: 1, color: Color(0xFF2C64E3)),
+                          borderRadius: BorderRadius.circular(32),
+                        ),
                       ),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(32)),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'Apply',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontFamily: themeFontFamily,
-                          fontWeight: FontWeight.w600,
-                          height: 0.16,
+                      child: const Center(
+                        child: Text(
+                          'Reset',
+                          style: TextStyle(
+                            color: Color(0xFF2C64E3),
+                            fontSize: 16,
+                            fontFamily: themeFontFamily,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
+                const SizedBox(width: 20),
+                Expanded(
+                  child: InkWell(
+                    onTap: () async {
+                      if (dateProvider
+                              .rangeDatePickerValueWithDefaultValue.length >
+                          1) {
+                        // Format start and end dates
+                        startDate = DateFormat('yyyy-MM-dd').format(
+                          dateProvider.rangeDatePickerValueWithDefaultValue[0]!,
+                        );
+                        endDate = DateFormat('yyyy-MM-dd').format(
+                          dateProvider.rangeDatePickerValueWithDefaultValue[1]!,
+                        );
+
+                        // Save to secure storage
+                        await storage.write(key: 'startDate', value: startDate);
+                        await storage.write(key: 'endDate', value: endDate);
+                      } else {
+                        // If only one date is selected, use it for both start and end dates
+                        startDate = DateFormat('yyyy-MM-dd').format(
+                          dateProvider.rangeDatePickerValueWithDefaultValue[0]!,
+                        );
+                        endDate = startDate;
+
+                        // Save to secure storage
+                        await storage.write(key: 'startDate', value: startDate);
+                        await storage.write(key: 'endDate', value: endDate);
+                      }
+
+                      setState(() {
+                        Navigator.of(context).pop();
+                      });
+                    },
+                    child: Container(
+                      width: double.maxFinite,
+                      height: 56,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 4),
+                      decoration: ShapeDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment(-1.00, 0.06),
+                          end: Alignment(1, -0.06),
+                          colors: [
+                            Color(0xFF0099FF),
+                            Color(0xFF54AB6A),
+                          ],
+                        ),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(32)),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'Apply',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontFamily: themeFontFamily,
+                            fontWeight: FontWeight.w600,
+                            height: 0.16,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -436,9 +436,26 @@ Widget weekendTripsNearYouCard(image, title, noOfDays, cityState,
   List<DateTime> getWeekendDates() {
     final now = DateTime.now();
     final firstDayOfWeek = now.subtract(Duration(days: now.weekday - 1));
-    final saturday = firstDayOfWeek.add(const Duration(days: 5));
-    final sunday = firstDayOfWeek.add(const Duration(days: 6));
-    return [saturday, sunday];
+    print('noofDays: $noOfDays');
+
+    if (noOfDays == "3") {
+      // Friday, Saturday, Sunday
+      final friday = firstDayOfWeek.add(const Duration(days: 4));
+      final sunday = firstDayOfWeek.add(const Duration(days: 6));
+      print('Friday: $friday, Sunday: $sunday');
+      return [friday, sunday];
+    } else if (noOfDays == "2") {
+      // Saturday, Sunday
+      final saturday = firstDayOfWeek.add(const Duration(days: 5));
+      final sunday = firstDayOfWeek.add(const Duration(days: 6));
+      print('Saturday: $saturday, Sunday: $sunday');
+      return [saturday, sunday];
+    } else {
+      // Only Saturday
+      final saturday = firstDayOfWeek.add(const Duration(days: 5));
+      print('Saturday: $saturday');
+      return [saturday, saturday];
+    }
   }
 
   Color getCategoryColor(String category) {

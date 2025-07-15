@@ -61,73 +61,80 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment(-1.00, 0.06),
-            end: Alignment(1, -0.06),
-            colors: [
-              Color(0xFF0099FF),
-              Color(0xFF54AB6A),
-            ],
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Logo in the center
-            const Spacer(),
-
-            Center(
-              child: Image.asset(
-                'assets/icons/logo_white.png',
-                width: 100, // Adjust the size as needed
-                height: 100,
-              ),
-            ),
-            const Spacer(),
-            // Welcome text and XplorionAi text with star
-            Column(
-              children: [
-                const Text(
-                  'Welcome to',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.white,
-                    fontFamily: 'IBM Plex Sans',
-                  ),
-                ),
-                Stack(
-                  clipBehavior: Clip.none, // Ensure the star is not clipped
-                  alignment: Alignment.center,
-                  children: [
-                    const Text(
-                      'XplorionAi',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        fontFamily: 'IBM Plex Sans',
-                      ),
-                    ),
-                    Positioned(
-                      top: -20,
-                      right: -40,
-                      child: Image.asset(
-                        'assets/icons/stars.png',
-                        width: 60, // Adjust the size as needed
-                        height: 50,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 50), // Add spacing at the bottom
-          ],
+      body: SizedBox.expand(
+        child: Image.asset(
+          'assets/images/splash_screen.jpg',
+          fit: BoxFit.cover,
         ),
       ),
+
+      // Container(
+      //   decoration: const BoxDecoration(
+      //     gradient: LinearGradient(
+      //       begin: Alignment(-1.00, 0.06),
+      //       end: Alignment(1, -0.06),
+      //       colors: [
+      //         Color(0xFF0099FF),
+      //         Color(0xFF54AB6A),
+      //       ],
+      //     ),
+      //   ),
+      //   child: Column(
+      //     mainAxisAlignment: MainAxisAlignment.center,
+      //     children: [
+      //       // Logo in the center
+      //       const Spacer(),
+
+      //       Center(
+      //         child: Image.asset(
+      //           'assets/icons/logo_white.png',
+      //           width: 100, // Adjust the size as needed
+      //           height: 100,
+      //         ),
+      //       ),
+      //       const Spacer(),
+      //       // Welcome text and XplorionAi text with star
+      //       Column(
+      //         children: [
+      //           const Text(
+      //             'Welcome to',
+      //             style: TextStyle(
+      //               fontSize: 18,
+      //               fontWeight: FontWeight.w400,
+      //               color: Colors.white,
+      //               fontFamily: 'IBM Plex Sans',
+      //             ),
+      //           ),
+      //           Stack(
+      //             clipBehavior: Clip.none, // Ensure the star is not clipped
+      //             alignment: Alignment.center,
+      //             children: [
+      //               const Text(
+      //                 'XplorionAi',
+      //                 style: TextStyle(
+      //                   fontSize: 28,
+      //                   fontWeight: FontWeight.bold,
+      //                   color: Colors.white,
+      //                   fontFamily: 'IBM Plex Sans',
+      //                 ),
+      //               ),
+      //               Positioned(
+      //                 top: -20,
+      //                 right: -40,
+      //                 child: Image.asset(
+      //                   'assets/icons/stars.png',
+      //                   width: 60, // Adjust the size as needed
+      //                   height: 50,
+      //                 ),
+      //               ),
+      //             ],
+      //           ),
+      //         ],
+      //       ),
+      //       const SizedBox(height: 50), // Add spacing at the bottom
+      //     ],
+      //   ),
+      // ),
     );
   }
 }
