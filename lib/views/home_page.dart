@@ -191,15 +191,15 @@ class _HomePageState extends State<HomePage> {
       case LocationStatus.serviceDisabled:
         return Column(
           children: [
-            const Text(
-              'Location services are disabled. Please enable them in settings.',
-              style: TextStyle(
-                color: Colors.red,
-                fontSize: 12,
-                fontFamily: themeFontFamily,
-                fontWeight: FontWeight.w300,
-              ),
-            ),
+            // const Text(
+            //   'Location services are disabled. Please enable them in settings.',
+            //   style: TextStyle(
+            //     color: Colors.red,
+            //     fontSize: 12,
+            //     fontFamily: themeFontFamily,
+            //     fontWeight: FontWeight.w300,
+            //   ),
+            // ),
             TextButton(
               onPressed: _determinePosition,
               child: const Text('Retry'),
@@ -209,15 +209,15 @@ class _HomePageState extends State<HomePage> {
       case LocationStatus.permissionDenied:
         return Column(
           children: [
-            const Text(
-              'Please enable Location for Personalised Travel Itineraries',
-              style: TextStyle(
-                color: Colors.red,
-                fontSize: 12,
-                fontFamily: themeFontFamily,
-                fontWeight: FontWeight.w300,
-              ),
-            ),
+            // const Text(
+            //   'Please enable Location for Personalised Travel Itineraries',
+            //   style: TextStyle(
+            //     color: Colors.red,
+            //     fontSize: 12,
+            //     fontFamily: themeFontFamily,
+            //     fontWeight: FontWeight.w300,
+            //   ),
+            // ),
             const SizedBox(height: 10),
             TextButton(
               style: TextButton.styleFrom(
@@ -239,15 +239,15 @@ class _HomePageState extends State<HomePage> {
       case LocationStatus.permissionPermanentlyDenied:
         return Column(
           children: [
-            const Text(
-              'Location permissions are permanently denied. Please enable them in app settings.',
-              style: TextStyle(
-                color: Colors.red,
-                fontSize: 12,
-                fontFamily: themeFontFamily,
-                fontWeight: FontWeight.w300,
-              ),
-            ),
+            // const Text(
+            //   'Location permissions are permanently denied. Please enable them in app settings.',
+            //   style: TextStyle(
+            //     color: Colors.red,
+            //     fontSize: 12,
+            //     fontFamily: themeFontFamily,
+            //     fontWeight: FontWeight.w300,
+            //   ),
+            // ),
             const SizedBox(height: 10),
             TextButton(
               style: TextButton.styleFrom(
@@ -272,7 +272,7 @@ class _HomePageState extends State<HomePage> {
                   );
                 }
               },
-              child: const Text('Open Settings'),
+              child: const Text('Enable Location'),
             ),
           ],
         );

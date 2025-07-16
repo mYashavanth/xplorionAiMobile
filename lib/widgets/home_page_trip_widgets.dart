@@ -951,93 +951,90 @@ Widget buildDayActivity(
                     ),
 
                     //
-                    Row(
-                      children: [
-                        //
-                        Container(
-                          margin: const EdgeInsets.only(right: 8),
-                          height: 26,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
-                          decoration: ShapeDecoration(
-                            color: const Color(0xFFEFEFEF),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(32),
-                            ),
-                          ),
-                          child: const Center(
-                            child: Text(
-                              'Park',
-                              style: TextStyle(
-                                color: Color(0xFF888888),
-                                fontSize: 12,
-                                fontFamily: themeFontFamily2,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ),
-                        //
+                    // Row(
+                    //   children: [
 
-                        //
-                        Container(
-                          height: 26,
-                          margin: const EdgeInsets.only(right: 8),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
-                          decoration: ShapeDecoration(
-                            color: const Color(0xFFEFEFEF),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(32),
-                            ),
-                          ),
-                          child: const Center(
-                            child: Text(
-                              'Garden',
-                              style: TextStyle(
-                                color: Color(0xFF888888),
-                                fontSize: 12,
-                                fontFamily: themeFontFamily2,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ),
-                        //
-                        //
-                        ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 190),
-                          child: IntrinsicWidth(
-                            child: Container(
-                              height: 26,
-                              margin: const EdgeInsets.only(right: 8),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 4),
-                              decoration: ShapeDecoration(
-                                color: const Color(0xFFEFEFEF),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(32),
-                                ),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  data[4],
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: Color(0xFF888888),
-                                    fontSize: 12,
-                                    fontFamily: themeFontFamily2,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        //
-                      ],
-                    ),
+                    //     Container(
+                    //       margin: const EdgeInsets.only(right: 8),
+                    //       height: 26,
+                    //       padding: const EdgeInsets.symmetric(
+                    //           horizontal: 10, vertical: 4),
+                    //       decoration: ShapeDecoration(
+                    //         color: const Color(0xFFEFEFEF),
+                    //         shape: RoundedRectangleBorder(
+                    //           borderRadius: BorderRadius.circular(32),
+                    //         ),
+                    //       ),
+                    //       child: const Center(
+                    //         child: Text(
+                    //           'Park',
+                    //           style: TextStyle(
+                    //             color: Color(0xFF888888),
+                    //             fontSize: 12,
+                    //             fontFamily: themeFontFamily2,
+                    //             fontWeight: FontWeight.w500,
+                    //           ),
+                    //         ),
+                    //       ),
+                    //     ),
+
+                    //     Container(
+                    //       height: 26,
+                    //       margin: const EdgeInsets.only(right: 8),
+                    //       padding: const EdgeInsets.symmetric(
+                    //           horizontal: 10, vertical: 4),
+                    //       decoration: ShapeDecoration(
+                    //         color: const Color(0xFFEFEFEF),
+                    //         shape: RoundedRectangleBorder(
+                    //           borderRadius: BorderRadius.circular(32),
+                    //         ),
+                    //       ),
+                    //       child: const Center(
+                    //         child: Text(
+                    //           'Garden',
+                    //           style: TextStyle(
+                    //             color: Color(0xFF888888),
+                    //             fontSize: 12,
+                    //             fontFamily: themeFontFamily2,
+                    //             fontWeight: FontWeight.w500,
+                    //           ),
+                    //         ),
+                    //       ),
+                    //     ),
+
+                    //     ConstrainedBox(
+                    //       constraints: const BoxConstraints(maxWidth: 190),
+                    //       child: IntrinsicWidth(
+                    //         child: Container(
+                    //           height: 26,
+                    //           margin: const EdgeInsets.only(right: 8),
+                    //           padding: const EdgeInsets.symmetric(
+                    //               horizontal: 10, vertical: 4),
+                    //           decoration: ShapeDecoration(
+                    //             color: const Color(0xFFEFEFEF),
+                    //             shape: RoundedRectangleBorder(
+                    //               borderRadius: BorderRadius.circular(32),
+                    //             ),
+                    //           ),
+                    //           child: Center(
+                    //             child: Text(
+                    //               data[4],
+                    //               maxLines: 1,
+                    //               overflow: TextOverflow.ellipsis,
+                    //               style: const TextStyle(
+                    //                 color: Color(0xFF888888),
+                    //                 fontSize: 12,
+                    //                 fontFamily: themeFontFamily2,
+                    //                 fontWeight: FontWeight.w500,
+                    //               ),
+                    //             ),
+                    //           ),
+                    //         ),
+                    //       ),
+                    //     ),
+                    //     //
+                    //   ],
+                    // ),
                     //
 
                     const SizedBox(
@@ -1322,13 +1319,18 @@ Widget buildDayActivity(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                data[4],
-                style: const TextStyle(
-                  color: Color(0xFF030917),
-                  fontSize: 16,
-                  fontFamily: themeFontFamily2,
-                  fontWeight: FontWeight.w500,
+              SizedBox(
+                width: 270,
+                child: Text(
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  data[4],
+                  style: const TextStyle(
+                    color: Color(0xFF030917),
+                    fontSize: 20,
+                    fontFamily: themeFontFamily2,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
               Container(

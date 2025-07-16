@@ -2196,7 +2196,9 @@ class _HomePageTripState extends State<HomePageTrip> {
             ? json.decode(response.body)[0]['nationalHolidaysJsonData']
             : json.decode(response.body);
         var nationalHolidaysDataLen = nationalHolidaysData.length;
-
+        if (holiday.isNotEmpty) {
+          holiday.clear();
+        }
         for (int i = 0; i < nationalHolidaysDataLen; i++) {
           setState(() {
             holiday.add(nationalHolidaysData[i]);
