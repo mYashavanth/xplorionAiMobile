@@ -3242,6 +3242,7 @@ Widget buildSavedItineriesBottomSheet(savedItineraryCollectionBool, setState,
                           Navigator.pop(context);
                           showModalBottomSheet(
                               context: context,
+                              isScrollControlled: true,
                               builder: (context) {
                                 return buildNewCollectionBottomSheet(
                                     collectionNameController, context);
@@ -3870,32 +3871,17 @@ Widget buildNewCollectionBottomSheet(
       final FlutterSecureStorage storage = const FlutterSecureStorage();
 
       return Container(
-        height: 329,
-        clipBehavior: Clip.antiAlias,
-        decoration: const ShapeDecoration(
-          color: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(8),
-              topRight: Radius.circular(8),
-            ),
-          ),
-        ),
+        height: MediaQuery.of(context).size.height,
+        color: Colors.white, // Set overall background color
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Top drag handle and title section
             Container(
               height: 87,
               clipBehavior: Clip.antiAlias,
-              decoration: const ShapeDecoration(
+              decoration: const BoxDecoration(
                 color: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(8),
-                    topRight: Radius.circular(8),
-                  ),
-                ),
-                shadows: [
+                boxShadow: [
                   BoxShadow(
                     color: Color(0x33000000),
                     blurRadius: 7,
@@ -3936,157 +3922,173 @@ Widget buildNewCollectionBottomSheet(
                 ),
               ),
             ),
-            const SizedBox(height: 10),
+
+            // Main content area that expands
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Collection name',
+                      style: TextStyle(
+                        color: Color(0xFF030917),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Container(
+                      margin: const EdgeInsets.only(top: 10, bottom: 10),
+                      height: 54,
+                      child: TextField(
+                        controller: collectionNameController,
+                        onChanged: (value) {
+                          setState(() {
+                            isCreateEnabled = value.trim().isNotEmpty;
+                          });
+                        },
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 18,
+                        ),
+                        decoration: const InputDecoration(
+                          contentPadding: EdgeInsets.all(20),
+                          hintText: 'Enter collection name',
+                          hintStyle: TextStyle(
+                            color: Color(0xFF888888),
+                            fontSize: 16,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(8)),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Button section that stays at the bottom
             Container(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0x33000000),
+                    blurRadius: 7,
+                    offset: Offset(0, -1),
+                    spreadRadius: 0,
+                  )
+                ],
+              ),
+              child: Row(
                 children: [
-                  const Text(
-                    'Collection name',
-                    style: TextStyle(
-                      color: Color(0xFF030917),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  Container(
-                    margin: const EdgeInsets.only(top: 10, bottom: 10),
-                    height: 54,
-                    child: TextField(
-                      controller: collectionNameController,
-                      onChanged: (value) {
-                        // Update button state based on TextField value
-                        setState(() {
-                          isCreateEnabled = value.trim().isNotEmpty;
-                        });
+                  Expanded(
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.pop(context);
                       },
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 18,
-                      ),
-                      decoration: const InputDecoration(
-                        contentPadding: EdgeInsets.all(20),
-                        hintText: 'Enter collection name',
-                        hintStyle: TextStyle(
-                          color: Color(0xFF888888),
-                          fontSize: 16,
+                      child: Container(
+                        height: 56,
+                        decoration: ShapeDecoration(
+                          shape: RoundedRectangleBorder(
+                            side: const BorderSide(
+                                width: 1, color: Color(0xFF005CE7)),
+                            borderRadius: BorderRadius.circular(32),
+                          ),
                         ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(8)),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: InkWell(
-                          onTap: () {
-                            Navigator.pop(context);
-                          },
-                          child: Container(
-                            height: 56,
-                            decoration: ShapeDecoration(
-                              shape: RoundedRectangleBorder(
-                                side: const BorderSide(
-                                    width: 1, color: Color(0xFF005CE7)),
-                                borderRadius: BorderRadius.circular(32),
-                              ),
-                            ),
-                            child: const Center(
-                              child: Text(
-                                'Cancel',
-                                style: TextStyle(
-                                  color: Color(0xFF005CE7),
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
+                        child: const Center(
+                          child: Text(
+                            'Cancel',
+                            style: TextStyle(
+                              color: Color(0xFF005CE7),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: InkWell(
-                          onTap: isCreateEnabled
-                              ? () async {
-                                  //Navigator.pop(context);
-                                  String? userToken =
-                                      await storage.read(key: 'userToken');
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: InkWell(
+                      onTap: isCreateEnabled
+                          ? () async {
+                              String? userToken =
+                                  await storage.read(key: 'userToken');
 
-                                  addCollection(
-                                      collectionNameController.text.trim(),
-                                      userToken!,
-                                      context);
-                                  Navigator.pop(context);
-                                  final itineraryId =
-                                      await storage.read(key: 'itineraryId');
-                                  if (context.mounted) {
-                                    showModalBottomSheet(
-                                      // isScrollControlled: true,
-                                      backgroundColor: Colors.white,
-                                      context: context,
-                                      builder: (context) {
-                                        return StatefulBuilder(
-                                          builder: (context, modalSetState) {
-                                            return buildSavedItineriesBottomSheet(
-                                              [
-                                                false,
-                                                false,
-                                                false,
-                                                false,
-                                                false,
-                                                false,
-                                                false,
-                                                false,
-                                                false
-                                              ],
-                                              modalSetState,
-                                              context,
-                                              collectionNameController,
-                                              itineraryId!,
-                                            );
-                                          },
+                              addCollection(
+                                  collectionNameController.text.trim(),
+                                  userToken!,
+                                  context);
+                              Navigator.pop(context);
+                              final itineraryId =
+                                  await storage.read(key: 'itineraryId');
+                              if (context.mounted) {
+                                showModalBottomSheet(
+                                  backgroundColor: Colors.white,
+                                  context: context,
+                                  builder: (context) {
+                                    return StatefulBuilder(
+                                      builder: (context, modalSetState) {
+                                        return buildSavedItineriesBottomSheet(
+                                          [
+                                            false,
+                                            false,
+                                            false,
+                                            false,
+                                            false,
+                                            false,
+                                            false,
+                                            false,
+                                            false
+                                          ],
+                                          modalSetState,
+                                          context,
+                                          collectionNameController,
+                                          itineraryId!,
                                         );
                                       },
                                     );
-                                  }
-                                }
-                              : null,
-                          child: Container(
-                            height: 56,
-                            decoration: ShapeDecoration(
-                              gradient: isCreateEnabled
-                                  ? themeGradientColor
-                                  : LinearGradient(
-                                      colors: [
-                                        Colors.grey,
-                                        Colors.grey[400]!,
-                                      ],
-                                    ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(32),
-                              ),
-                            ),
-                            child: Center(
-                              child: Text(
-                                'Create',
-                                style: TextStyle(
-                                  color: isCreateEnabled
-                                      ? Colors.white
-                                      : Colors.black38,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
+                                  },
+                                );
+                              }
+                            }
+                          : null,
+                      child: Container(
+                        height: 56,
+                        decoration: ShapeDecoration(
+                          gradient: isCreateEnabled
+                              ? themeGradientColor
+                              : LinearGradient(
+                                  colors: [
+                                    Colors.grey,
+                                    Colors.grey[400]!,
+                                  ],
                                 ),
-                              ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(32),
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Create',
+                            style: TextStyle(
+                              color: isCreateEnabled
+                                  ? Colors.white
+                                  : Colors.black38,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
                       ),
-                    ],
+                    ),
                   ),
                 ],
               ),

@@ -20,7 +20,16 @@ Widget topBannerCard(status, heading, note, image, fromDate, toDate,
     onTap: () async {
       if (!isBannerClickable) return; // Prevent multiple clicks
       isBannerClickable = false; // Disable further clicks
-
+      if (currentLocation == 'Loading location...') {
+        // Show a message or handle the case where location is not available
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please wait, location is being fetched...'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+        return;
+      }
       try {
         print(
             "$travelCompanion ---- $budgetType ----- $fromDate ---- $toDate ---- $currentLocation ---- $heading");

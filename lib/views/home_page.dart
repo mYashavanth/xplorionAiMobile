@@ -460,6 +460,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void initState() {
+    _getData();
     fetchItineraries();
     _determinePosition();
 
@@ -492,6 +493,10 @@ class _HomePageState extends State<HomePage> {
       print(
           'bannerData:+++++++++++++++++++++++++++++++++++++++++++++++++++ $data');
 
+      if (imageSliders.isNotEmpty) {
+        imageSliders.clear();
+      }
+
       for (int i = 0; i < dataLen; i++) {
         imageSliders.add(
           topBannerCard(
@@ -523,11 +528,11 @@ class _HomePageState extends State<HomePage> {
           weekendTrips.clear();
           imageSliders.clear();
         });
-        await _determinePosition();
+        await _getData();
         await fetchItineraries();
+        await _determinePosition();
         await fetchPopularDestination();
         await fetchWeekendTripsNearMe();
-        await _getData();
       },
       child: SafeArea(
         child: Scaffold(
@@ -877,21 +882,97 @@ class _HomePageState extends State<HomePage> {
                           ? ListView.builder(
                               padding: const EdgeInsets.only(top: 4, bottom: 4),
                               scrollDirection: Axis.horizontal,
-                              itemCount: 5,
+                              itemCount: 3, // Only 3 dummy cards as requested
                               itemBuilder: (context, index) {
-                                return Shimmer.fromColors(
-                                  baseColor: Colors.grey.shade300,
-                                  highlightColor: Colors.grey.shade100,
-                                  child: Container(
-                                    width: 200,
-                                    height: 300,
-                                    margin: const EdgeInsets.symmetric(
-                                        horizontal: 8),
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey,
-                                      borderRadius: BorderRadius.circular(12),
+                                // Create dummy data for each card
+                                final dummyData = [
+                                  {
+                                    'image':
+                                        'assets/images/weekendTrips/21.jpg',
+                                    'title': 'Plotting your next escape',
+                                    'noOfDays':
+                                        'Making space for a mini vacation...',
+                                    'cityState':
+                                        'Somewhere worth escaping to...',
+                                    'distanceFromPlace':
+                                        'Calculating miles of memories...',
+                                    'activities': 'Relax, Unwind, Explore',
+                                    'category': 'Adventure',
+                                  },
+                                  {
+                                    'image':
+                                        'assets/images/weekendTrips/1500.jpg',
+                                    'title': 'Plotting your next escape',
+                                    'noOfDays':
+                                        'Making space for a mini vacation...',
+                                    'cityState':
+                                        'Somewhere worth escaping to...',
+                                    'distanceFromPlace':
+                                        'Calculating miles of memories...',
+                                    'activities': 'Relax, Unwind, Explore',
+                                    'category': 'Relaxation',
+                                  },
+                                  {
+                                    'image':
+                                        'assets/images/weekendTrips/7353.jpg',
+                                    'title': 'Plotting your next escape',
+                                    'noOfDays':
+                                        'Making space for a mini vacation...',
+                                    'cityState':
+                                        'Somewhere worth escaping to...',
+                                    'distanceFromPlace':
+                                        'Calculating miles of memories...',
+                                    'activities': 'Relax, Unwind, Explore',
+                                    'category': 'Cultural',
+                                  },
+                                ];
+
+                                return Stack(
+                                  children: [
+                                    // Actual dummy card with slightly reduced opacity
+                                    Opacity(
+                                      opacity: 0.8,
+                                      child: weekendTripsNearYouCard(
+                                        dummyData[index]['image']!,
+                                        dummyData[index]['title']!,
+                                        dummyData[index]['noOfDays']!,
+                                        dummyData[index]['cityState']!,
+                                        dummyData[index]['distanceFromPlace']!,
+                                        dummyData[index]['activities']!,
+                                        context,
+                                        dummyData[index]['category']!,
+                                      ),
                                     ),
-                                  ),
+
+                                    // More visible shimmer overlay with gradient
+                                    Shimmer.fromColors(
+                                      baseColor:
+                                          Colors.grey.shade300.withOpacity(0.7),
+                                      highlightColor:
+                                          Colors.white.withOpacity(0.9),
+                                      period: Duration(
+                                          milliseconds:
+                                              1500), // Faster animation
+                                      child: Container(
+                                        width: 291,
+                                        height: 410,
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                            colors: [
+                                              Colors.white.withOpacity(0.5),
+                                              Colors.white.withOpacity(0.3),
+                                              Colors.white.withOpacity(0.5),
+                                            ],
+                                            stops: [0.1, 0.5, 0.9],
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(24),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 );
                               },
                             )
@@ -916,7 +997,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     const Text('Uncover must-see gems just around the corner!'),
-                    SizedBox(
+                    const SizedBox(
                       height: 10,
                     ),
                     AbsorbPointer(
@@ -933,24 +1014,79 @@ class _HomePageState extends State<HomePage> {
                                         padding: const EdgeInsets.only(
                                             top: 4, bottom: 4),
                                         scrollDirection: Axis.horizontal,
-                                        itemCount: 5,
+                                        itemCount: 4,
                                         itemBuilder: (context, index) {
-                                          return Shimmer.fromColors(
-                                            baseColor: Colors.grey.shade300,
-                                            highlightColor:
-                                                Colors.grey.shade100,
-                                            child: Container(
-                                              width: 200,
-                                              height: 240,
-                                              margin:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 8),
-                                              decoration: BoxDecoration(
-                                                color: Colors.grey,
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
+                                          final dummyData = [
+                                            {
+                                              'image':
+                                                  'assets/images/popularDestinations/354.jpg',
+                                              'title': 'Manali Hills',
+                                            },
+                                            {
+                                              'image':
+                                                  'assets/images/popularDestinations/39550.jpg',
+                                              'title': 'Goa Beaches',
+                                            },
+                                            {
+                                              'image':
+                                                  'assets/images/popularDestinations/2149211337.jpg',
+                                              'title': 'Jaipur Forts',
+                                            },
+                                            {
+                                              'image':
+                                                  'assets/images/popularDestinations/2150456198.jpg',
+                                              'title': 'Kerala Backwaters',
+                                            },
+                                          ];
+
+                                          return Stack(
+                                            children: [
+                                              // Dummy card with reduced opacity
+                                              Opacity(
+                                                opacity: 0.8,
+                                                child:
+                                                    popularDestinationsNearby(
+                                                  dummyData[index]['image']!,
+                                                  dummyData[index]['title']!,
+                                                  context,
+                                                ),
                                               ),
-                                            ),
+
+                                              // Enhanced shimmer overlay
+                                              Shimmer.fromColors(
+                                                baseColor: Colors.white
+                                                    .withOpacity(0.9),
+                                                highlightColor: Colors
+                                                    .grey.shade100
+                                                    .withOpacity(0.9),
+                                                period: const Duration(
+                                                    milliseconds:
+                                                        1000), // Faster animation
+                                                child: Container(
+                                                  width: 152,
+                                                  height: 234,
+                                                  decoration: BoxDecoration(
+                                                    gradient: LinearGradient(
+                                                      begin: Alignment.topLeft,
+                                                      end:
+                                                          Alignment.bottomRight,
+                                                      colors: [
+                                                        Colors.white
+                                                            .withOpacity(0.5),
+                                                        Colors.white
+                                                            .withOpacity(0.3),
+                                                        Colors.white
+                                                            .withOpacity(0.5),
+                                                      ],
+                                                      stops: [0.1, 0.5, 0.9],
+                                                    ),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
                                           );
                                         },
                                       ),
