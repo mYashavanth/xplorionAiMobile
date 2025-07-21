@@ -101,28 +101,28 @@ Widget topBannerCard(status, heading, note, image, fromDate, toDate,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.only(
-                      top: 5, bottom: 5, left: 10, right: 10),
-                  decoration: ShapeDecoration(
-                    color: const Color(0xFF005CE7),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                  ),
-                  child: Text(
-                    status,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontFamily: themeFontFamily2,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                const SizedBox(
-                  height: 8,
-                ),
+                // Container(
+                //   padding: const EdgeInsets.only(
+                //       top: 5, bottom: 5, left: 10, right: 10),
+                //   decoration: ShapeDecoration(
+                //     color: const Color(0xFF005CE7),
+                //     shape: RoundedRectangleBorder(
+                //       borderRadius: BorderRadius.circular(24),
+                //     ),
+                //   ),
+                //   child: Text(
+                //     status,
+                //     style: const TextStyle(
+                //       color: Colors.white,
+                //       fontSize: 10,
+                //       fontFamily: themeFontFamily2,
+                //       fontWeight: FontWeight.w700,
+                //     ),
+                //   ),
+                // ),
+                // const SizedBox(
+                //   height: 8,
+                // ),
                 SizedBox(
                   child: Text(
                     heading,
@@ -134,43 +134,44 @@ Widget topBannerCard(status, heading, note, image, fromDate, toDate,
                     ),
                   ),
                 ),
-                const SizedBox(
-                  height: 8,
-                ),
-                SizedBox(
-                  width: 240,
-                  child: Text(
-                    note,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Color(0xFFEDF2FE),
-                      fontSize: 14,
-                      fontFamily: themeFontFamily2,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ),
+                // const SizedBox(height: 8),
+                // SizedBox(
+                //   width: 240,
+                //   child: Text(
+                //     note,
+                //     maxLines: 3,
+                //     overflow: TextOverflow.ellipsis,
+                //     style: const TextStyle(
+                //       color: Color(0xFFEDF2FE),
+                //       fontSize: 14,
+                //       fontFamily: themeFontFamily2,
+                //       fontWeight: FontWeight.w400,
+                //     ),
+                //   ),
+                // ),
                 const Spacer(),
-                Container(
-                  margin: const EdgeInsets.only(top: 10),
-                  width: 60,
-                  height: 30,
-                  decoration: ShapeDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment(-1.00, 0.06),
-                      end: Alignment(1, -0.06),
-                      colors: [
-                        Color(0xFF0099FF),
-                        Color(0xFF54AB6A),
-                      ],
+                Align(
+                  alignment: Alignment.bottomRight,
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 10),
+                    width: 60,
+                    height: 30,
+                    decoration: ShapeDecoration(
+                      gradient: const LinearGradient(
+                        begin: Alignment(-1.00, 0.06),
+                        end: Alignment(1, -0.06),
+                        colors: [
+                          Color(0xFF0099FF),
+                          Color(0xFF54AB6A),
+                        ],
+                      ),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(32)),
                     ),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(32)),
-                  ),
-                  child: const Icon(
-                    Icons.arrow_forward,
-                    color: Colors.white,
+                    child: const Icon(
+                      Icons.arrow_forward,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ],
@@ -311,30 +312,31 @@ Widget singleCardPlan(context, imageUrl, placeName, noOfDays, dayDate,
                       },
                       child: Stack(
                         children: [
+                          // Positioned(
+                          //   left: 0,
+                          //   top: 0,
+                          //   child: Container(
+                          //     width: 28,
+                          //     height: 28,
+                          //     decoration: const ShapeDecoration(
+                          //       image: DecorationImage(
+                          //         image: AssetImage(
+                          //             "assets/images/friend_photo.jpeg"),
+                          //         fit: BoxFit.fill,
+                          //       ),
+                          //       shape: OvalBorder(
+                          //         side: BorderSide(
+                          //           width: 1,
+                          //           strokeAlign: BorderSide.strokeAlignOutside,
+                          //           color: Colors.white,
+                          //         ),
+                          //       ),
+                          //     ),
+                          //   ),
+                          // ),
                           Positioned(
+                            // left: 19,
                             left: 0,
-                            top: 0,
-                            child: Container(
-                              width: 28,
-                              height: 28,
-                              decoration: const ShapeDecoration(
-                                image: DecorationImage(
-                                  image: AssetImage(
-                                      "assets/images/friend_photo.jpeg"),
-                                  fit: BoxFit.fill,
-                                ),
-                                shape: OvalBorder(
-                                  side: BorderSide(
-                                    width: 1,
-                                    strokeAlign: BorderSide.strokeAlignOutside,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            left: 19,
                             top: 0,
                             child: Container(
                               width: 28,

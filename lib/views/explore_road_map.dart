@@ -504,7 +504,7 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
     // Ensure img has a valid value
     print('ratings = $ratings');
     img ??=
-        'https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png';
+        'https://xplorionai.nyc3.cdn.digitaloceanspaces.com/banners/placeholder_image.jpg';
 
     return Container(
       margin: const EdgeInsets.only(left: 5, right: 5),
@@ -732,7 +732,7 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
 //     }
 //     // Ensure img has a valid value
 //     img ??=
-//         'https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png';
+//         'https://xplorionai.nyc3.cdn.digitaloceanspaces.com/banners/placeholder_image.jpg';
 //     String save = 'save_outline.svg';
 //     if (saved) {
 //       save = 'save_fill.svg';

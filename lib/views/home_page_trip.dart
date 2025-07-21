@@ -206,6 +206,7 @@ class _HomePageTripState extends State<HomePageTrip> {
               }
               daysDataDisplay[dayNo - 1] = data;
             });
+            setDay1SliderShowActivity(daysDataDisplay);
             print('Itinerary for day $dayNo generated successfully.');
             keepTrying = false; // Success, stop retrying
           }
@@ -519,7 +520,87 @@ class _HomePageTripState extends State<HomePageTrip> {
 
           setState(() {
             for (int d = noOfDays; d >= 1; d--) {
-              menuItemNames.insert(0, "Day $d");
+              String day;
+              // If the days array has a valid entry for this day, use its 'day' field
+              if (responseData['itinerary']['days'].length >= d) {
+                day = responseData['itinerary']['days'][d - 1]['day'];
+              } else if (responseData['itinerary']['days'].isNotEmpty) {
+                // If days array is not empty, try to generate the date string for the missing day
+                // Parse the first day as a DateTime
+                String firstDayStr =
+                    responseData['itinerary']['days'][0]['day'];
+                // Try to parse "month date" (e.g., "July 25")
+                DateTime? firstDayDate;
+                try {
+                  List<String> parts = firstDayStr.split(' ');
+                  if (parts.length == 2) {
+                    String month = parts[0];
+                    int dayNum = int.tryParse(parts[1]) ?? 1;
+                    int year = DateTime.now().year;
+                    // Try to get the month number
+                    Map<String, int> monthMap = {
+                      'Jan': 1,
+                      'January': 1,
+                      'Feb': 2,
+                      'February': 2,
+                      'Mar': 3,
+                      'March': 3,
+                      'Apr': 4,
+                      'April': 4,
+                      'May': 5,
+                      'Jun': 6,
+                      'June': 6,
+                      'Jul': 7,
+                      'July': 7,
+                      'Aug': 8,
+                      'August': 8,
+                      'Sep': 9,
+                      'September': 9,
+                      'Oct': 10,
+                      'October': 10,
+                      'Nov': 11,
+                      'November': 11,
+                      'Dec': 12,
+                      'December': 12,
+                    };
+                    int? monthNum = monthMap[month];
+                    if (monthNum != null) {
+                      firstDayDate = DateTime(year, monthNum, dayNum);
+                    }
+                  }
+                } catch (_) {
+                  firstDayDate = null;
+                }
+                if (firstDayDate != null) {
+                  // Calculate the date for the current day
+                  DateTime thisDay = firstDayDate.add(Duration(days: d - 1));
+                  // Format as "Month Day" (e.g., "July 25")
+                  String monthName = [
+                    '',
+                    'January',
+                    'February',
+                    'March',
+                    'April',
+                    'May',
+                    'June',
+                    'July',
+                    'August',
+                    'September',
+                    'October',
+                    'November',
+                    'December'
+                  ][thisDay.month];
+                  day = "$monthName ${thisDay.day}";
+                } else {
+                  day = "Day $d"; // fallback
+                }
+              } else {
+                day = "Day $d"; // Fallback if day is not available
+              }
+              print('+++++++++++day $day');
+
+              // menuItemNames.insert(0, "Day $d");
+              menuItemNames.insert(0, day);
 
               if (d == 1) {
                 menuBoolList.insert(0, true);
@@ -616,7 +697,18 @@ class _HomePageTripState extends State<HomePageTrip> {
 
         setState(() {
           for (int d = noOfDays; d >= 1; d--) {
-            menuItemNames.insert(0, "Day $d");
+            String day;
+            if (responseDataS[0]['itinerary']['itinerary']['days'].length >=
+                d) {
+              day = responseDataS[0]['itinerary']['itinerary']['days'][d - 1]
+                  ['day'];
+            } else {
+              day = "Day $d"; // Fallback if day is not available
+            }
+            print('+++++++++++day $day');
+
+            // menuItemNames.insert(0, "Day $d");
+            menuItemNames.insert(0, day);
 
             if (d == 1) {
               menuBoolList.insert(0, true);
@@ -696,9 +788,20 @@ class _HomePageTripState extends State<HomePageTrip> {
 
   void setDay1SliderShowActivity(daysData) {
     if (daysData.isNotEmpty) {
-      var activities = daysData[0]['activities'];
-      day1SliderShowActivity = List<bool>.filled(activities.length, true);
-      isTitleExpandedCards = List<bool>.filled(activities.length, false);
+      // Find the maximum activities length across all days
+      int maxActivitiesLength = 0;
+      for (int i = 0; i < daysData.length; i++) {
+        if (daysData[i]['activities'] != null) {
+          int currentLength = daysData[i]['activities'].length;
+          if (currentLength > maxActivitiesLength) {
+            maxActivitiesLength = currentLength;
+          }
+        }
+      }
+
+      // Initialize lists with the maximum length
+      day1SliderShowActivity = List<bool>.filled(maxActivitiesLength, true);
+      isTitleExpandedCards = List<bool>.filled(maxActivitiesLength, false);
     }
   }
 
@@ -1905,7 +2008,7 @@ class _HomePageTripState extends State<HomePageTrip> {
               decoration: ShapeDecoration(
                 image: DecorationImage(
                   image: NetworkImage(activitiesData[k]['place_image_url'] ??
-                      "https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png"),
+                      "https://xplorionai.nyc3.cdn.digitaloceanspaces.com/banners/placeholder_image.jpg"),
                   fit: BoxFit.cover,
                 ),
                 shape: const RoundedRectangleBorder(

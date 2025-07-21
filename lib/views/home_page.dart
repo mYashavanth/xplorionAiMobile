@@ -419,7 +419,7 @@ class _HomePageState extends State<HomePage> {
           var placeName = data[i]['place_name'];
           String imageURL = data[i]['image_url']?.isNotEmpty == true
               ? data[i]['image_url']
-              : 'https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png';
+              : 'https://xplorionai.nyc3.cdn.digitaloceanspaces.com/banners/placeholder_image.jpg';
           var title = data[i]['title'];
           var noOfDays = data[i]['no_of_days'];
           var cityState = data[i]['city_state'];
@@ -1030,7 +1030,7 @@ class _HomePageState extends State<HomePage> {
                                             {
                                               'image':
                                                   'assets/images/popularDestinations/2149211337.jpg',
-                                              'title': 'Forts',
+                                              'title': 'Mountains',
                                             },
                                             {
                                               'image':

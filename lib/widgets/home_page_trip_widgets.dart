@@ -529,7 +529,7 @@ Widget buildDayActivity(
       case 4:
         return 'Luxury';
       default:
-        return 'N/A';
+        return 'Price not available';
     }
   }
 
@@ -656,7 +656,7 @@ Widget buildDayActivity(
             ? [
                 vehicleIcon,
                 Text(
-                  '$duration Mins • $kms $distance_units',
+                  '$duration Mins • $kms $distance_units ',
                   style: const TextStyle(
                     color: Color(0xFF888888),
                     fontSize: 12,
@@ -928,7 +928,8 @@ Widget buildDayActivity(
                             children: [
                               TextSpan(
                                 text:
-                                    '${ratings != "N/A" ? ratings : 'N/A'} ( Google ) • ',
+                                    '${ratings != "N/A" ? ratings : 'N/A'} ( Google )',
+                                // '${ratings != "N/A" ? ratings : 'N/A'} ( Google ) • ',
                                 style: const TextStyle(
                                   color: Color(0xFF0A0A0A),
                                   fontSize: 14,
@@ -936,17 +937,17 @@ Widget buildDayActivity(
                                   fontWeight: FontWeight.w400,
                                 ),
                               ),
-                              TextSpan(
-                                text: _getPriceLevel(
-                                    price_level != "N/A" ? price_level : 0),
-                                style: TextStyle(
-                                  color: _getPriceColor(
-                                      price_level != "N/A" ? price_level : 0),
-                                  fontSize: 14,
-                                  fontFamily: themeFontFamily2,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
+                              // TextSpan(
+                              //   text: _getPriceLevel(
+                              //       price_level != "N/A" ? price_level : 0),
+                              //   style: TextStyle(
+                              //     color: _getPriceColor(
+                              //         price_level != "N/A" ? price_level : 0),
+                              //     fontSize: 14,
+                              //     fontFamily: themeFontFamily2,
+                              //     fontWeight: FontWeight.w500,
+                              //   ),
+                              // ),
                             ],
                           ),
                         ),
@@ -1032,18 +1033,44 @@ Widget buildDayActivity(
                         const SizedBox(
                           width: 10,
                         ),
-                        Expanded(
-                          child: Text(
-                            priceDescription == "N/A" ||
-                                    priceDescription == "null"
-                                ? 'Price Level : Price info missing—discover it!'
-                                : 'Price Level : $priceDescription',
-                            style: const TextStyle(
-                              color: Color(0xFF0A0A0A),
-                              fontSize: 14,
-                              fontFamily: themeFontFamily2,
-                              fontWeight: FontWeight.w400,
-                            ),
+                        // Expanded(
+                        //   child: Text(
+                        //     priceDescription == "N/A" ||
+                        //             priceDescription == "null"
+                        //         ? 'Price Level : Price info missing—discover it!'
+                        //         : 'Price Level : $priceDescription',
+                        //     style: const TextStyle(
+                        //       color: Color(0xFF0A0A0A),
+                        //       fontSize: 14,
+                        //       fontFamily: themeFontFamily2,
+                        //       fontWeight: FontWeight.w400,
+                        //     ),
+                        //   ),
+                        // ),
+                        Text.rich(
+                          TextSpan(
+                            children: [
+                              const TextSpan(
+                                text: 'Price Level : ',
+                                style: TextStyle(
+                                  color: Color(0xFF0A0A0A),
+                                  fontSize: 14,
+                                  fontFamily: themeFontFamily2,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                              TextSpan(
+                                text: _getPriceLevel(
+                                    price_level != "N/A" ? price_level : 0),
+                                style: TextStyle(
+                                  color: _getPriceColor(
+                                      price_level != "N/A" ? price_level : 0),
+                                  fontSize: 14,
+                                  fontFamily: themeFontFamily2,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
