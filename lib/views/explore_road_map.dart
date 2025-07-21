@@ -80,6 +80,42 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
     }
   }
 
+  Future<void> openMapWithLocation(String location) async {
+    // URL encode the location string to handle spaces and special characters
+    String encodedLocation = Uri.encodeComponent(location);
+
+    String googleMapsUrl =
+        'https://www.google.com/maps/search/?api=1&query=$encodedLocation';
+    String appleMapsUrl = 'http://maps.apple.com/?q=$encodedLocation';
+
+    if (Platform.isAndroid) {
+      // First try with Google Maps app
+      String googleMapsAppUrl = 'geo:0,0?q=$encodedLocation';
+      if (await canLaunchUrlString(googleMapsAppUrl)) {
+        await launchUrlString(googleMapsAppUrl);
+      }
+      // Fallback to Google Maps in browser
+      else if (await canLaunchUrlString(googleMapsUrl)) {
+        await launchUrlString(googleMapsUrl);
+      } else {
+        throw 'Could not launch Google Maps.';
+      }
+    } else if (Platform.isIOS) {
+      // Try Apple Maps first
+      if (await canLaunchUrlString(appleMapsUrl)) {
+        await launchUrlString(appleMapsUrl);
+      }
+      // Fallback to Google Maps in browser
+      else if (await canLaunchUrlString(googleMapsUrl)) {
+        await launchUrlString(googleMapsUrl);
+      } else {
+        throw 'Could not launch Apple Maps or Google Maps.';
+      }
+    } else {
+      throw 'Unsupported platform.';
+    }
+  }
+
   // Define multiple LatLng points
   final List<LatLng> points = [
     const LatLng(37.7749, -122.4194), // San Francisco
@@ -631,7 +667,8 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
                 const SizedBox(height: 10),
                 GestureDetector(
                   onTap: () {
-                    _openMap(lat, long);
+                    // _openMap(lat, long);
+                    openMapWithLocation(title);
                   },
                   child: Container(
                     width: double.infinity,

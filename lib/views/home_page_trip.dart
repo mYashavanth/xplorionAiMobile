@@ -692,11 +692,13 @@ class _HomePageTripState extends State<HomePageTrip> {
 
   List<int> day1SliderCurrentPos = [0, 0, 0, 0];
   List<bool> day1SliderShowActivity = [];
+  List<bool> isTitleExpandedCards = [];
 
   void setDay1SliderShowActivity(daysData) {
     if (daysData.isNotEmpty) {
       var activities = daysData[0]['activities'];
       day1SliderShowActivity = List<bool>.filled(activities.length, true);
+      isTitleExpandedCards = List<bool>.filled(activities.length, false);
     }
   }
 
@@ -1920,9 +1922,8 @@ class _HomePageTripState extends State<HomePageTrip> {
 
           // Add elements to the sublist
           activitiesSubList.add('car');
-          activitiesSubList.add(activitiesData[k]['time'] +
-              ' : ' +
-              activitiesData[k]['activity']);
+          activitiesSubList.add(
+              activitiesData[k]['time'] + '\n' + activitiesData[k]['activity']);
           activitiesSubList.add(doseImageSliders);
           activitiesSubList.add(j);
           activitiesSubList
@@ -1940,6 +1941,7 @@ class _HomePageTripState extends State<HomePageTrip> {
           activitiesSubList.add(activitiesData[k]['price_level_description']);
           activitiesSubList.add(activitiesData[k]['currently_open']);
           activitiesSubList.add(activitiesData[k]['distance_unit']);
+          activitiesSubList.add(activitiesData[k]['price_level']);
 
           // Add the sublist to the main activities list
           activities.add(activitiesSubList);
@@ -1954,6 +1956,7 @@ class _HomePageTripState extends State<HomePageTrip> {
       'sliderPos': day1SliderCurrentPos,
       'showActivity': day1SliderShowActivity,
       'place': iterneryTitle.split(' ').first,
+      'isTitleExpandedCards': isTitleExpandedCards,
     };
 
     menuIndex = menuIndex + 1;

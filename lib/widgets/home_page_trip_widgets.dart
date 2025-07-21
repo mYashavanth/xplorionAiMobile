@@ -40,6 +40,42 @@ Future<void> _openMap(double latitude, double longitude) async {
   }
 }
 
+Future<void> openMapWithLocation(String location) async {
+  // URL encode the location string to handle spaces and special characters
+  String encodedLocation = Uri.encodeComponent(location);
+
+  String googleMapsUrl =
+      'https://www.google.com/maps/search/?api=1&query=$encodedLocation';
+  String appleMapsUrl = 'http://maps.apple.com/?q=$encodedLocation';
+
+  if (Platform.isAndroid) {
+    // First try with Google Maps app
+    String googleMapsAppUrl = 'geo:0,0?q=$encodedLocation';
+    if (await canLaunchUrlString(googleMapsAppUrl)) {
+      await launchUrlString(googleMapsAppUrl);
+    }
+    // Fallback to Google Maps in browser
+    else if (await canLaunchUrlString(googleMapsUrl)) {
+      await launchUrlString(googleMapsUrl);
+    } else {
+      throw 'Could not launch Google Maps.';
+    }
+  } else if (Platform.isIOS) {
+    // Try Apple Maps first
+    if (await canLaunchUrlString(appleMapsUrl)) {
+      await launchUrlString(appleMapsUrl);
+    }
+    // Fallback to Google Maps in browser
+    else if (await canLaunchUrlString(googleMapsUrl)) {
+      await launchUrlString(googleMapsUrl);
+    } else {
+      throw 'Could not launch Apple Maps or Google Maps.';
+    }
+  } else {
+    throw 'Unsupported platform.';
+  }
+}
+
 Future<void> addCollection(
     String collectionName, String token, BuildContext context) async {
   if (collectionName.isEmpty || token.isEmpty) {
@@ -241,6 +277,8 @@ class _DayItineraryViewState extends State<DayItineraryView> {
         widget.dayActivityDataArray['showActivity'];
     List<int> day1SliderCurrentPos = widget.dayActivityDataArray['sliderPos'];
     String place = widget.dayActivityDataArray['place'];
+    List<bool> isTitleExpandedCards =
+        widget.dayActivityDataArray['isTitleExpandedCards'] ?? [];
 
     return Column(
       children: [
@@ -393,6 +431,7 @@ class _DayItineraryViewState extends State<DayItineraryView> {
             place,
             day1SliderCurrentPos,
             day1SliderShowActivity,
+            isTitleExpandedCards,
             widget.contextP,
             widget.transpotationModeBool,
             widget.redoIndividualItinerary,
@@ -415,6 +454,7 @@ List<Widget> buildMultipleDayActivity(
     place,
     day1SliderCurrentPos,
     day1SliderShowActivity,
+    isTitleExpandedCards,
     contextP,
     transpotationModeBool,
     redoIndividualItinerary,
@@ -430,6 +470,7 @@ List<Widget> buildMultipleDayActivity(
           place,
           day1SliderCurrentPos,
           day1SliderShowActivity,
+          isTitleExpandedCards,
           i,
           contextP,
           transpotationModeBool,
@@ -449,6 +490,7 @@ Widget buildDayActivity(
     place,
     List<int> day1SliderCurrentPos,
     List<bool> day1SliderShowActivity,
+    List<bool> isTitleExpandedCards,
     index,
     context,
     transpotationModeBool,
@@ -474,6 +516,37 @@ Widget buildDayActivity(
   String priceDescription = data[14].toString();
   String currentlyOpen = data[15].toString();
   String distance_units = data[16].toString();
+  var price_level = data[17];
+
+  String _getPriceLevel(int? level) {
+    switch (level) {
+      case 1:
+        return 'Inexpensive';
+      case 2:
+        return 'Moderate';
+      case 3:
+        return 'Expensive';
+      case 4:
+        return 'Luxury';
+      default:
+        return 'N/A';
+    }
+  }
+
+  Color _getPriceColor(int? level) {
+    switch (level) {
+      case 1:
+        return Color(0xFF4CAF50); // Green
+      case 2:
+        return Color(0xFF2196F3); // Blue
+      case 3:
+        return Color(0xFFFF9800); // Orange
+      case 4:
+        return Color(0xFF9B27B0); // Red
+      default:
+        return Color(0xFF0A0A0A); // Default text color
+    }
+  }
 
   if (currentlyOpen == 'true') {
     open = true;
@@ -482,16 +555,6 @@ Widget buildDayActivity(
   }
 
   Widget visitedWidget = Text('');
-  // print(
-  //     '++++++++++++++++++++++++++++++++++++++++++++++data++++++++++++++++++++++++=');
-  // print(data[3]);
-  // print(
-  //     '++++++++++++++++++++++++++++++++++++++++++++++data++++++++++++++++++++++++=');
-  // print(
-  //     '++++++++++++++++++++++++++++++++++++++++++++++markvisited++++++++++++++++++++++++=');
-  // print(markAsVisitedList);
-  // print(
-  //     '++++++++++++++++++++++++++++++++++++++++++++++markvisited++++++++++++++++++++++++=');
   visitedWidget = InkWell(
     onTap: () {
       print('Clicked on mark as visited');
@@ -601,71 +664,34 @@ Widget buildDayActivity(
                     fontWeight: FontWeight.w400,
                   ),
                 ),
-                // InkWell(
-                //   onTap: () {
-                //     showModalBottomSheet(
-                //       isScrollControlled: true,
-                //       shape: const RoundedRectangleBorder(
-                //         borderRadius: BorderRadius.only(
-                //           topLeft: Radius.circular(8),
-                //           topRight: Radius.circular(8),
-                //         ),
-                //       ),
-                //       context: context,
-                //       builder: (context) {
-                //         return StatefulBuilder(
-                //           builder: (
-                //             context,
-                //             StateSetter modalSetState,
-                //           ) {
-                //             return buildChangeTransportationModeBottomSheet(
-                //                 transpotationModeBool, modalSetState, context);
-                //           },
-                //         );
-                //         // return Container();
-                //       },
-                //     );
-                //   },
-                //   child: const Icon(Icons.arrow_drop_down),
-                // ),
-                const SizedBox(width: 10),
                 GestureDetector(
                   onTap: () async {
                     if (originDestination != '') {
-                      // Extract latitudes and longitudes using RegExp
                       RegExp regExp = RegExp(r'\(([^,]+), ([^)]+)\)');
                       Iterable<RegExpMatch> matches =
                           regExp.allMatches(originDestination);
 
-                      // Convert matches to list of coordinates
                       List<List<double>> coordinates = matches.map((match) {
                         double latitude = double.parse(match.group(1)!);
                         double longitude = double.parse(match.group(2)!);
                         return [latitude, longitude];
                       }).toList();
 
-                      // Assign source and destination
                       List<double> source = coordinates[0];
                       List<double> destination = coordinates[1];
 
-                      final double sourceLat =
-                          source[0]; //37.7749; Source latitude
-                      final double sourceLng =
-                          source[1]; //-122.4194; Source longitude
-                      final double destLat =
-                          destination[0]; //34.0522; // Destination latitude
-                      final double destLng =
-                          destination[1]; // Destination longitude
+                      final double sourceLat = source[0];
+                      final double sourceLng = source[1];
+                      final double destLat = destination[0];
+                      final double destLng = destination[1];
 
                       Uri mapUri;
 
                       if (Platform.isIOS) {
-                        // Use Apple Maps for iOS
                         mapUri = Uri.parse(
                           "https://maps.apple.com/?saddr=$sourceLat,$sourceLng&daddr=$destLat,$destLng",
                         );
                       } else {
-                        // Use Google Maps for Android
                         mapUri = Uri.parse(
                           "https://www.google.com/maps/dir/?api=1&origin=$sourceLat,$sourceLng&destination=$destLat,$destLng&travelmode=driving",
                         );
@@ -727,7 +753,6 @@ Widget buildDayActivity(
                   fontSize: 16,
                   fontFamily: themeFontFamily2,
                   fontWeight: FontWeight.w500,
-                  // height: 0,
                 ),
               ),
             ),
@@ -748,82 +773,12 @@ Widget buildDayActivity(
           ),
         ],
       ),
-      /*const SizedBox(
-        height: 20,
-      ),
-      const Text(
-        'Start your day with a hearty South Indian breakfast at Mavalli Tiffin Room (MTR), known for its dosas, idlis, and strong filter coffee.',
-        style: TextStyle(
-          color: Color(0xFF030917),
-          fontSize: 16,
-          fontFamily: themeFontFamily2,
-          fontWeight: FontWeight.w400,
-        ),
-      ), */
       const SizedBox(
         height: 20,
       ),
-
-      // Visibility(
-      //   visible: !day1SliderShowActivity[index],
-      //   child:
-      //    Container(
-      //     height: 54,
-      //     padding: const EdgeInsets.all(10),
-      //     decoration: ShapeDecoration(
-      //       color: Colors.white,
-      //       shape: RoundedRectangleBorder(
-      //         side: const BorderSide(width: 1, color: Color(0xFFCDCED7)),
-      //         borderRadius: BorderRadius.circular(8),
-      //       ),
-      //     ),
-      //     child: Row(
-      //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      //       children: [
-      //         Text(
-      //           data[4],
-      //           style: const TextStyle(
-      //             color: Color(0xFF030917),
-      //             fontSize: 16,
-      //             fontFamily: themeFontFamily2,
-      //             fontWeight: FontWeight.w500,
-      //           ),
-      //         ),
-      //         Container(
-      //           width: 30,
-      //           height: 30,
-      //           // padding: const EdgeInsets.all(8),
-      //           decoration: ShapeDecoration(
-      //             color: const Color(0xFFEFEFEF),
-      //             shape: RoundedRectangleBorder(
-      //               borderRadius: BorderRadius.circular(50),
-      //             ),
-      //           ),
-      //           child: Center(
-      //             child: IconButton(
-      //               padding: const EdgeInsets.all(0),
-      //               onPressed: () {
-      //                 setState(() {
-      //                   day1SliderShowActivity[index] =
-      //                       !day1SliderShowActivity[index];
-      //                 });
-      //               },
-      //               icon: const Icon(Icons.keyboard_arrow_down_outlined),
-      //             ),
-      //           ),
-      //         ),
-      //       ],
-      //     ),
-      //   ),
-      // ),
-
       Visibility(
-        // maintainAnimation: true,
-        // maintainState: true,
         visible: !day1SliderShowActivity[index],
-        // Visibility Widget child is in bottom of this widget
         replacement: Container(
-          // height: 590,
           decoration: ShapeDecoration(
             color: Colors.white,
             shape: RoundedRectangleBorder(
@@ -837,13 +792,9 @@ Widget buildDayActivity(
                 children: [
                   CarouselSlider(
                     options: CarouselOptions(
-                      // height: 200,
-                      // aspectRatio: 1,
-                      // enlargeCenterPage: true,
                       viewportFraction: 1,
                       enableInfiniteScroll: false,
                       initialPage: 0,
-                      // autoPlay: true,
                       onPageChanged: (i, reason) {
                         setState(
                           () {
@@ -860,7 +811,6 @@ Widget buildDayActivity(
                       margin: const EdgeInsets.all(10),
                       width: 30,
                       height: 30,
-                      // padding: const EdgeInsets.all(8),
                       decoration: ShapeDecoration(
                         color: Colors.white,
                         shape: RoundedRectangleBorder(
@@ -902,7 +852,6 @@ Widget buildDayActivity(
                                       borderRadius: const BorderRadius.all(
                                         Radius.circular(50),
                                       ),
-                                      // shape: BoxShape.circle,
                                       color: currentPos == indexS
                                           ? const Color(0xFFFFFFFF)
                                           : const Color(0xFFA5A5A5),
@@ -915,8 +864,6 @@ Widget buildDayActivity(
                         ),
                 ],
               ),
-              //
-
               Padding(
                 padding: const EdgeInsets.fromLTRB(10, 12, 10, 10),
                 child: Column(
@@ -925,17 +872,26 @@ Widget buildDayActivity(
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        SizedBox(
-                          width: 270,
-                          child: Text(
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            data[4],
-                            style: const TextStyle(
-                              color: Color(0xFF030917),
-                              fontSize: 20,
-                              fontFamily: themeFontFamily2,
-                              fontWeight: FontWeight.w500,
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                isTitleExpandedCards[index] =
+                                    !isTitleExpandedCards[index];
+                              });
+                            },
+                            child: Text(
+                              data[4],
+                              maxLines: isTitleExpandedCards[index] ? null : 1,
+                              overflow: isTitleExpandedCards[index]
+                                  ? null
+                                  : TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Color(0xFF030917),
+                                fontSize: 18,
+                                fontFamily: themeFontFamily2,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
                         ),
@@ -949,97 +905,6 @@ Widget buildDayActivity(
                     const SizedBox(
                       height: 10,
                     ),
-
-                    //
-                    // Row(
-                    //   children: [
-
-                    //     Container(
-                    //       margin: const EdgeInsets.only(right: 8),
-                    //       height: 26,
-                    //       padding: const EdgeInsets.symmetric(
-                    //           horizontal: 10, vertical: 4),
-                    //       decoration: ShapeDecoration(
-                    //         color: const Color(0xFFEFEFEF),
-                    //         shape: RoundedRectangleBorder(
-                    //           borderRadius: BorderRadius.circular(32),
-                    //         ),
-                    //       ),
-                    //       child: const Center(
-                    //         child: Text(
-                    //           'Park',
-                    //           style: TextStyle(
-                    //             color: Color(0xFF888888),
-                    //             fontSize: 12,
-                    //             fontFamily: themeFontFamily2,
-                    //             fontWeight: FontWeight.w500,
-                    //           ),
-                    //         ),
-                    //       ),
-                    //     ),
-
-                    //     Container(
-                    //       height: 26,
-                    //       margin: const EdgeInsets.only(right: 8),
-                    //       padding: const EdgeInsets.symmetric(
-                    //           horizontal: 10, vertical: 4),
-                    //       decoration: ShapeDecoration(
-                    //         color: const Color(0xFFEFEFEF),
-                    //         shape: RoundedRectangleBorder(
-                    //           borderRadius: BorderRadius.circular(32),
-                    //         ),
-                    //       ),
-                    //       child: const Center(
-                    //         child: Text(
-                    //           'Garden',
-                    //           style: TextStyle(
-                    //             color: Color(0xFF888888),
-                    //             fontSize: 12,
-                    //             fontFamily: themeFontFamily2,
-                    //             fontWeight: FontWeight.w500,
-                    //           ),
-                    //         ),
-                    //       ),
-                    //     ),
-
-                    //     ConstrainedBox(
-                    //       constraints: const BoxConstraints(maxWidth: 190),
-                    //       child: IntrinsicWidth(
-                    //         child: Container(
-                    //           height: 26,
-                    //           margin: const EdgeInsets.only(right: 8),
-                    //           padding: const EdgeInsets.symmetric(
-                    //               horizontal: 10, vertical: 4),
-                    //           decoration: ShapeDecoration(
-                    //             color: const Color(0xFFEFEFEF),
-                    //             shape: RoundedRectangleBorder(
-                    //               borderRadius: BorderRadius.circular(32),
-                    //             ),
-                    //           ),
-                    //           child: Center(
-                    //             child: Text(
-                    //               data[4],
-                    //               maxLines: 1,
-                    //               overflow: TextOverflow.ellipsis,
-                    //               style: const TextStyle(
-                    //                 color: Color(0xFF888888),
-                    //                 fontSize: 12,
-                    //                 fontFamily: themeFontFamily2,
-                    //                 fontWeight: FontWeight.w500,
-                    //               ),
-                    //             ),
-                    //           ),
-                    //         ),
-                    //       ),
-                    //     ),
-                    //     //
-                    //   ],
-                    // ),
-                    //
-
-                    const SizedBox(
-                      height: 10,
-                    ),
                     Text(
                       onlineDescriptionAboutLocality,
                       style: const TextStyle(
@@ -1049,39 +914,47 @@ Widget buildDayActivity(
                         fontWeight: FontWeight.w400,
                       ),
                     ),
-
                     const SizedBox(
                       height: 10,
                     ),
-
-                    //
                     Row(
                       children: [
                         SvgPicture.asset('assets/icons/star_rating.svg'),
                         const SizedBox(
                           width: 10,
                         ),
-                        Text(
-                          // '$ratings ( Google ) • ₹₹',
-                          ratings == "N/A" || ratings == "null"
-                              ? 'No reviews yet—be the first!'
-                              : '$ratings ( Google ) • ₹₹',
-                          style: const TextStyle(
-                            color: Color(0xFF0A0A0A),
-                            fontSize: 14,
-                            fontFamily: themeFontFamily2,
-                            fontWeight: FontWeight.w400,
+                        Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text:
+                                    '${ratings != "N/A" ? ratings : 'N/A'} ( Google ) • ',
+                                style: const TextStyle(
+                                  color: Color(0xFF0A0A0A),
+                                  fontSize: 14,
+                                  fontFamily: themeFontFamily2,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                              TextSpan(
+                                text: _getPriceLevel(
+                                    price_level != "N/A" ? price_level : 0),
+                                style: TextStyle(
+                                  color: _getPriceColor(
+                                      price_level != "N/A" ? price_level : 0),
+                                  fontSize: 14,
+                                  fontFamily: themeFontFamily2,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
-                    //
-
                     const SizedBox(
                       height: 10,
                     ),
-
-                    //
                     Row(
                       children: [
                         SvgPicture.asset('assets/icons/location.svg'),
@@ -1103,13 +976,9 @@ Widget buildDayActivity(
                         ),
                       ],
                     ),
-                    //
-
                     const SizedBox(
                       height: 10,
                     ),
-
-                    //
                     Row(
                       children: [
                         SvgPicture.asset('assets/icons/clock_fill.svg'),
@@ -1154,13 +1023,9 @@ Widget buildDayActivity(
                         ),
                       ],
                     ),
-                    //
-
                     const SizedBox(
                       height: 10,
                     ),
-
-                    //
                     Row(
                       children: [
                         SvgPicture.asset('assets/icons/wallet.svg'),
@@ -1169,7 +1034,6 @@ Widget buildDayActivity(
                         ),
                         Expanded(
                           child: Text(
-                            // 'Price Level : $priceDescription',
                             priceDescription == "N/A" ||
                                     priceDescription == "null"
                                 ? 'Price Level : Price info missing—discover it!'
@@ -1184,12 +1048,9 @@ Widget buildDayActivity(
                         ),
                       ],
                     ),
-
                     const SizedBox(
                       height: 10,
                     ),
-
-                    //
                     Row(
                       children: [
                         SvgPicture.asset('assets/icons/sand_timer.svg'),
@@ -1209,17 +1070,12 @@ Widget buildDayActivity(
                         ),
                       ],
                     ),
-                    //
-
                     const SizedBox(
                       height: 20,
                     ),
-
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      // mainAxisSize: MainAxisSize.min,
-                      // mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Container(
                           height: 32,
@@ -1240,7 +1096,7 @@ Widget buildDayActivity(
                               ),
                               GestureDetector(
                                 onTap: () {
-                                  _openMap(lat, long); // 12.971599, 77.594566
+                                  openMapWithLocation(data[4]);
                                 },
                                 child: const Text(
                                   'Directions',
@@ -1255,7 +1111,6 @@ Widget buildDayActivity(
                             ],
                           ),
                         ),
-
                         InkWell(
                           onTap: () {
                             Navigator.of(context)
@@ -1294,12 +1149,9 @@ Widget buildDayActivity(
                             ),
                           ),
                         ),
-                        //
-
                         visitedWidget
                       ],
                     ),
-                    //
                   ],
                 ),
               ),
@@ -1327,7 +1179,7 @@ Widget buildDayActivity(
                   data[4],
                   style: const TextStyle(
                     color: Color(0xFF030917),
-                    fontSize: 20,
+                    fontSize: 18,
                     fontFamily: themeFontFamily2,
                     fontWeight: FontWeight.w500,
                   ),
@@ -1336,7 +1188,6 @@ Widget buildDayActivity(
               Container(
                 width: 30,
                 height: 30,
-                // padding: const EdgeInsets.all(8),
                 decoration: ShapeDecoration(
                   color: const Color(0xFFEFEFEF),
                   shape: RoundedRectangleBorder(

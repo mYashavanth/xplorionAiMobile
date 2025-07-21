@@ -98,6 +98,42 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
     }
   }
 
+  Future<void> openMapWithLocation(String location) async {
+    // URL encode the location string to handle spaces and special characters
+    String encodedLocation = Uri.encodeComponent(location);
+
+    String googleMapsUrl =
+        'https://www.google.com/maps/search/?api=1&query=$encodedLocation';
+    String appleMapsUrl = 'http://maps.apple.com/?q=$encodedLocation';
+
+    if (Platform.isAndroid) {
+      // First try with Google Maps app
+      String googleMapsAppUrl = 'geo:0,0?q=$encodedLocation';
+      if (await canLaunchUrlString(googleMapsAppUrl)) {
+        await launchUrlString(googleMapsAppUrl);
+      }
+      // Fallback to Google Maps in browser
+      else if (await canLaunchUrlString(googleMapsUrl)) {
+        await launchUrlString(googleMapsUrl);
+      } else {
+        throw 'Could not launch Google Maps.';
+      }
+    } else if (Platform.isIOS) {
+      // Try Apple Maps first
+      if (await canLaunchUrlString(appleMapsUrl)) {
+        await launchUrlString(appleMapsUrl);
+      }
+      // Fallback to Google Maps in browser
+      else if (await canLaunchUrlString(googleMapsUrl)) {
+        await launchUrlString(googleMapsUrl);
+      } else {
+        throw 'Could not launch Apple Maps or Google Maps.';
+      }
+    } else {
+      throw 'Unsupported platform.';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -303,33 +339,33 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
                   ],
                 ),
                 const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.only(right: 8),
-                      height: 26,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: ShapeDecoration(
-                        color: const Color(0xFFEFEFEF),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(32),
-                        ),
-                      ),
-                      child: const Center(
-                        child: Text(
-                          'Restaurant',
-                          style: TextStyle(
-                            color: Color(0xFF888888),
-                            fontSize: 12,
-                            fontFamily: themeFontFamily2,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                // Row(
+                //   children: [
+                //     Container(
+                //       margin: const EdgeInsets.only(right: 8),
+                //       height: 26,
+                //       padding: const EdgeInsets.symmetric(
+                //           horizontal: 10, vertical: 4),
+                //       decoration: ShapeDecoration(
+                //         color: const Color(0xFFEFEFEF),
+                //         shape: RoundedRectangleBorder(
+                //           borderRadius: BorderRadius.circular(32),
+                //         ),
+                //       ),
+                //       child: const Center(
+                //         child: Text(
+                //           'Restaurant',
+                //           style: TextStyle(
+                //             color: Color(0xFF888888),
+                //             fontSize: 12,
+                //             fontFamily: themeFontFamily2,
+                //             fontWeight: FontWeight.w500,
+                //           ),
+                //         ),
+                //       ),
+                //     ),
+                //   ],
+                // ),
                 Visibility(
                   visible: restuarantCurrentPos[index] == 0,
                   child: const Column(
@@ -352,13 +388,35 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
                   children: [
                     SvgPicture.asset('assets/icons/star_rating.svg'),
                     const SizedBox(width: 10),
-                    Text(
-                      '${restaurant['rating'] ?? 'N/A'} (${restaurant['ratings'] ?? '0'}) • ${_getPriceLevel(restaurant['price_level'])}',
-                      style: const TextStyle(
-                        color: Color(0xFF0A0A0A),
-                        fontSize: 14,
-                        fontFamily: themeFontFamily2,
-                        fontWeight: FontWeight.w400,
+                    Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text:
+                                '${restaurant['ratings'] ?? 'N/A'} ( Google ) • ',
+                            style: const TextStyle(
+                              color: Color(0xFF0A0A0A),
+                              fontSize: 14,
+                              fontFamily: themeFontFamily2,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                          TextSpan(
+                            text: _getPriceLevel(
+                                restaurant['price_level'] != "N/A"
+                                    ? restaurant['price_level']
+                                    : 0),
+                            style: TextStyle(
+                              color: _getPriceColor(
+                                  restaurant['price_level'] != "N/A"
+                                      ? restaurant['price_level']
+                                      : 0),
+                              fontSize: 14,
+                              fontFamily: themeFontFamily2,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -540,7 +598,8 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
                         children: [
                           GestureDetector(
                             onTap: () {
-                              _openMap(restaurant['lat'], restaurant['long']);
+                              // _openMap(restaurant['lat'], restaurant['long']);
+                              openMapWithLocation(restaurant['name'] ?? '');
                             },
                             child: Container(
                               height: 32,
@@ -611,10 +670,34 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
     );
   }
 
-  String _getPriceLevel(dynamic priceLevel) {
-    if (priceLevel == null || priceLevel == 'N/A') return '';
-    if (priceLevel is String) return priceLevel;
-    return '₹' * (priceLevel as int);
+  String _getPriceLevel(int? level) {
+    switch (level) {
+      case 1:
+        return 'Inexpensive';
+      case 2:
+        return 'Moderate';
+      case 3:
+        return 'Expensive';
+      case 4:
+        return 'Luxury';
+      default:
+        return 'N/A';
+    }
+  }
+
+  Color _getPriceColor(int? level) {
+    switch (level) {
+      case 1:
+        return Color(0xFF4CAF50); // Green
+      case 2:
+        return Color(0xFF2196F3); // Blue
+      case 3:
+        return Color(0xFFFF9800); // Orange
+      case 4:
+        return Color(0xFF9B27B0); // Red
+      default:
+        return Color(0xFF0A0A0A); // Default text color
+    }
   }
 
   String _getPriceRange(dynamic priceLevel) {
