@@ -1020,22 +1020,22 @@ class _HomePageState extends State<HomePage> {
                                             {
                                               'image':
                                                   'assets/images/popularDestinations/354.jpg',
-                                              'title': 'Manali Hills',
+                                              'title': 'Hills',
                                             },
                                             {
                                               'image':
                                                   'assets/images/popularDestinations/39550.jpg',
-                                              'title': 'Goa Beaches',
+                                              'title': 'Beaches',
                                             },
                                             {
                                               'image':
                                                   'assets/images/popularDestinations/2149211337.jpg',
-                                              'title': 'Jaipur Forts',
+                                              'title': 'Forts',
                                             },
                                             {
                                               'image':
                                                   'assets/images/popularDestinations/2150456198.jpg',
-                                              'title': 'Kerala Backwaters',
+                                              'title': 'Landmarks',
                                             },
                                           ];
 
