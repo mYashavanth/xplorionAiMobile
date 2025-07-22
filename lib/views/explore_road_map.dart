@@ -206,6 +206,7 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
         activity['lat'],
         activity['long'],
         activity['ratings'],
+        activity['price_level'],
       ));
     }
 
@@ -372,7 +373,7 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
         ),
         centerTitle: true,
         title: const Text(
-          'Explore',
+          'Map View',
           textAlign: TextAlign.center,
           style: TextStyle(
             color: Color(0xFF1F1F1F),
@@ -472,6 +473,36 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
     );
   }
 
+  String _getPriceLevel(int? level) {
+    switch (level) {
+      case 1:
+        return 'Inexpensive';
+      case 2:
+        return 'Moderate';
+      case 3:
+        return 'Expensive';
+      case 4:
+        return 'Luxury';
+      default:
+        return 'Price not available';
+    }
+  }
+
+  Color _getPriceColor(int? level) {
+    switch (level) {
+      case 1:
+        return Color(0xFF4CAF50); // Green
+      case 2:
+        return Color(0xFF2196F3); // Blue
+      case 3:
+        return Color(0xFFFF9800); // Orange
+      case 4:
+        return Color(0xFF9B27B0); // Red
+      default:
+        return Color(0xFF0A0A0A); // Default text color
+    }
+  }
+
   Widget popUpExploreWidgets(
     index,
     context,
@@ -483,6 +514,7 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
     lat,
     long,
     ratings,
+    priceLevel,
   ) {
     // Ensure img has a valid value
     print('ratings = $ratings');
@@ -605,15 +637,33 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
                               const SizedBox(
                                 width: 4,
                               ),
-                              Text(
-                                ratings == "N/A" || ratings == null
-                                    ? 'No reviews yet—be the first!'
-                                    : '$ratings ( Google ) • ₹₹',
-                                style: const TextStyle(
-                                  color: Color(0xFF888888),
-                                  fontSize: 12,
-                                  fontFamily: 'IBM Plex Sans',
-                                  fontWeight: FontWeight.w400,
+                              Text.rich(
+                                TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text:
+                                          '${ratings != "N/A" ? ratings : 'N/A'} • ',
+                                      style: const TextStyle(
+                                        color: Color(0xFF0A0A0A),
+                                        fontSize: 14,
+                                        fontFamily: themeFontFamily2,
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: _getPriceLevel(
+                                          priceLevel != "N/A" ? priceLevel : 0),
+                                      style: TextStyle(
+                                        color: _getPriceColor(
+                                            priceLevel != "N/A"
+                                                ? priceLevel
+                                                : 0),
+                                        fontSize: 14,
+                                        fontFamily: themeFontFamily2,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
