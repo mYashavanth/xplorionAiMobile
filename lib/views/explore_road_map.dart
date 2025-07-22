@@ -172,7 +172,8 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
     // Generate tabs if needed
     if (topTabs.length < dataLen) {
       for (int i = 0; i < dataLen; i++) {
-        topTabs.add(Tab(text: 'Day ${mapsDataJson[i]['day_no']}'));
+        // topTabs.add(Tab(text: 'Day ${mapsDataJson[i]['day_no']}'));
+        topTabs.add(Tab(text: '${mapsDataJson[i]['day']}'));
       }
     }
 
@@ -380,15 +381,10 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
             fontWeight: FontWeight.w600,
           ),
         ),
-        // actions: [
-        //   IconButton(
-        //     onPressed: () {},
-        //     icon: const Icon(Icons.add),
-        //   ),
-        // ],
         bottom: TabBar(
+          isScrollable: true,
           labelColor: Colors.black,
-          labelPadding: const EdgeInsets.all(0),
+          labelPadding: const EdgeInsets.symmetric(horizontal: 8),
           indicatorColor: Colors.black,
           indicatorPadding: const EdgeInsets.all(0),
           labelStyle: const TextStyle(
@@ -404,20 +400,7 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
             fontWeight: FontWeight.w400,
           ),
           controller: mapTabController,
-          tabs:
-              topTabs /*const [
-           Tab(
-              text: 'Overview',
-              // icon: Icon(Icons.directions_car),
-            ),
-            Tab(
-              text: 'Attractions',
-            ),
-            Tab(
-              text: 'Restaurants',
-            ),
-          ]*/
-          ,
+          tabs: topTabs,
         ),
       ),
       body: Stack(
