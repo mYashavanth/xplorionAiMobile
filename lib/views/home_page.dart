@@ -37,7 +37,7 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   static const apiKey = 'AIzaSyDEJx-EbYbqRixjZ0DvwuPd3FKVKtvv_OY';
   LocationStatus _locationStatus = LocationStatus.loading;
   String currentLocation = 'Loading location...';
@@ -460,6 +460,8 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _getData();
     fetchItineraries();
     _determinePosition();
@@ -471,8 +473,81 @@ class _HomePageState extends State<HomePage> {
         });
       }
     });
+  }
 
-    super.initState();
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkPermissionOnResume();
+    }
+  }
+
+  Future<void> _checkPermissionOnResume() async {
+    // Check if we previously had denied permissions
+    if (_locationStatus == LocationStatus.permissionDenied ||
+        _locationStatus == LocationStatus.permissionPermanentlyDenied) {
+      // Check current permission status
+      LocationPermission permission = await Geolocator.checkPermission();
+
+      if (permission == LocationPermission.whileInUse ||
+          permission == LocationPermission.always) {
+        // Permission was granted while app was in background
+        _showRefreshPopup();
+      }
+    }
+  }
+
+  void _showRefreshPopup() {
+    if (_isDialogShowing || !mounted) return;
+
+    _isDialogShowing = true;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Location Enabled'),
+        content: const Text(
+            'Location services have been enabled. Refresh to load location-based content.'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _isDialogShowing = false;
+              _refreshAllData();
+            },
+            child: const Text('Refresh'),
+          ),
+        ],
+      ),
+    ).then((_) {
+      _isDialogShowing = false;
+    });
+  }
+
+  Future<void> _refreshAllData() async {
+    setState(() {
+      _locationStatus = LocationStatus.loading;
+      showReload = false;
+      createdIternery.clear();
+      popularDestination.clear();
+      weekendTrips.clear();
+      imageSliders.clear();
+    });
+
+    await _determinePosition();
+    if (_locationStatus == LocationStatus.granted) {
+      await _getData();
+      await fetchItineraries();
+      await fetchPopularDestination();
+      await fetchWeekendTripsNearMe();
+    }
   }
 
   @override
