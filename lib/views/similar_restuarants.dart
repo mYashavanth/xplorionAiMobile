@@ -54,6 +54,8 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
         Uri.parse(
             '$baseurl/similer-resturant/${Uri.encodeComponent('$placeName $place')}/$token'),
       );
+      print(
+          'apiUrl: $baseurl/similer-resturant/${Uri.encodeComponent('$placeName $place')}/$token');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);

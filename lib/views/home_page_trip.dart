@@ -131,6 +131,7 @@ class _HomePageTripState extends State<HomePageTrip> {
     return toDate.difference(fromDate).inDays + 1;
   }
 
+  bool _hasLimitReachedError = false;
   bool _hasDayGenerationError = false;
   int _failedDayNumber = 0;
 
@@ -234,6 +235,91 @@ class _HomePageTripState extends State<HomePageTrip> {
         isLoading = false;
       });
     }
+  }
+
+  Widget _buildLimitReachedScreen() {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        automaticallyImplyLeading: false,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: TextButton(
+              onPressed: () {
+                Navigator.of(context).popUntil((route) => route.isFirst);
+              },
+              child: const Text(
+                'Back to Home',
+                style: TextStyle(
+                  color: Color(0xFF0099FF),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SvgPicture.asset('assets/icons/itinerary_failure.svg'),
+              const SizedBox(height: 20),
+              const Text(
+                'You have reached your itinerary limit',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'You have reached your maximum number of Itinenaries, Please mail us at support@xplorionai.com to reset.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Color(0xFF888888),
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF0099FF), Color(0xFF54AB6A)],
+                    ),
+                    borderRadius: BorderRadius.circular(50),
+                  ),
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.of(context).popUntil((route) => route.isFirst);
+                    },
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(50),
+                      ),
+                      backgroundColor: Colors.transparent,
+                    ),
+                    child: const Text('Back to Home',
+                        style: TextStyle(
+                            fontWeight: FontWeight.w600, fontSize: 16)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildDayGenerationError() {
@@ -500,6 +586,14 @@ class _HomePageTripState extends State<HomePageTrip> {
 
         if (response.statusCode == 200) {
           responseData = json.decode(response.body);
+          if (responseData['errFlag'] == 2) {
+            // Limit reached error
+            setState(() {
+              _hasLimitReachedError = true;
+              isLoading = false;
+            });
+            return;
+          }
 
           var daysData = responseData['itinerary']['days'];
           print('daysData $daysData');
@@ -877,6 +971,7 @@ class _HomePageTripState extends State<HomePageTrip> {
       if (data != null && data is Map<String, dynamic>) {
         print(
             '+++++++++++++++++++++++++++++++++++++redoItinerary++++++++++++++++++++++++++++++++++++++++++++++++++');
+        print(apiUrl);
         print(data);
         print(
             '+++++++++++++++++++++++++++++++++++++redoItinerary++++++++++++++++++++++++++++++++++++++++++++++++++');
@@ -919,6 +1014,7 @@ class _HomePageTripState extends State<HomePageTrip> {
       print(
           '+++++++++++++++++++++++++++++++++++++redoIndvidualItinerary++++++++++++++++++++++++++++++++++++++++++++++++++');
       print(apiUrl);
+      print(data);
       print(
           '+++++++++++++++++++++++++++++++++++++redoIndvidualItinerary++++++++++++++++++++++++++++++++++++++++++++++++++');
       if (data != null && data is Map<String, dynamic>) {
@@ -1190,6 +1286,11 @@ class _HomePageTripState extends State<HomePageTrip> {
   @override
   Widget build(BuildContext context) {
     tripItineraryWidget = changeTripItineraryMenuView();
+
+    if (_hasLimitReachedError) {
+      return _buildLimitReachedScreen();
+    }
+
     if (_hasDayGenerationError) {
       return _buildDayGenerationError();
     }
