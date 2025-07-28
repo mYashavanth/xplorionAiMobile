@@ -59,6 +59,21 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        // if (data["errFlag"] == 2) {
+        //   ScaffoldMessenger.of(context).showSnackBar(
+        //     SnackBar(
+        //       content: Text(data["message"] ??
+        //           'Similar Restuarant creation Limit Reached'),
+        //       behavior: SnackBarBehavior.floating,
+        //       margin: EdgeInsets.only(
+        //         left: 16,
+        //         right: 16,
+        //         bottom: 20 + MediaQuery.of(context).viewInsets.bottom,
+        //       ),
+        //     ),
+        //   );
+        //   return; // Exit if no data is received
+        // }
         setState(() {
           restaurants = data;
           restuarantCurrentPos = List<int>.filled(data.length, 0);

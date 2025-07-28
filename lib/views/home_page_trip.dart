@@ -967,6 +967,20 @@ class _HomePageTripState extends State<HomePageTrip> {
       // Make the Get request
       final response = await http.get(Uri.parse(apiUrl));
       var data = json.decode(response.body);
+      if (data["errFlag"] == 2) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(data["message"] ?? 'Day Redo Limit Reached'),
+            behavior: SnackBarBehavior.floating,
+            margin: EdgeInsets.only(
+              left: 16,
+              right: 16,
+              bottom: 20 + MediaQuery.of(context).viewInsets.bottom,
+            ),
+          ),
+        );
+        return; // Exit if no data is received
+      }
 
       if (data != null && data is Map<String, dynamic>) {
         print(
@@ -1010,6 +1024,20 @@ class _HomePageTripState extends State<HomePageTrip> {
       // Make the Get request
       final response = await http.get(Uri.parse(apiUrl));
       var data = json.decode(response.body);
+      if (data["errFlag"] == 2) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(data["message"] ?? 'Activity Redo Limit Reached'),
+            behavior: SnackBarBehavior.floating,
+            margin: EdgeInsets.only(
+              left: 16,
+              right: 16,
+              bottom: 20 + MediaQuery.of(context).viewInsets.bottom,
+            ),
+          ),
+        );
+        return; // Exit if no data is received
+      }
 
       print(
           '+++++++++++++++++++++++++++++++++++++redoIndvidualItinerary++++++++++++++++++++++++++++++++++++++++++++++++++');
