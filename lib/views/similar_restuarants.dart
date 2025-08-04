@@ -26,6 +26,8 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
   bool isLoading = true;
   String errorMessage = '';
   List<dynamic> restaurants = [];
+  bool limitReached = false;
+  List<bool> isNameExpanded = [];
 
   @override
   void initState() {
@@ -39,6 +41,11 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
           place = args['place'];
         });
         fetchSimilarRestaurants();
+      } else {
+        setState(() {
+          isLoading = false;
+          errorMessage = 'No place information provided';
+        });
       }
     });
   }
@@ -47,40 +54,47 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
     try {
       final token = await storage.read(key: 'userToken');
       if (token == null) {
-        throw Exception('User token not found');
+        throw Exception('User token not found. Please login again.');
       }
 
       final response = await http.get(
         Uri.parse(
             '$baseurl/similer-resturant/${Uri.encodeComponent('$placeName $place')}/$token'),
       );
-      print(
-          'apiUrl: $baseurl/similer-resturant/${Uri.encodeComponent('$placeName $place')}/$token');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        // if (data["errFlag"] == 2) {
-        //   ScaffoldMessenger.of(context).showSnackBar(
-        //     SnackBar(
-        //       content: Text(data["message"] ??
-        //           'Similar Restuarant creation Limit Reached'),
-        //       behavior: SnackBarBehavior.floating,
-        //       margin: EdgeInsets.only(
-        //         left: 16,
-        //         right: 16,
-        //         bottom: 20 + MediaQuery.of(context).viewInsets.bottom,
-        //       ),
-        //     ),
-        //   );
-        //   return; // Exit if no data is received
-        // }
-        setState(() {
-          restaurants = data;
-          restuarantCurrentPos = List<int>.filled(data.length, 0);
-          isLoading = false;
-        });
+        if (data is Map &&
+            data.containsKey("errFlag") &&
+            data["errFlag"] == 2) {
+          setState(() {
+            limitReached = true;
+            isLoading = false;
+            errorMessage =
+                data["message"] ?? 'Similar restaurant creation limit reached';
+          });
+          return;
+        } else if (data is List) {
+          if (data.isEmpty) {
+            setState(() {
+              isLoading = false;
+              errorMessage = 'No similar restaurants found';
+            });
+          } else {
+            setState(() {
+              restaurants = data;
+              restuarantCurrentPos = List<int>.filled(data.length, 0);
+              isNameExpanded = List<bool>.filled(data.length, false);
+              isLoading = false;
+              errorMessage = '';
+            });
+          }
+        } else {
+          throw Exception('Unexpected response format');
+        }
       } else {
-        throw Exception('Failed to load restaurants: ${response.statusCode}');
+        throw Exception(
+            'Failed to load restaurants. Status code: ${response.statusCode}');
       }
     } catch (e) {
       setState(() {
@@ -91,63 +105,69 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
   }
 
   Future<void> _openMap(double latitude, double longitude) async {
-    String googleMapsUrl =
-        'geo:$latitude,$longitude?q=$latitude,$longitude'; // Launch Google Maps on Android with geo: scheme
-    String appleMapsUrl =
-        'http://maps.apple.com/?q=$latitude,$longitude'; // Launch Apple Maps on iOS with maps: scheme
+    String googleMapsUrl = 'geo:$latitude,$longitude?q=$latitude,$longitude';
+    String appleMapsUrl = 'http://maps.apple.com/?q=$latitude,$longitude';
 
-    if (Platform.isAndroid) {
-      // Android - Open Google Maps
-      if (await canLaunchUrlString(googleMapsUrl)) {
-        await launchUrlString(googleMapsUrl);
+    try {
+      if (Platform.isAndroid) {
+        if (await canLaunchUrlString(googleMapsUrl)) {
+          await launchUrlString(googleMapsUrl);
+        } else {
+          throw 'Could not open Google Maps.';
+        }
+      } else if (Platform.isIOS) {
+        if (await canLaunchUrlString(appleMapsUrl)) {
+          await launchUrlString(appleMapsUrl);
+        } else {
+          throw 'Could not open Apple Maps.';
+        }
       } else {
-        throw 'Could not open Google Maps.';
+        throw 'Unsupported platform.';
       }
-    } else if (Platform.isIOS) {
-      // iOS - Open Apple Maps
-      if (await canLaunchUrlString(appleMapsUrl)) {
-        await launchUrlString(appleMapsUrl);
-      } else {
-        throw 'Could not open Apple Maps.';
-      }
-    } else {
-      throw 'Unsupported platform.';
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to open maps: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
   Future<void> openMapWithLocation(String location) async {
-    // URL encode the location string to handle spaces and special characters
     String encodedLocation = Uri.encodeComponent(location);
-
     String googleMapsUrl =
         'https://www.google.com/maps/search/?api=1&query=$encodedLocation';
     String appleMapsUrl = 'http://maps.apple.com/?q=$encodedLocation';
 
-    if (Platform.isAndroid) {
-      // First try with Google Maps app
-      String googleMapsAppUrl = 'geo:0,0?q=$encodedLocation';
-      if (await canLaunchUrlString(googleMapsAppUrl)) {
-        await launchUrlString(googleMapsAppUrl);
-      }
-      // Fallback to Google Maps in browser
-      else if (await canLaunchUrlString(googleMapsUrl)) {
-        await launchUrlString(googleMapsUrl);
+    try {
+      if (Platform.isAndroid) {
+        String googleMapsAppUrl = 'geo:0,0?q=$encodedLocation';
+        if (await canLaunchUrlString(googleMapsAppUrl)) {
+          await launchUrlString(googleMapsAppUrl);
+        } else if (await canLaunchUrlString(googleMapsUrl)) {
+          await launchUrlString(googleMapsUrl);
+        } else {
+          throw 'Could not launch Google Maps.';
+        }
+      } else if (Platform.isIOS) {
+        if (await canLaunchUrlString(appleMapsUrl)) {
+          await launchUrlString(appleMapsUrl);
+        } else if (await canLaunchUrlString(googleMapsUrl)) {
+          await launchUrlString(googleMapsUrl);
+        } else {
+          throw 'Could not launch Apple Maps or Google Maps.';
+        }
       } else {
-        throw 'Could not launch Google Maps.';
+        throw 'Unsupported platform.';
       }
-    } else if (Platform.isIOS) {
-      // Try Apple Maps first
-      if (await canLaunchUrlString(appleMapsUrl)) {
-        await launchUrlString(appleMapsUrl);
-      }
-      // Fallback to Google Maps in browser
-      else if (await canLaunchUrlString(googleMapsUrl)) {
-        await launchUrlString(googleMapsUrl);
-      } else {
-        throw 'Could not launch Apple Maps or Google Maps.';
-      }
-    } else {
-      throw 'Unsupported platform.';
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to open maps: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -185,15 +205,71 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
 
   Widget _buildBodyContent() {
     if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Finding similar palaces...'),
+          ],
+        ),
+      );
+    }
+
+    if (limitReached) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.orange),
+            const SizedBox(height: 16),
+            Text(
+              errorMessage,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16),
+            ),
+          ],
+        ),
+      );
     }
 
     if (errorMessage.isNotEmpty) {
-      return Center(child: Text(errorMessage));
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const SizedBox(height: 16),
+            Text(
+              errorMessage,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: fetchSimilarRestaurants,
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
     }
 
     if (restaurants.isEmpty) {
-      return const Center(child: Text('No similar restaurants found'));
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.search_off, size: 48, color: Colors.grey),
+            SizedBox(height: 16),
+            Text(
+              'No similar palaces found',
+              style: TextStyle(fontSize: 16),
+            ),
+          ],
+        ),
+      );
     }
 
     return ListView.builder(
@@ -239,6 +315,17 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
                     color: Colors.grey[200],
                     child: const Icon(Icons.restaurant, size: 50),
                   ),
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Center(
+                      child: CircularProgressIndicator(
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded /
+                                loadingProgress.expectedTotalBytes!
+                            : null,
+                      ),
+                    );
+                  },
                 ),
               )
             : Container(
@@ -247,8 +334,6 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
               ),
       )
     ];
-
-    final isExpanded = index == 0; // Expand first item by default
 
     return Container(
       decoration: ShapeDecoration(
@@ -315,13 +400,26 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      restaurant['name'] ?? 'Unknown',
-                      style: const TextStyle(
-                        color: Color(0xFF030917),
-                        fontSize: 20,
-                        fontFamily: themeFontFamily2,
-                        fontWeight: FontWeight.w500,
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            isNameExpanded[index] = !isNameExpanded[index];
+                          });
+                        },
+                        child: Text(
+                          restaurant['name'] ?? 'Unknown',
+                          style: const TextStyle(
+                            color: Color(0xFF030917),
+                            fontSize: 20,
+                            fontFamily: themeFontFamily2,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: isNameExpanded[index] ? null : 1,
+                          overflow: isNameExpanded[index]
+                              ? null
+                              : TextOverflow.ellipsis,
+                        ),
                       ),
                     ),
                     Container(
@@ -339,12 +437,8 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
                           padding: const EdgeInsets.all(0),
                           onPressed: () {
                             setState(() {
-                              // Toggle expanded state
-                              if (restuarantCurrentPos[index] == 0) {
-                                restuarantCurrentPos[index] = 1;
-                              } else {
-                                restuarantCurrentPos[index] = 0;
-                              }
+                              restuarantCurrentPos[index] =
+                                  restuarantCurrentPos[index] == 0 ? 1 : 0;
                             });
                           },
                           icon: restuarantCurrentPos[index] == 0
@@ -354,51 +448,6 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
                       ),
                     ),
                   ],
-                ),
-                const SizedBox(height: 10),
-                // Row(
-                //   children: [
-                //     Container(
-                //       margin: const EdgeInsets.only(right: 8),
-                //       height: 26,
-                //       padding: const EdgeInsets.symmetric(
-                //           horizontal: 10, vertical: 4),
-                //       decoration: ShapeDecoration(
-                //         color: const Color(0xFFEFEFEF),
-                //         shape: RoundedRectangleBorder(
-                //           borderRadius: BorderRadius.circular(32),
-                //         ),
-                //       ),
-                //       child: const Center(
-                //         child: Text(
-                //           'Restaurant',
-                //           style: TextStyle(
-                //             color: Color(0xFF888888),
-                //             fontSize: 12,
-                //             fontFamily: themeFontFamily2,
-                //             fontWeight: FontWeight.w500,
-                //           ),
-                //         ),
-                //       ),
-                //     ),
-                //   ],
-                // ),
-                Visibility(
-                  visible: restuarantCurrentPos[index] == 0,
-                  child: const Column(
-                    children: [
-                      SizedBox(height: 10),
-                      Text(
-                        'A great place to enjoy delicious food and drinks.',
-                        style: TextStyle(
-                          color: Color(0xFF0A0A0A),
-                          fontSize: 14,
-                          fontFamily: themeFontFamily2,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
                 const SizedBox(height: 10),
                 Row(
@@ -486,8 +535,8 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
                                     style: TextStyle(
                                       color:
                                           restaurant['currently_open'] == true
-                                              ? Color(0xFF54AB6A)
-                                              : Color(0xFFD93025),
+                                              ? const Color(0xFF54AB6A)
+                                              : const Color(0xFFD93025),
                                       fontSize: 14,
                                       fontFamily: themeFontFamily2,
                                       fontWeight: FontWeight.w500,
@@ -551,33 +600,6 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
                         ],
                       ),
                       const Spacer(),
-                      // Container(
-                      //   height: 32,
-                      //   padding: const EdgeInsets.symmetric(
-                      //       horizontal: 12, vertical: 4),
-                      //   decoration: ShapeDecoration(
-                      //     color: const Color(0xFFECF2FF),
-                      //     shape: RoundedRectangleBorder(
-                      //       borderRadius: BorderRadius.circular(32),
-                      //     ),
-                      //   ),
-                      //   child: Row(
-                      //     mainAxisSize: MainAxisSize.min,
-                      //     children: [
-                      //       SvgPicture.asset('assets/icons/replace.svg'),
-                      //       const SizedBox(width: 5),
-                      //       const Text(
-                      //         'Replace',
-                      //         style: TextStyle(
-                      //           color: Color(0xFF005CE7),
-                      //           fontSize: 12,
-                      //           fontFamily: themeFontFamily,
-                      //           fontWeight: FontWeight.w500,
-                      //         ),
-                      //       ),
-                      //     ],
-                      //   ),
-                      // ),
                     ],
                   ),
                 ),
@@ -615,8 +637,15 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
                         children: [
                           GestureDetector(
                             onTap: () {
-                              // _openMap(restaurant['lat'], restaurant['long']);
-                              openMapWithLocation(restaurant['name'] ?? '');
+                              if (restaurant['lat'] != null &&
+                                  restaurant['long'] != null) {
+                                _openMap(
+                                  double.parse(restaurant['lat'].toString()),
+                                  double.parse(restaurant['long'].toString()),
+                                );
+                              } else {
+                                openMapWithLocation(restaurant['name'] ?? '');
+                              }
                             },
                             child: Container(
                               height: 32,
@@ -647,33 +676,6 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
                               ),
                             ),
                           ),
-                          // Container(
-                          //   height: 32,
-                          //   padding: const EdgeInsets.symmetric(
-                          //       horizontal: 12, vertical: 4),
-                          //   decoration: ShapeDecoration(
-                          //     color: const Color(0xFFECF2FF),
-                          //     shape: RoundedRectangleBorder(
-                          //       borderRadius: BorderRadius.circular(32),
-                          //     ),
-                          //   ),
-                          //   child: Row(
-                          //     mainAxisSize: MainAxisSize.min,
-                          //     children: [
-                          //       SvgPicture.asset('assets/icons/replace.svg'),
-                          //       const SizedBox(width: 5),
-                          //       const Text(
-                          //         'Replace',
-                          //         style: TextStyle(
-                          //           color: Color(0xFF005CE7),
-                          //           fontSize: 12,
-                          //           fontFamily: themeFontFamily,
-                          //           fontWeight: FontWeight.w500,
-                          //         ),
-                          //       ),
-                          //     ],
-                          //   ),
-                          // ),
                         ],
                       ),
                     ],
@@ -705,15 +707,15 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
   Color _getPriceColor(int? level) {
     switch (level) {
       case 1:
-        return Color(0xFF4CAF50); // Green
+        return const Color(0xFF4CAF50); // Green
       case 2:
-        return Color(0xFF2196F3); // Blue
+        return const Color(0xFF2196F3); // Blue
       case 3:
-        return Color(0xFFFF9800); // Orange
+        return const Color(0xFFFF9800); // Orange
       case 4:
-        return Color(0xFF9B27B0); // Red
+        return const Color(0xFF9B27B0); // Red
       default:
-        return Color(0xFF0A0A0A); // Default text color
+        return const Color(0xFF0A0A0A); // Default text color
     }
   }
 
@@ -736,6 +738,8 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
   }
 }
 
+enum TrimMode { Line, Length }
+
 class SeeHoursWidget extends StatefulWidget {
   final String placeName;
 
@@ -756,23 +760,16 @@ class _SeeHoursWidgetState extends State<SeeHoursWidget> {
 
     try {
       final response = await http.get(Uri.parse(apiUrl));
-      print('Response: ${response.body}');
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
-        print('Error: ${response.statusCode}');
         return {
-          "weekday_text": [
-            "Not available",
-          ]
+          "weekday_text": ["Not available"],
         };
       }
     } catch (e) {
-      print('Error occurred while fetching data: $e');
       return {
-        "weekday_text": [
-          "Not available",
-        ]
+        "weekday_text": ["Not available"],
       };
     }
   }
