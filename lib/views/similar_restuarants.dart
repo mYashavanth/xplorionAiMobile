@@ -637,15 +637,15 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
                         children: [
                           GestureDetector(
                             onTap: () {
-                              if (restaurant['lat'] != null &&
-                                  restaurant['long'] != null) {
-                                _openMap(
-                                  double.parse(restaurant['lat'].toString()),
-                                  double.parse(restaurant['long'].toString()),
-                                );
-                              } else {
-                                openMapWithLocation(restaurant['name'] ?? '');
-                              }
+                              // if (restaurant['lat'] != null &&
+                              //     restaurant['long'] != null) {
+                              //   _openMap(
+                              //     double.parse(restaurant['lat'].toString()),
+                              //     double.parse(restaurant['long'].toString()),
+                              //   );
+                              // } else {
+                              openMapWithLocation(restaurant['name'] ?? '');
+                              // }
                             },
                             child: Container(
                               height: 32,
