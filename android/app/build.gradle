@@ -13,7 +13,7 @@ if (keystorePropertiesFile.exists()) {
 
 
 android {
-    namespace = "com.yourname.xplorionai"
+    namespace = "com.xplorion.ai"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -27,7 +27,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.yourname.xplorionai"
+        applicationId = "com.xplorion.ai"
         minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

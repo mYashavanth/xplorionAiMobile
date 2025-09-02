@@ -7,6 +7,43 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:374790515855:android:efc8cf71dbfadf42bf14fa",
+        "android_client_info": {
+          "package_name": "com.xplorion.ai"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "374790515855-epgr86gnthbu4ocss10c7v586hbq5dd5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.xplorion.ai",
+            "certificate_hash": "6ddf0847e0925663fc1faa0f95221f0555accc6b"
+          }
+        },
+        {
+          "client_id": "374790515855-52t07pq4jk0a2a04em59qheijlaepnqc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCXLSx2ucRaA7aSexEVISHIRWJtof1hjsA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "374790515855-52t07pq4jk0a2a04em59qheijlaepnqc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:374790515855:android:c148d4e56d05ae4abf14fa",
         "android_client_info": {
           "package_name": "com.yourname.xplorionai"

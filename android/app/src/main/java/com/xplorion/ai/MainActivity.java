@@ -1,4 +1,4 @@
-package com.yourname.xplorionai;
+package com.xplorion.ai;
 
 import io.flutter.embedding.android.FlutterActivity;
 
