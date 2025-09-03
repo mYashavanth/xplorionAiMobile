@@ -1,3 +1,4 @@
+import 'dart:async'; // for Timer
 import 'dart:convert';
 import 'package:calendar_date_picker2/calendar_date_picker2.dart';
 import 'package:flutter/cupertino.dart';
@@ -10,7 +11,7 @@ import 'package:xplorion_ai/lib_assets/fonts.dart';
 import 'package:xplorion_ai/providers/ci_date_provider.dart';
 import 'package:xplorion_ai/views/create_itinerary.dart';
 import 'package:http/http.dart' as http;
-import 'package:intl/intl.dart'; // Import the intl package
+import 'package:intl/intl.dart';
 import '../../views/urlconfig.dart';
 
 class SelectDateRange extends StatefulWidget {
@@ -32,9 +33,10 @@ class _SelectDateRangeState extends State<SelectDateRange> {
   bool tripLength = false;
   int tripDays = 0;
 
-  List<bool> monthSelected = [true, false, false, false];
-  List<String> cityList = []; // List to store city suggestions
-  final String token = "your_token_here"; // Replace with your actual token
+  List<String> cityList = [];
+  String lastQuery = ""; // to avoid duplicate API calls
+  Timer? _debounce;
+
   DateTime? selectedStartDate;
 
   @override
@@ -43,22 +45,32 @@ class _SelectDateRangeState extends State<SelectDateRange> {
     _loadPreSelectedLocationOrDate();
   }
 
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
   Future<void> _loadPreSelectedLocationOrDate() async {
     String? selectedPlace = await storage.read(key: 'selectedPlace');
     String? startDateR = await storage.read(key: 'startDate');
     String? endDateR = await storage.read(key: 'endDate');
     setState(() {
       preLoadLocation.text = selectedPlace ?? '';
-      startDate = startDateR ?? '';
-      endDate = endDateR ?? '';
+      startDate = startDateR ?? 'Start Date';
+      endDate = endDateR ?? 'End Date';
     });
   }
 
-  // Function to fetch city suggestions from the API
+  // Debounced fetch
   Future<void> fetchCities(String query) async {
     print("Fetching cities for query: $query");
+    if (query == lastQuery) return; // skip duplicate query
+    lastQuery = query;
+
     String? userToken = await storage.read(key: 'userToken');
     final String url = "$baseurl/app/city-name/$query/$userToken";
+    print("API URL: $url");
     final response = await http.get(Uri.parse(url));
 
     if (response.statusCode == 200) {
@@ -89,15 +101,27 @@ class _SelectDateRangeState extends State<SelectDateRange> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Autocomplete<String>(
-                optionsBuilder: (TextEditingValue textEditingValue) {
-                  if (textEditingValue.text.isEmpty) {
+                optionsBuilder: (TextEditingValue textEditingValue) async {
+                  final query = textEditingValue.text.trim();
+
+                  if (query.isEmpty || query.length < 2) {
                     return const Iterable<String>.empty();
                   }
-                  return fetchCities(textEditingValue.text)
-                      .then((_) => cityList);
+
+                  // debounce API call
+                  _debounce?.cancel();
+                  final completer = Completer<List<String>>();
+                  _debounce =
+                      Timer(const Duration(milliseconds: 500), () async {
+                    await fetchCities(query);
+                    completer.complete(cityList);
+                  });
+
+                  return completer.future;
                 },
-                onSelected: (String selectedCity) {
-                  print("Selected city: $selectedCity");
+                onSelected: (String selectedCity) async {
+                  await storage.write(
+                      key: 'selectedPlace', value: selectedCity);
                 },
                 fieldViewBuilder: (BuildContext context,
                     TextEditingController textEditingController,
@@ -150,8 +174,7 @@ class _SelectDateRangeState extends State<SelectDateRange> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 0),
-                        width: MediaQuery.of(context).size.width -
-                            40, // Full width minus padding
+                        width: MediaQuery.of(context).size.width - 40,
                         height:
                             optionCount * 50.0 < 500 ? optionCount * 50.0 : 500,
                         decoration: BoxDecoration(
@@ -191,9 +214,7 @@ class _SelectDateRangeState extends State<SelectDateRange> {
                   );
                 },
               ),
-              const SizedBox(
-                height: 5,
-              ),
+              const SizedBox(height: 5),
               const Text(
                 'When do you want to go?',
                 style: TextStyle(
@@ -203,9 +224,7 @@ class _SelectDateRangeState extends State<SelectDateRange> {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              const SizedBox(
-                height: 5,
-              ),
+              const SizedBox(height: 5),
               const Text(
                 'Choose a date range',
                 style: TextStyle(
@@ -215,9 +234,7 @@ class _SelectDateRangeState extends State<SelectDateRange> {
                   fontWeight: FontWeight.w400,
                 ),
               ),
-              const SizedBox(
-                height: 20,
-              ),
+              const SizedBox(height: 20),
               Visibility(
                 visible: dateBool,
                 child: Container(
@@ -260,9 +277,7 @@ class _SelectDateRangeState extends State<SelectDateRange> {
                             color: Color(0xFF030917),
                           ),
                         ),
-                        const SizedBox(
-                          width: 10,
-                        ),
+                        const SizedBox(width: 10),
                         Text(
                           '$startDate  -  $endDate',
                           style: const TextStyle(
@@ -284,6 +299,7 @@ class _SelectDateRangeState extends State<SelectDateRange> {
     );
   }
 
+  // ================= Date Modal ====================
   Widget dateModal(StateSetter modalSetState) {
     final dateProvider = context.watch<CIDateProvider>();
     final config = CalendarDatePicker2Config(
@@ -318,17 +334,13 @@ class _SelectDateRangeState extends State<SelectDateRange> {
         fontWeight: FontWeight.w500,
       ),
       selectableDayPredicate: (day) {
-        // Allow dates after today
         if (day.isBefore(DateTime.now().subtract(const Duration(days: 1)))) {
           return false;
         }
-
-        // If a start date is selected, limit the end date to 7 days after the start date
         if (selectedStartDate != null) {
           final maxEndDate = selectedStartDate!.add(const Duration(days: 6));
           return day.isBefore(maxEndDate) || day.isAtSameMomentAs(maxEndDate);
         }
-
         return true;
       },
     );
@@ -361,9 +373,7 @@ class _SelectDateRangeState extends State<SelectDateRange> {
                 ),
               ),
             ),
-            const SizedBox(
-              height: 10,
-            ),
+            const SizedBox(height: 10),
             const Text(
               'Select dates',
               style: TextStyle(
@@ -376,20 +386,19 @@ class _SelectDateRangeState extends State<SelectDateRange> {
             SizedBox(
               height: MediaQuery.of(context).size.height * 0.7,
               child: CalendarDatePicker2(
-                  config: config,
-                  value: dateProvider.rangeDatePickerValueWithDefaultValue,
-                  onValueChanged: (dates) {
-                    if (dates.isNotEmpty) {
-                      setState(() {
-                        selectedStartDate = dates[0];
-                        dateProvider.changeDate(dates);
-                      });
-                    }
-                  }),
+                config: config,
+                value: dateProvider.rangeDatePickerValueWithDefaultValue,
+                onValueChanged: (dates) {
+                  if (dates.isNotEmpty) {
+                    setState(() {
+                      selectedStartDate = dates[0];
+                      dateProvider.changeDate(dates);
+                    });
+                  }
+                },
+              ),
             ),
-            const SizedBox(
-              height: 10,
-            ),
+            const SizedBox(height: 10),
             Row(
               children: [
                 Expanded(
@@ -433,29 +442,22 @@ class _SelectDateRangeState extends State<SelectDateRange> {
                       if (dateProvider
                               .rangeDatePickerValueWithDefaultValue.length >
                           1) {
-                        // Format start and end dates
                         startDate = DateFormat('yyyy-MM-dd').format(
                           dateProvider.rangeDatePickerValueWithDefaultValue[0]!,
                         );
                         endDate = DateFormat('yyyy-MM-dd').format(
                           dateProvider.rangeDatePickerValueWithDefaultValue[1]!,
                         );
-
-                        // Save to secure storage
                         await storage.write(key: 'startDate', value: startDate);
                         await storage.write(key: 'endDate', value: endDate);
                       } else {
-                        // If only one date is selected, use it for both start and end dates
                         startDate = DateFormat('yyyy-MM-dd').format(
                           dateProvider.rangeDatePickerValueWithDefaultValue[0]!,
                         );
                         endDate = startDate;
-
-                        // Save to secure storage
                         await storage.write(key: 'startDate', value: startDate);
                         await storage.write(key: 'endDate', value: endDate);
                       }
-
                       setState(() {
                         Navigator.of(context).pop();
                       });
@@ -469,10 +471,7 @@ class _SelectDateRangeState extends State<SelectDateRange> {
                         gradient: const LinearGradient(
                           begin: Alignment(-1.00, 0.06),
                           end: Alignment(1, -0.06),
-                          colors: [
-                            Color(0xFF0099FF),
-                            Color(0xFF54AB6A),
-                          ],
+                          colors: [Color(0xFF0099FF), Color(0xFF54AB6A)],
                         ),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(32)),
@@ -500,6 +499,7 @@ class _SelectDateRangeState extends State<SelectDateRange> {
     );
   }
 
+  // ================= Date Helper ====================
   String splitDate(String dates) {
     var totalDateWithTime = dates.split(' ');
     var totalDate = totalDateWithTime[0].split('-');
