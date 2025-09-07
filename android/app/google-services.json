@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "374790515855-3p4c1vbckvkgqdgnedrtha3qtf06168q.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.xplorion.ai",
+            "certificate_hash": "2468dec711655f0d60d81d01c5b17d2b95c46fbd"
+          }
+        },
+        {
           "client_id": "374790515855-epgr86gnthbu4ocss10c7v586hbq5dd5.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

@@ -234,7 +234,8 @@ class _ProfileState extends State<Profile> {
     return InkWell(
       onTap: () {
         if (page == 'ru') {
-          _launchURL('https://play.google.com/store/games?hl=en_IN');
+          _launchURL(
+              'https://play.google.com/store/apps/details?id=com.xplorion.ai');
         } else if (page == 'es') {
           Navigator.of(context).pushNamed('/edit_your_interests');
         } else {

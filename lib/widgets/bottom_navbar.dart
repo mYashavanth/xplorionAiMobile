@@ -35,12 +35,18 @@ class _TripssistNavigationBarState extends State<TripssistNavigationBar> {
           Navigator.of(context).popUntil((route) => route.isFirst);
         //Navigator.of(context).pushNamed('/home_page');
         case 1:
-          storage.write(key: 'selectedPlace', value: '');
+          _clearStoredData();
           Navigator.of(context).pushNamed('/create_itinerary');
         case 2:
           Navigator.of(context).pushNamed('/profile');
       }
     });
+  }
+
+  Future<void> _clearStoredData() async {
+    await storage.delete(key: 'selectedPlace');
+    await storage.delete(key: 'startDate');
+    await storage.delete(key: 'endDate');
   }
 
   @override

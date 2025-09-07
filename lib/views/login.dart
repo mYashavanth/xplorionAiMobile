@@ -55,11 +55,27 @@ class _LogInState extends State<LogIn> {
       final UserCredential userCredential =
           await FirebaseAuth.instance.signInWithCredential(credential);
       final User? user = userCredential.user;
+      print('+++++++++++++++++++++Google Sign-In successful: $userCredential');
 
       if (user != null) {
         final String? email = user.email;
-        final String? username = user.displayName; // Get the username
-        final String? googleToken = googleAuth.idToken; // Get the Google token
+        String? username = user.displayName; // Try displayName first
+        final String? googleToken = googleAuth.idToken;
+
+        // Fallback: try additionalUserInfo
+        if (username == null && userCredential.additionalUserInfo != null) {
+          final profile = userCredential.additionalUserInfo!.profile;
+          if (profile != null) {
+            if (profile['name'] != null) {
+              username = profile['name'];
+            } else if (profile['given_name'] != null &&
+                profile['family_name'] != null) {
+              username = '${profile['given_name']} ${profile['family_name']}';
+            }
+          }
+        }
+
+        print('emainl: $email username: $username googleToken: $googleToken');
 
         if (email != null && googleToken != null && username != null) {
           print("User email: $email");
