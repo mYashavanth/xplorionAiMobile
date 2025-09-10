@@ -35,7 +35,73 @@ class _LogInState extends State<LogIn> {
   bool wrongPassword = false;
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+
+// final GoogleSignIn _googleSignIn = GoogleSignIn(
+//       serverClientId:
+//           '1084462359243-9df8j4ges0elg05i6rq14q0e1jskubd7.apps.googleusercontent.com');
+
+//   Future<void> _signInWithGoogle() async {
+//     try {
+//       _googleSignIn.signOut(); // Ensure previous sessions are cleared
+//       // 1. Trigger the modern authentication flow.
+//       // The user will be prompted to select a Google account.
+//       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+
+//       // This handles the case where the user closes the sign-in dialog.
+//       if (googleUser == null) {
+//         print('+++++++++++++++++++++++++Sign-in canceled by user.');
+//         return;
+//       }
+
+//       // 2. Obtain the auth details from the successful sign-in.
+//       final GoogleSignInAuthentication googleAuth =
+//           await googleUser.authentication;
+
+//       // 3. Create a new Firebase credential using the idToken and accessToken.
+//       final OAuthCredential credential = GoogleAuthProvider.credential(
+//         accessToken: googleAuth.accessToken,
+//         idToken: googleAuth.idToken,
+//       );
+
+//       // 4. Sign in to Firebase with the credential.
+//       final UserCredential userCredential =
+//           await FirebaseAuth.instance.signInWithCredential(credential);
+//       final User? user = userCredential.user;
+
+//       print('Google Sign-In successful, user: ${user?.displayName}');
+
+//       if (user != null) {
+//         final String? email = user.email;
+//         final String? username = user.displayName;
+//         final String? googleToken = googleAuth.idToken;
+
+//         if (email != null && googleToken != null && username != null) {
+//           // Your logic to send data to your backend remains the same. It's good to go!
+//           print("User details obtained. Sending to backend...");
+//           await _sendLoginDataToBackend(email, googleToken, username);
+//         } else {
+//           print("Failed to retrieve required user details from Google.");
+//           // Optionally, show a user-friendly error message here.
+//         }
+//       }
+//     } catch (e) {
+//       print("Error during Google Sign-In process: $e");
+//       // Show a generic error message to the user.
+//       if (mounted) {
+//         // Check if the widget is still in the tree
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           const SnackBar(
+//             content:
+//                 Text('An error occurred during sign-in. Please try again.'),
+//           ),
+//         );
+//       }
+//     }
+//   }
+
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+      serverClientId:
+          '1084462359243-9df8j4ges0elg05i6rq14q0e1jskubd7.apps.googleusercontent.com');
 
   Future<void> _signInWithGoogle() async {
     try {

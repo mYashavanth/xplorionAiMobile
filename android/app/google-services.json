@@ -30,6 +30,14 @@
           }
         },
         {
+          "client_id": "374790515855-mq0kdgjgplrsbc5bbavj638muphftgj2.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.xplorion.ai",
+            "certificate_hash": "68a36dfe6f4c4e2fcdf08dbde3a3b1a989c207c0"
+          }
+        },
+        {
           "client_id": "374790515855-52t07pq4jk0a2a04em59qheijlaepnqc.apps.googleusercontent.com",
           "client_type": 3
         }

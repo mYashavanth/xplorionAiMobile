@@ -36,7 +36,7 @@ class _TripssistNavigationBarState extends State<TripssistNavigationBar> {
         //Navigator.of(context).pushNamed('/home_page');
         case 1:
           _clearStoredData();
-          Navigator.of(context).pushNamed('/create_itinerary');
+         
         case 2:
           Navigator.of(context).pushNamed('/profile');
       }
@@ -47,6 +47,7 @@ class _TripssistNavigationBarState extends State<TripssistNavigationBar> {
     await storage.delete(key: 'selectedPlace');
     await storage.delete(key: 'startDate');
     await storage.delete(key: 'endDate');
+    Navigator.of(context).pushNamed('/create_itinerary');
   }
 
   @override

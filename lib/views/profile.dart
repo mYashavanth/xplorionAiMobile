@@ -222,6 +222,11 @@ class _ProfileState extends State<Profile> {
             const SizedBox(
               height: 8,
             ),
+            buildProfileRowWidget(
+                'delete_outline.svg', 'Delete Account', 'DeleteAccount'),
+            const SizedBox(
+              height: 8,
+            ),
             buildProfileRowWidget('log_out.svg', 'Log out', 'LogOut'),
           ],
         ),
@@ -238,6 +243,8 @@ class _ProfileState extends State<Profile> {
               'https://play.google.com/store/apps/details?id=com.xplorion.ai');
         } else if (page == 'es') {
           Navigator.of(context).pushNamed('/edit_your_interests');
+        } else if (page == 'DeleteAccount') {
+          _launchURL('https://forms.gle/aFmjNYdTrXqjiYY97');
         } else {
           redirect(title, page);
         }
@@ -264,7 +271,11 @@ class _ProfileState extends State<Profile> {
                 shape: OvalBorder(),
               ),
               child: Center(
-                child: SvgPicture.asset('assets/icons/$svg'),
+                child: SvgPicture.asset(
+                  'assets/icons/$svg',
+                  colorFilter: const ColorFilter.mode(
+                      Color(0xFF000000), BlendMode.srcIn),
+                ),
               ),
             ),
             const SizedBox(
@@ -284,9 +295,12 @@ class _ProfileState extends State<Profile> {
               padding: const EdgeInsets.all(0),
               onPressed: () {
                 if (page == 'ru') {
-                  _launchURL('https://play.google.com/store/games?hl=en_IN');
+                  _launchURL(
+                      'https://play.google.com/store/apps/details?id=com.xplorion.ai');
                 } else if (page == 'es') {
                   Navigator.of(context).pushNamed('/edit_your_interests');
+                } else if (page == 'DeleteAccount') {
+                  _launchURL('https://forms.gle/aFmjNYdTrXqjiYY97');
                 } else {
                   redirect(title, page);
                 }
@@ -312,10 +326,10 @@ class _ProfileState extends State<Profile> {
 
   void _launchURL(String url) async {
     final Uri uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
+    try {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      throw 'Could not launch $url';
+    } catch (e) {
+      debugPrint("Error launching $url : $e");
     }
   }
 

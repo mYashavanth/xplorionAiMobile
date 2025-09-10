@@ -33,7 +33,9 @@ class _SignUpState extends State<SignUp> {
   bool visibleBoolConfirmPassword = false;
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+      serverClientId:
+          '1084462359243-9df8j4ges0elg05i6rq14q0e1jskubd7.apps.googleusercontent.com');
 
   bool eligibleForSignup = false;
   bool safetyAgreementChecked = false; // New variable for the checkbox

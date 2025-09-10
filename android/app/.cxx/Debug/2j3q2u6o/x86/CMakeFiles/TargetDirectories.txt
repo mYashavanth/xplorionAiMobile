@@ -1,2 +1,0 @@
-C:/Users/mchet/OneDrive/Desktop/Projects/xplorion/xplorionAiMobile/android/app/.cxx/Debug/2j3q2u6o/x86/CMakeFiles/edit_cache.dir
-C:/Users/mchet/OneDrive/Desktop/Projects/xplorion/xplorionAiMobile/android/app/.cxx/Debug/2j3q2u6o/x86/CMakeFiles/rebuild_cache.dir
