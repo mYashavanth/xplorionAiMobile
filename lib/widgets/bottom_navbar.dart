@@ -36,7 +36,6 @@ class _TripssistNavigationBarState extends State<TripssistNavigationBar> {
         //Navigator.of(context).pushNamed('/home_page');
         case 1:
           _clearStoredData();
-         
         case 2:
           Navigator.of(context).pushNamed('/profile');
       }
