@@ -57,7 +57,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // MODIFIED: This function now handles the initial location setup.
     _loadInitialLocation();
 
     Timer(const Duration(seconds: 15), () {
@@ -71,7 +70,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     });
   }
 
-  // MODIFIED: This function now checks for saved location or starts permission flow.
+  // MODIFIED: This function now handles the initial location setup with a default.
   Future<void> _loadInitialLocation() async {
     String? savedLocation = await storage.read(key: 'savedLocation');
     String? isManualStr = await storage.read(key: 'isLocationManual');
@@ -85,8 +84,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       });
       _fetchAllData();
     } else {
-      // FIRST LAUNCH: Start the permission flow.
-      _determinePosition();
+      // FIRST LAUNCH: Set a default location without asking for permission.
+      await _setDefaultLocationAndFetchData();
     }
   }
 
@@ -103,21 +102,17 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     }
   }
 
-  // MODIFIED: The complete, final permission flow.
-  Future<void> _determinePosition({bool fromRefresh = false}) async {
-    setState(() {
-      _locationStatus = LocationStatus.loading;
-      errorMessage = null;
-    });
+  // This function is now only called by user action (GPS button or pull-to-refresh).
+  Future<void> _determinePosition() async {
+    setState(() => _locationStatus = LocationStatus.loading);
 
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        setState(() {
-          _locationStatus = LocationStatus.serviceDisabled;
-          errorMessage = 'Location services are disabled.';
-        });
-        if (!fromRefresh) await _setDefaultLocationAndFetchData();
+        _showInfoDialog(
+            'Location Disabled', 'Please enable location services to use GPS.');
+        setState(() =>
+            _locationStatus = LocationStatus.granted); // Revert to stable state
         return;
       }
 
@@ -125,29 +120,22 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          setState(() {
-            _locationStatus = LocationStatus.permissionDenied;
-            errorMessage = 'Location permissions are denied.';
-          });
-          if (!fromRefresh) await _setDefaultLocationAndFetchData();
-          return;
-        }
+      }
+
+      if (permission == LocationPermission.denied) {
+        _showInfoDialog('Permission Denied',
+            'Please grant location permission to use this feature.');
+        setState(() =>
+            _locationStatus = LocationStatus.granted); // Revert to stable state
+        return;
       }
 
       if (permission == LocationPermission.deniedForever) {
-        setState(() {
-          _locationStatus = LocationStatus.permissionPermanentlyDenied;
-          errorMessage = 'Location permissions are permanently denied.';
-        });
-        if (!fromRefresh) {
-          _showManualEntryOrSettingsDialog();
-        } else {
-          // On refresh, if permanently denied, just show a quick message.
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content:
-                  Text('Enable location in settings to refresh with GPS.')));
-        }
+        _showInfoDialog('Permission Permanently Denied',
+            'Location permission is permanently denied. Please enable it in your device settings.',
+            showSettingsButton: true);
+        setState(() =>
+            _locationStatus = LocationStatus.granted); // Revert to stable state
         return;
       }
 
@@ -156,81 +144,43 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       );
       await _getAddressFromLatLng(position);
     } catch (e) {
-      setState(() {
-        _locationStatus = LocationStatus.error;
-        errorMessage = 'Failed to get location: ${e.toString()}';
-      });
-      if (!fromRefresh) await _setDefaultLocationAndFetchData();
+      _showInfoDialog('Location Error',
+          'Could not get your current location. Please try again or enter one manually.');
+      setState(() =>
+          _locationStatus = LocationStatus.granted); // Revert to stable state
     }
   }
 
-  void _showSimpleRetryDialog(
-      String title, String message, String buttonText, VoidCallback onPressed) {
+  void _showInfoDialog(String title, String message,
+      {bool showSettingsButton = false, VoidCallback? onDismiss}) {
     if (_isDialogShowing || !mounted) return;
     _isDialogShowing = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       showDialog(
         context: context,
-        barrierDismissible: false,
         builder: (context) => AlertDialog(
           title: Text(title),
           content: Text(message),
           actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                onPressed();
-              },
-              child: Text(buttonText),
-            ),
+            if (showSettingsButton)
+              TextButton(
+                child: const Text('Open Settings'),
+                onPressed: () async {
+                  Navigator.of(context).pop();
+                  await openAppSettings();
+                },
+              ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Close'),
+              child: const Text('OK'),
             ),
           ],
         ),
-      ).then((_) => _isDialogShowing = false);
-    });
-  }
-
-  void _showManualEntryOrSettingsDialog() {
-    if (_isDialogShowing || !mounted) return;
-    _isDialogShowing = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => AlertDialog(
-          title: const Text('Permission Permanently Denied'),
-          content: const Text(
-              'Location permissions are permanently denied. Please enable them in app settings or enter your location manually.'),
-          actions: [
-            TextButton(
-              child: const Text('Use Default'),
-              onPressed: () {
-                Navigator.of(context).pop();
-                _setDefaultLocationAndFetchData();
-              },
-            ),
-            TextButton(
-              child: const Text('Enter Manually'),
-              onPressed: () {
-                Navigator.of(context).pop();
-                _showManualLocationEntryDialog();
-              },
-            ),
-            TextButton(
-              child: const Text('Open Settings'),
-              onPressed: () async {
-                Navigator.of(context).pop();
-                await openAppSettings();
-              },
-            ),
-          ],
-        ),
-      ).then((_) => _isDialogShowing = false);
+      ).then((_) {
+        _isDialogShowing = false;
+        onDismiss?.call();
+      });
     });
   }
 
@@ -253,128 +203,232 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       context: context,
       barrierDismissible: false,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('Enter Your Location'),
-          content: Form(
-            key: _formKey,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(
-                    controller: _addressController,
-                    autofocus: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Address / Area *',
-                      hintText: 'e.g., 836, SBI Staff Colony...',
-                    ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Address / Area is required.';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: _cityController,
-                    decoration: const InputDecoration(
-                      labelText: 'City *',
-                      hintText: 'e.g., Bengaluru',
-                    ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'City is required.';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: _stateController,
-                    decoration: const InputDecoration(
-                      labelText: 'State / Province *',
-                      hintText: 'e.g., Karnataka',
-                    ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'State / Province is required.';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: _pincodeController,
-                    decoration: const InputDecoration(
-                      labelText: 'Pincode / Zip Code *',
-                      hintText: 'e.g., 560040',
-                    ),
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Pincode / Zip Code is required.';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: _countryController,
-                    decoration: const InputDecoration(
-                      labelText: 'Country *',
-                      hintText: 'e.g., India',
-                    ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Country is required.';
-                      }
-                      return null;
-                    },
-                  ),
-                ],
+        return SizedBox(
+          width: MediaQuery.of(context).size.width * 0.9,
+          child: AlertDialog(
+            backgroundColor: Colors.white,
+            surfaceTintColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: const Text(
+              'Enter Your Location',
+              style: TextStyle(
+                color: Color(0xFF1F1F1F),
+                fontSize: 20,
+                fontFamily: themeFontFamily,
+                fontWeight: FontWeight.w600,
               ),
             ),
+            content: Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: _addressController,
+                      autofocus: true,
+                      style: const TextStyle(fontFamily: themeFontFamily),
+                      decoration: InputDecoration(
+                        labelText: 'Address / Area *',
+                        hintText: 'e.g., 836, SBI Staff Colony...',
+                        labelStyle: const TextStyle(
+                            fontFamily: themeFontFamily, color: Colors.grey),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Colors.blue),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Address / Area is required.';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _cityController,
+                      style: const TextStyle(fontFamily: themeFontFamily),
+                      decoration: InputDecoration(
+                        labelText: 'City *',
+                        hintText: 'e.g., Bengaluru',
+                        labelStyle: const TextStyle(
+                            fontFamily: themeFontFamily, color: Colors.grey),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Colors.blue),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'City is required.';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _stateController,
+                      style: const TextStyle(fontFamily: themeFontFamily),
+                      decoration: InputDecoration(
+                        labelText: 'State / Province *',
+                        hintText: 'e.g., Karnataka',
+                        labelStyle: const TextStyle(
+                            fontFamily: themeFontFamily, color: Colors.grey),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Colors.blue),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'State / Province is required.';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _pincodeController,
+                      style: const TextStyle(fontFamily: themeFontFamily),
+                      decoration: InputDecoration(
+                        labelText: 'Pincode / Zip Code *',
+                        hintText: 'e.g., 560040',
+                        labelStyle: const TextStyle(
+                            fontFamily: themeFontFamily, color: Colors.grey),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Colors.blue),
+                        ),
+                      ),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Pincode / Zip Code is required.';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _countryController,
+                      style: const TextStyle(fontFamily: themeFontFamily),
+                      decoration: InputDecoration(
+                        labelText: 'Country *',
+                        hintText: 'e.g., India',
+                        labelStyle: const TextStyle(
+                            fontFamily: themeFontFamily, color: Colors.grey),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Colors.blue),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Country is required.';
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actionsAlignment: MainAxisAlignment.spaceBetween,
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(
+                    color: Color(0xFF005CE7),
+                    fontFamily: themeFontFamily,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(25), // Increased rounding
+                  gradient: const LinearGradient(
+                    colors: [
+                      Color(0xFF0099FF), // Darker Blue
+                      Color(0xFF54AB6A), // Darker Green
+                    ],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                ),
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (_formKey.currentState!.validate()) {
+                      final address = _addressController.text.trim();
+                      final city = _cityController.text.trim();
+                      final state = _stateController.text.trim();
+                      final pincode = _pincodeController.text.trim();
+                      final country = _countryController.text.trim();
+
+                      final details = {
+                        'address': address,
+                        'city': city,
+                        'state': state,
+                        'pincode': pincode,
+                        'country': country,
+                      };
+
+                      final locationString =
+                          "$address, $city, $state $pincode, $country";
+
+                      Navigator.of(context).pop();
+                      _updateLocationAndFetchData(locationString,
+                          isManual: true, details: details);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(25), // Increased rounding
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
+                  ),
+                  child: const Text(
+                    'Submit',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontFamily: themeFontFamily,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-          actions: [
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            ElevatedButton(
-              child: const Text('Submit'),
-              onPressed: () {
-                if (_formKey.currentState!.validate()) {
-                  final address = _addressController.text.trim();
-                  final city = _cityController.text.trim();
-                  final state = _stateController.text.trim();
-                  final pincode = _pincodeController.text.trim();
-                  final country = _countryController.text.trim();
-
-                  final details = {
-                    'address': address,
-                    'city': city,
-                    'state': state,
-                    'pincode': pincode,
-                    'country': country,
-                  };
-
-                  final locationString =
-                      "$address, $city, $state $pincode, $country";
-
-                  Navigator.of(context).pop();
-                  _updateLocationAndFetchData(locationString,
-                      isManual: true, details: details);
-                }
-              },
-            ),
-          ],
         );
       },
     );
   }
 
-  void _updateLocationAndFetchData(String location,
+  Future<void> _updateLocationAndFetchData(String location,
       {required bool isManual, Map<String, String>? details}) async {
     await storage.write(key: 'savedLocation', value: location);
     await storage.write(key: 'isLocationManual', value: isManual.toString());
@@ -395,11 +449,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     _fetchAllData();
   }
 
-  // NEW: A helper function to set the default location.
   Future<void> _setDefaultLocationAndFetchData() async {
     const defaultLocation = "Majestic, Bengaluru, Karnataka 560009, India";
-    // We treat the default location as "manual" so the "Change" button appears.
-    _updateLocationAndFetchData(defaultLocation, isManual: true);
+    await _updateLocationAndFetchData(defaultLocation, isManual: true);
   }
 
   Future<void> _fetchAllData() async {
@@ -439,8 +491,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         _locationStatus = LocationStatus.error;
         errorMessage = 'Could not get location name. Please try manually.';
       });
-      _showSimpleRetryDialog(
-          'Location Error', errorMessage!, 'Retry', _determinePosition);
+      _showInfoDialog('Location Error', errorMessage!);
     }
   }
 
@@ -553,18 +604,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   Future<void> _checkPermissionOnResume() async {
-    if ([
-      LocationStatus.permissionDenied,
-      LocationStatus.permissionPermanentlyDenied,
-      LocationStatus.serviceDisabled
-    ].contains(_locationStatus)) {
-      final permission = await Geolocator.checkPermission();
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (serviceEnabled &&
-          (permission == LocationPermission.whileInUse ||
-              permission == LocationPermission.always)) {
-        _showRefreshPopup();
-      }
+    // We only try to auto-refresh if the user previously denied (but not forever).
+    if (_locationStatus == LocationStatus.permissionDenied ||
+        _locationStatus == LocationStatus.serviceDisabled) {
+      _determinePosition();
     }
   }
 
@@ -593,7 +636,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   Future<void> _refreshAllData() async {
-    await _determinePosition(fromRefresh: true);
+    await _determinePosition();
   }
 
   @override
@@ -1118,19 +1161,22 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 ),
               ),
             ),
-            // The "Change" button is now always available if the location is granted.
             SizedBox(
               height: 24,
-              child: TextButton(
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                icon: const Icon(Icons.gps_fixed, size: 18, color: Colors.blue),
+                tooltip: 'Select current location',
+                onPressed: () => _determinePosition(), // Trigger GPS flow
+              ),
+            ),
+            SizedBox(
+              height: 24,
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                icon: const Icon(Icons.edit, size: 18, color: Colors.blue),
+                tooltip: 'Enter location manually',
                 onPressed: _showManualLocationEntryDialog,
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                child: const Text(
-                  'Change',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                ),
               ),
             )
           ],
@@ -1152,7 +1198,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 foregroundColor: Colors.blue,
               ),
-              onPressed: _determinePosition,
+              onPressed: () => _determinePosition(),
               child: const Text('Set Location',
                   style: TextStyle(fontWeight: FontWeight.bold)),
             ),
