@@ -57,6 +57,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // MODIFIED: This function now handles the initial location setup.
     _loadInitialLocation();
 
     Timer(const Duration(seconds: 15), () {
@@ -70,11 +71,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     });
   }
 
+  // MODIFIED: This function now checks for saved location or starts permission flow.
   Future<void> _loadInitialLocation() async {
     String? savedLocation = await storage.read(key: 'savedLocation');
     String? isManualStr = await storage.read(key: 'isLocationManual');
 
     if (savedLocation != null && savedLocation.isNotEmpty) {
+      // If a location is already saved, use it.
       setState(() {
         currentLocation = savedLocation;
         _locationStatus = LocationStatus.granted;
@@ -82,6 +85,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       });
       _fetchAllData();
     } else {
+      // FIRST LAUNCH: Start the permission flow.
       _determinePosition();
     }
   }
@@ -99,8 +103,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     }
   }
 
-  // MODIFIED: This is the corrected and final permission flow logic.
-  Future<void> _determinePosition() async {
+  // MODIFIED: The complete, final permission flow.
+  Future<void> _determinePosition({bool fromRefresh = false}) async {
     setState(() {
       _locationStatus = LocationStatus.loading;
       errorMessage = null;
@@ -113,12 +117,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           _locationStatus = LocationStatus.serviceDisabled;
           errorMessage = 'Location services are disabled.';
         });
-        // MODIFIED: Show dialog with manual entry option when service is disabled.
-        _showLocationOptionDialog(
-          'Location Disabled',
-          'Location services are disabled. Please enable them in settings or enter the location manually.',
-          retryCallback: _determinePosition,
-        );
+        if (!fromRefresh) await _setDefaultLocationAndFetchData();
         return;
       }
 
@@ -131,12 +130,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             _locationStatus = LocationStatus.permissionDenied;
             errorMessage = 'Location permissions are denied.';
           });
-          _showSimpleRetryDialog(
-            'Permission Denied',
-            'Please enable Location for Personalised Travel Itineraries.',
-            'Enable Location',
-            _determinePosition,
-          );
+          if (!fromRefresh) await _setDefaultLocationAndFetchData();
           return;
         }
       }
@@ -146,12 +140,17 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           _locationStatus = LocationStatus.permissionPermanentlyDenied;
           errorMessage = 'Location permissions are permanently denied.';
         });
-        // This is the ONLY case where manual entry is offered along with settings.
-        _showManualEntryOrSettingsDialog();
+        if (!fromRefresh) {
+          _showManualEntryOrSettingsDialog();
+        } else {
+          // On refresh, if permanently denied, just show a quick message.
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content:
+                  Text('Enable location in settings to refresh with GPS.')));
+        }
         return;
       }
 
-      // If we reach here, permission is granted.
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
@@ -161,15 +160,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         _locationStatus = LocationStatus.error;
         errorMessage = 'Failed to get location: ${e.toString()}';
       });
-      _showLocationOptionDialog(
-        'Location Error',
-        errorMessage ?? 'Unknown error occurred',
-        retryCallback: _determinePosition,
-      );
+      if (!fromRefresh) await _setDefaultLocationAndFetchData();
     }
   }
 
-  // A simple dialog for non-permanent denial cases.
   void _showSimpleRetryDialog(
       String title, String message, String buttonText, VoidCallback onPressed) {
     if (_isDialogShowing || !mounted) return;
@@ -200,43 +194,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     });
   }
 
-  // NEW: A flexible dialog for cases that should offer manual entry.
-  void _showLocationOptionDialog(String title, String message,
-      {VoidCallback? retryCallback}) {
-    if (_isDialogShowing || !mounted) return;
-
-    _isDialogShowing = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => AlertDialog(
-          title: Text(title),
-          content: Text(message),
-          actions: [
-            TextButton(
-              child: const Text('Enter Manually'),
-              onPressed: () {
-                Navigator.of(context).pop();
-                _showManualLocationEntryDialog();
-              },
-            ),
-            if (retryCallback != null)
-              TextButton(
-                child: const Text('Retry'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  retryCallback();
-                },
-              ),
-          ],
-        ),
-      ).then((_) => _isDialogShowing = false);
-    });
-  }
-
-  // This dialog is now ONLY for the permanently denied case.
   void _showManualEntryOrSettingsDialog() {
     if (_isDialogShowing || !mounted) return;
     _isDialogShowing = true;
@@ -250,6 +207,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           content: const Text(
               'Location permissions are permanently denied. Please enable them in app settings or enter your location manually.'),
           actions: [
+            TextButton(
+              child: const Text('Use Default'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _setDefaultLocationAndFetchData();
+              },
+            ),
             TextButton(
               child: const Text('Enter Manually'),
               onPressed: () {
@@ -431,6 +395,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     _fetchAllData();
   }
 
+  // NEW: A helper function to set the default location.
+  Future<void> _setDefaultLocationAndFetchData() async {
+    const defaultLocation = "Majestic, Bengaluru, Karnataka 560009, India";
+    // We treat the default location as "manual" so the "Change" button appears.
+    _updateLocationAndFetchData(defaultLocation, isManual: true);
+  }
+
   Future<void> _fetchAllData() async {
     setState(() {
       createdIternery.clear();
@@ -468,8 +439,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         _locationStatus = LocationStatus.error;
         errorMessage = 'Could not get location name. Please try manually.';
       });
-      _showLocationOptionDialog('Location Error', errorMessage!,
-          retryCallback: _determinePosition);
+      _showSimpleRetryDialog(
+          'Location Error', errorMessage!, 'Retry', _determinePosition);
     }
   }
 
@@ -622,9 +593,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   Future<void> _refreshAllData() async {
-    await storage.delete(key: 'savedLocation');
-    await storage.delete(key: 'isLocationManual');
-    await _determinePosition();
+    await _determinePosition(fromRefresh: true);
   }
 
   @override
@@ -1149,21 +1118,21 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 ),
               ),
             ),
-            if (_isManualLocation)
-              SizedBox(
-                height: 24,
-                child: TextButton(
-                  onPressed: _showManualLocationEntryDialog,
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: const Text(
-                    'Change',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                  ),
+            // The "Change" button is now always available if the location is granted.
+            SizedBox(
+              height: 24,
+              child: TextButton(
+                onPressed: _showManualLocationEntryDialog,
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-              )
+                child: const Text(
+                  'Change',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+              ),
+            )
           ],
         );
       case LocationStatus.serviceDisabled:
@@ -1191,28 +1160,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         );
     }
   }
-
-  // This widget is no longer used since the dummy data is in its place.
-  // Widget _buildShimmerList({bool isSmall = false}) {
-  //   return ListView.builder(
-  //     scrollDirection: Axis.horizontal,
-  //     itemCount: 3,
-  //     itemBuilder: (context, index) {
-  //       return Shimmer.fromColors(
-  //         baseColor: Colors.grey.shade300,
-  //         highlightColor: Colors.grey.shade100,
-  //         child: Container(
-  //           width: isSmall ? 160 : 280,
-  //           margin: const EdgeInsets.symmetric(horizontal: 8),
-  //           decoration: BoxDecoration(
-  //             color: Colors.white,
-  //             borderRadius: BorderRadius.circular(16),
-  //           ),
-  //         ),
-  //       );
-  //     },
-  //   );
-  // }
 }
 
 class CustomNavigatorObserver extends NavigatorObserver {
