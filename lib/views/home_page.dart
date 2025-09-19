@@ -70,13 +70,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     });
   }
 
-  // MODIFIED: This function now handles the initial location setup with a default.
   Future<void> _loadInitialLocation() async {
     String? savedLocation = await storage.read(key: 'savedLocation');
     String? isManualStr = await storage.read(key: 'isLocationManual');
 
     if (savedLocation != null && savedLocation.isNotEmpty) {
-      // If a location is already saved, use it.
       setState(() {
         currentLocation = savedLocation;
         _locationStatus = LocationStatus.granted;
@@ -84,7 +82,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       });
       _fetchAllData();
     } else {
-      // FIRST LAUNCH: Set a default location without asking for permission.
       await _setDefaultLocationAndFetchData();
     }
   }
@@ -102,7 +99,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     }
   }
 
-  // This function is now only called by user action (GPS button or pull-to-refresh).
   Future<void> _determinePosition() async {
     setState(() => _locationStatus = LocationStatus.loading);
 
@@ -111,8 +107,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       if (!serviceEnabled) {
         _showInfoDialog(
             'Location Disabled', 'Please enable location services to use GPS.');
-        setState(() =>
-            _locationStatus = LocationStatus.granted); // Revert to stable state
+        setState(() => _locationStatus = LocationStatus.granted);
         return;
       }
 
@@ -125,8 +120,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       if (permission == LocationPermission.denied) {
         _showInfoDialog('Permission Denied',
             'Please grant location permission to use this feature.');
-        setState(() =>
-            _locationStatus = LocationStatus.granted); // Revert to stable state
+        setState(() => _locationStatus = LocationStatus.granted);
         return;
       }
 
@@ -134,8 +128,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         _showInfoDialog('Permission Permanently Denied',
             'Location permission is permanently denied. Please enable it in your device settings.',
             showSettingsButton: true);
-        setState(() =>
-            _locationStatus = LocationStatus.granted); // Revert to stable state
+        setState(() => _locationStatus = LocationStatus.granted);
         return;
       }
 
@@ -146,8 +139,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     } catch (e) {
       _showInfoDialog('Location Error',
           'Could not get your current location. Please try again or enter one manually.');
-      setState(() =>
-          _locationStatus = LocationStatus.granted); // Revert to stable state
+      setState(() => _locationStatus = LocationStatus.granted);
     }
   }
 
@@ -212,7 +204,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               borderRadius: BorderRadius.circular(16),
             ),
             title: const Text(
-              'Enter Your Location',
+              'Enter Your Current Location',
               style: TextStyle(
                 color: Color(0xFF1F1F1F),
                 fontSize: 20,
@@ -226,6 +218,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    const SizedBox(height: 16),
                     TextFormField(
                       controller: _addressController,
                       autofocus: true,
@@ -604,10 +597,18 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   Future<void> _checkPermissionOnResume() async {
-    // We only try to auto-refresh if the user previously denied (but not forever).
-    if (_locationStatus == LocationStatus.permissionDenied ||
-        _locationStatus == LocationStatus.serviceDisabled) {
-      _determinePosition();
+    if ([
+      LocationStatus.permissionDenied,
+      LocationStatus.permissionPermanentlyDenied,
+      LocationStatus.serviceDisabled
+    ].contains(_locationStatus)) {
+      final permission = await Geolocator.checkPermission();
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (serviceEnabled &&
+          (permission == LocationPermission.whileInUse ||
+              permission == LocationPermission.always)) {
+        _showRefreshPopup();
+      }
     }
   }
 
@@ -704,6 +705,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     ),
                     const SizedBox(height: 10),
                     _buildLocationUI(),
+                    _buildLocationAccuracyWarning(),
                     const SizedBox(height: 20),
                     Opacity(
                       opacity: blockUI ? 0.4 : 1.0,
@@ -1167,7 +1169,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 padding: EdgeInsets.zero,
                 icon: const Icon(Icons.gps_fixed, size: 18, color: Colors.blue),
                 tooltip: 'Select current location',
-                onPressed: () => _determinePosition(), // Trigger GPS flow
+                onPressed: () => _determinePosition(),
               ),
             ),
             SizedBox(
@@ -1204,6 +1206,39 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             ),
           ],
         );
+    }
+  }
+
+  // NEW: A widget to show the location accuracy warning.
+  Widget _buildLocationAccuracyWarning() {
+    if (_isManualLocation) {
+      return Container(
+        margin: const EdgeInsets.only(top: 8.0),
+        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+        decoration: BoxDecoration(
+          color: Colors.blue.shade50,
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text(
+                "Enable location for more accurate itineraries and features.",
+                style: TextStyle(
+                  fontFamily: themeFontFamily,
+                  color: Colors.black87,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      return const SizedBox
+          .shrink(); // Return an empty widget if location is from GPS
     }
   }
 }

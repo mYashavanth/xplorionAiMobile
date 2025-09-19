@@ -11,7 +11,10 @@ import 'dart:convert';
 import 'package:xplorion_ai/views/urlconfig.dart';
 
 class Friends extends StatefulWidget {
-  const Friends({super.key});
+  final String resIterneryId;
+  final String? iterneryTitle;
+  const Friends(
+      {super.key, required this.resIterneryId, required this.iterneryTitle});
 
   @override
   State<Friends> createState() => _FriendsState();
@@ -81,6 +84,7 @@ class _FriendsState extends State<Friends> {
         if (data['errFlag'] == 0) {
           // Success
           fetchFriends(); // Refresh the list
+          shareItineraryWithFriend();
           Navigator.pop(context); // Close the dialog
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(data['message'])),
@@ -95,6 +99,45 @@ class _FriendsState extends State<Friends> {
       }
     } catch (e) {
       // Handle error
+      print('Error adding friend: $e');
+    }
+  }
+
+  Future<void> shareItineraryWithFriend() async {
+    try {
+      final token = await storage.read(key: 'userToken');
+      if (token == null) return;
+
+      final response = await http.post(
+        Uri.parse('$baseurl/app/friends/share-iternary'),
+        body: {
+          'token': token,
+          'friendEmail': _emailController.text,
+          'iternaryId': widget.resIterneryId,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        print('Response data++++++++++++++++++++++++++++++++: $data');
+        if (data['errFlag'] == 0) {
+          // Success
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(data['message'])),
+          );
+          print(
+              'Itinerary shared successfully+++++++++++++++++++++++++++++++++++ ${data['message']}');
+        } else {
+          // Handle error
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(data['message'])),
+          );
+          print('Failed to share itinerary: ${data['message']}');
+        }
+      }
+    } catch (e) {
+      // Handle error
+      print('Error sharing itinerary: $e');
     }
   }
 
@@ -123,6 +166,7 @@ class _FriendsState extends State<Friends> {
       }
     } catch (e) {
       // Handle error
+      print('Error removing friend: $e');
     }
   }
 

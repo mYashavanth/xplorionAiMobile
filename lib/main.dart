@@ -169,7 +169,7 @@ class _MyAppState extends State<MyApp> {
         '/detailed_saved_itinerary': (context) =>
             const SavedInDetailedItinerary(),
         '/Feedback': (context) => const FeedBack(),
-        '/friends': (context) => const Friends(),
+        // '/friends': (context) => const Friends(),
         '/forgot_password': (context) => const ForgotPassword(),
         '/verify_otp': (context) => const VerifyOtp(),
         '/set_password': (context) => const SetPassword(),

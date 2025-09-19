@@ -5,6 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:xplorion_ai/lib_assets/fonts.dart';
 import 'package:xplorion_ai/lib_assets/input_decoration.dart';
+import 'package:xplorion_ai/views/friends.dart';
 import 'package:xplorion_ai/views/urlconfig.dart';
 
 class TripSettings extends StatefulWidget {
@@ -249,7 +250,15 @@ class _TripSettingsState extends State<TripSettings> {
                 ),
                 InkWell(
                   onTap: () {
-                    Navigator.of(context).pushNamed('/friends');
+                    // Navigator.of(context).pushNamed('/friends');
+                    Navigator.push(
+                        this.context,
+                        MaterialPageRoute(
+                          builder: (buildContext) => Friends(
+                            resIterneryId: widget.resIterneryId,
+                            iterneryTitle: widget.iterneryTitle,
+                          ),
+                        ));
                   },
                   child: Container(
                     margin: const EdgeInsets.only(top: 6),
@@ -290,12 +299,17 @@ class _TripSettingsState extends State<TripSettings> {
                           ),
                         ),
                         const Spacer(),
-                        IconButton(
-                          onPressed: () {
-                            Navigator.of(context).pushNamed('/friends');
-                          },
-                          icon: const Icon(Icons.arrow_forward_ios_rounded),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 28,
+                          color: const Color(0xFF888888),
                         ),
+                        // IconButton(
+                        //   onPressed: () {
+                        //     // Navigator.of(context).pushNamed('/friends');
+                        //   },
+                        //   icon: const Icon(Icons.arrow_forward_ios_rounded),
+                        // ),
                       ],
                     ),
                   ),

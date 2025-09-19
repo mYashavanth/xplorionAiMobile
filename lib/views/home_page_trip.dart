@@ -1619,7 +1619,8 @@ class _HomePageTripState extends State<HomePageTrip> {
 
                                 InkWell(
                                   onTap: () {
-                                    print(resIterneryId);
+                                    print(
+                                        'resIterneryId++++++++++++++++++++++++++++++ : $resIterneryId');
                                     Navigator.push(
                                         this.context,
                                         MaterialPageRoute(
