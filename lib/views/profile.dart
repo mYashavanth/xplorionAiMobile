@@ -177,6 +177,11 @@ class _ProfileState extends State<Profile> {
             buildProfileRowWidget(
                 'ongoing.svg', 'Continue Planning', 'continue_planning'),
             const SizedBox(
+              height: 8,
+            ),
+            buildProfileRowWidget(
+                'ongoing.svg', 'Shared Itineraries', 'shared_itinerarys'),
+            const SizedBox(
               height: 15,
             ),
             const Text(

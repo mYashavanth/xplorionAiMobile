@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:xplorion_ai/lib_assets/colors.dart';
@@ -21,9 +20,12 @@ class Friends extends StatefulWidget {
 }
 
 class _FriendsState extends State<Friends> {
-  bool copied = false;
-  List<dynamic> friendsList = [];
   bool isLoading = true;
+  List<dynamic> allFriendsList = [];
+  List<dynamic> taggedFriendsList = [];
+  // This list will now hold ALL friends for the second list view.
+  List<dynamic> mainFriendsList = [];
+
   final storage = const FlutterSecureStorage();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
@@ -31,256 +33,7 @@ class _FriendsState extends State<Friends> {
   @override
   void initState() {
     super.initState();
-    fetchFriends();
-  }
-
-  Future<void> fetchFriends() async {
-    setState(() {
-      isLoading = true;
-    });
-    try {
-      final token = await storage.read(key: 'userToken');
-      if (token == null) return;
-
-      final response = await http.get(
-        Uri.parse('$baseurl/app/friends/all/$token'),
-      );
-
-      if (response.statusCode == 200) {
-        setState(() {
-          friendsList = json.decode(response.body);
-          isLoading = false;
-        });
-      } else {
-        setState(() {
-          isLoading = false;
-        });
-        // Handle error
-      }
-    } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
-      // Handle error
-    }
-  }
-
-  Future<void> addFriend() async {
-    try {
-      final token = await storage.read(key: 'userToken');
-      if (token == null) return;
-
-      final response = await http.post(
-        Uri.parse('$baseurl/app/friends/add'),
-        body: {
-          'token': token,
-          'friendName': _nameController.text,
-          'friendEmail': _emailController.text,
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['errFlag'] == 0) {
-          // Success
-          fetchFriends(); // Refresh the list
-          shareItineraryWithFriend();
-          Navigator.pop(context); // Close the dialog
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(data['message'])),
-          );
-        } else {
-          // Handle error
-          Navigator.pop(context); // Close the dialog
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(data['message'])),
-          );
-        }
-      }
-    } catch (e) {
-      // Handle error
-      print('Error adding friend: $e');
-    }
-  }
-
-  Future<void> shareItineraryWithFriend() async {
-    try {
-      final token = await storage.read(key: 'userToken');
-      if (token == null) return;
-
-      final response = await http.post(
-        Uri.parse('$baseurl/app/friends/share-iternary'),
-        body: {
-          'token': token,
-          'friendEmail': _emailController.text,
-          'iternaryId': widget.resIterneryId,
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        print('Response data++++++++++++++++++++++++++++++++: $data');
-        if (data['errFlag'] == 0) {
-          // Success
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(data['message'])),
-          );
-          print(
-              'Itinerary shared successfully+++++++++++++++++++++++++++++++++++ ${data['message']}');
-        } else {
-          // Handle error
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(data['message'])),
-          );
-          print('Failed to share itinerary: ${data['message']}');
-        }
-      }
-    } catch (e) {
-      // Handle error
-      print('Error sharing itinerary: $e');
-    }
-  }
-
-  Future<void> removeFriend(String friendEmail) async {
-    try {
-      final token = await storage.read(key: 'userToken');
-      if (token == null) return;
-
-      final response = await http.post(
-        Uri.parse('$baseurl/app/friends/remove'),
-        body: {
-          'token': token,
-          'friendEmail': friendEmail,
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['errFlag'] == 0) {
-          // Success
-          fetchFriends(); // Refresh the list
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(data['message'])),
-          );
-        }
-      }
-    } catch (e) {
-      // Handle error
-      print('Error removing friend: $e');
-    }
-  }
-
-  void showAddFriendDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          contentPadding: EdgeInsets.zero,
-          content: Container(
-            height: 300,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-            decoration: ShapeDecoration(
-              color: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(32),
-              ),
-            ),
-            child: Column(
-              children: [
-                const Text(
-                  'Add Friend',
-                  style: TextStyle(
-                    color: Color(0xFF030917),
-                    fontSize: 16,
-                    fontFamily: themeFontFamily2,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TextField(
-                  controller: _nameController,
-                  decoration: InputDecoration(
-                    labelText: 'Friend Name',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(32),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: _emailController,
-                  decoration: InputDecoration(
-                    labelText: 'Friend Email',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(32),
-                    ),
-                  ),
-                ),
-                const Spacer(),
-                Row(
-                  children: [
-                    Expanded(
-                      child: InkWell(
-                        onTap: () {
-                          Navigator.pop(context);
-                        },
-                        child: Container(
-                          height: 56,
-                          decoration: ShapeDecoration(
-                            shape: RoundedRectangleBorder(
-                              side: const BorderSide(
-                                  width: 1, color: Color(0xFF005CE7)),
-                              borderRadius: BorderRadius.circular(32),
-                            ),
-                          ),
-                          child: const Center(
-                            child: Text(
-                              'Cancel',
-                              style: TextStyle(
-                                color: Color(0xFF005CE7),
-                                fontSize: 16,
-                                fontFamily: themeFontFamily,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: InkWell(
-                        onTap: addFriend,
-                        child: Container(
-                          height: 56,
-                          decoration: ShapeDecoration(
-                            gradient: themeGradientColor,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(32),
-                            ),
-                          ),
-                          child: const Center(
-                            child: Text(
-                              'Add',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontFamily: themeFontFamily,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
+    _fetchData();
   }
 
   @override
@@ -290,6 +43,233 @@ class _FriendsState extends State<Friends> {
     super.dispose();
   }
 
+  // Fetches all data and updates the UI
+  Future<void> _fetchData() async {
+    if (!mounted) return;
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      await Future.wait([
+        _fetchAllFriends(),
+        _fetchTaggedFriendsForItinerary(),
+      ]);
+      _processFriendLists();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading friends: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
+
+  // API call to get all friends for the user
+  Future<void> _fetchAllFriends() async {
+    final token = await storage.read(key: 'userToken');
+    if (token == null) throw Exception('Authentication token not found.');
+
+    final response = await http.get(
+      Uri.parse('$baseurl/app/friends/all/$token'),
+    );
+
+    print("--- API RESPONSE: Get All Friends ---");
+    print(response.body);
+
+    if (response.statusCode == 200) {
+      if (mounted) allFriendsList = json.decode(response.body);
+    } else {
+      throw Exception('Failed to load all friends list.');
+    }
+  }
+
+  // API call to get friends tagged to the specific itinerary
+  Future<void> _fetchTaggedFriendsForItinerary() async {
+    final token = await storage.read(key: 'userToken');
+    if (token == null) throw Exception('Authentication token not found.');
+
+    final response = await http.get(
+      Uri.parse('$baseurl/app/friends/${widget.resIterneryId}/$token'),
+    );
+
+    print("--- API RESPONSE: Get Tagged Friends for Itinerary ---");
+    print(response.body);
+
+    if (response.statusCode == 200) {
+      if (mounted) taggedFriendsList = json.decode(response.body);
+    } else {
+      throw Exception('Failed to load tagged friends.');
+    }
+  }
+
+  // UPDATED: Processes lists to show all friends in the second list.
+  void _processFriendLists() {
+    final taggedEmails =
+        taggedFriendsList.map((friend) => friend['friendEmail']).toSet();
+
+    final fullTaggedFriends = allFriendsList
+        .where((friend) => taggedEmails.contains(friend['friendEmail']))
+        .toList();
+
+    if (mounted) {
+      setState(() {
+        taggedFriendsList = fullTaggedFriends;
+        // The main list now always shows all friends.
+        mainFriendsList = allFriendsList;
+      });
+    }
+  }
+
+  // ACTION: Adds a new friend AND tags them to the current itinerary.
+  Future<void> _addAndTagFriend() async {
+    final token = await storage.read(key: 'userToken');
+    if (token == null) return;
+
+    try {
+      final response = await http.post(
+        Uri.parse('$baseurl/app/friends/add'),
+        body: {
+          'token': token,
+          'friendName': _nameController.text,
+          'friendEmail': _emailController.text,
+        },
+      );
+
+      print("--- API RESPONSE: Add Friend ---");
+      print(response.body);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['errFlag'] == 0) {
+          await _tagFriend(_emailController.text, showSnackbar: false);
+          _clearControllersAndRefresh();
+        } else {
+          _handleApiError(data['message']);
+        }
+      }
+    } catch (e) {
+      print('Error adding and tagging friend: $e');
+    }
+  }
+
+  // ACTION: Adds a new friend to the main list ONLY.
+  Future<void> _addFriendOnly() async {
+    final token = await storage.read(key: 'userToken');
+    if (token == null) return;
+
+    try {
+      final response = await http.post(
+        Uri.parse('$baseurl/app/friends/add'),
+        body: {
+          'token': token,
+          'friendName': _nameController.text,
+          'friendEmail': _emailController.text,
+        },
+      );
+
+      print("--- API RESPONSE: Add Friend Only ---");
+      print(response.body);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['errFlag'] == 0) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(data['message'])),
+          );
+          _clearControllersAndRefresh();
+        } else {
+          _handleApiError(data['message']);
+        }
+      }
+    } catch (e) {
+      print('Error adding friend only: $e');
+    }
+  }
+
+  // ACTION: Tags an existing friend to the itinerary.
+  Future<void> _tagFriend(String friendEmail,
+      {bool showSnackbar = true}) async {
+    final token = await storage.read(key: 'userToken');
+    if (token == null) return;
+    try {
+      final response = await http.post(
+        Uri.parse('$baseurl/app/friends/share-iternary'),
+        body: {
+          'token': token,
+          'friendEmail': friendEmail,
+          'iternaryId': widget.resIterneryId,
+        },
+      );
+
+      print("--- API RESPONSE: Tag Friend ---");
+      print(response.body);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (showSnackbar) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(data['message'])),
+          );
+        }
+        if (data['errFlag'] == 0) {
+          _fetchData();
+        }
+      }
+    } catch (e) {
+      print('Error sharing itinerary: $e');
+    }
+  }
+
+  // ACTION: PERMANENTLY removes a friend from the user's account.
+  Future<void> _permanentlyRemoveFriend(String friendEmail) async {
+    final token = await storage.read(key: 'userToken');
+    if (token == null) return;
+
+    try {
+      final response = await http.post(
+        Uri.parse('$baseurl/app/friends/remove'),
+        body: {'token': token, 'friendEmail': friendEmail},
+      );
+
+      print("--- API RESPONSE: Remove Friend ---");
+      print(response.body);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data['message'])),
+        );
+        if (data['errFlag'] == 0) {
+          _fetchData();
+        }
+      }
+    } catch (e) {
+      print('Error removing friend: $e');
+    }
+  }
+
+  // --- HELPER METHODS ---
+  void _clearControllersAndRefresh() {
+    _nameController.clear();
+    _emailController.clear();
+    Navigator.pop(context);
+    _fetchData();
+  }
+
+  void _handleApiError(String message) {
+    Navigator.pop(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -297,14 +277,11 @@ class _FriendsState extends State<Friends> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         leading: IconButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
+            onPressed: () => Navigator.pop(context),
             icon: const Icon(Icons.arrow_back_ios_new)),
         centerTitle: true,
         title: const Text(
-          'Friends',
-          textAlign: TextAlign.center,
+          'Manage Friends',
           style: TextStyle(
             color: Color(0xFF1F1F1F),
             fontSize: 20,
@@ -312,185 +289,198 @@ class _FriendsState extends State<Friends> {
             fontWeight: FontWeight.w600,
           ),
         ),
-        // actions: [
-        //   IconButton(
-        //     icon: const Icon(Icons.add),
-        //     onPressed: showAddFriendDialog,
-        //   ),
-        // ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(15),
-        child: isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : ListView(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 10),
-                      const Text(
-                        'Invite Friends',
-                        style: TextStyle(
-                          color: Color(0xFF191B1C),
-                          fontSize: 18,
-                          fontFamily: themeFontFamily2,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const Text(
-                        'Share the adventure! Invite friends to join your itinerary by email.',
-                        style: TextStyle(
-                          color: Color(0xFF888888),
-                          fontSize: 14,
-                          fontFamily: themeFontFamily2,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      GestureDetector(
-                        onTap: () {
-                          showAddFriendDialog();
-                          // Clipboard.setData(
-                          //         const ClipboardData(text: "www.example.com"))
-                          //     .then((_) {
-                          //   setState(() {
-                          //     copied = true;
-                          //   });
-                          //   ScaffoldMessenger.of(context).showSnackBar(
-                          //     const SnackBar(
-                          //         content: Text("Link copied to clipboard")),
-                          //   );
-                          // });
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : ListView(
+              padding: const EdgeInsets.all(15),
+              children: [
+                // Section 1: Add New Friend with two options
+                const Text('Invite Friends',
+                    style: TextStyle(
+                      color: Color(0xFF191B1C),
+                      fontSize: 18,
+                      fontFamily: themeFontFamily2,
+                      fontWeight: FontWeight.w500,
+                    )),
+                const Text('Add new friends and invite them to collaborate.',
+                    style: TextStyle(
+                      color: Color(0xFF888888),
+                      fontSize: 14,
+                      fontFamily: themeFontFamily2,
+                      fontWeight: FontWeight.w400,
+                    )),
+                const SizedBox(height: 20),
+                _buildInviteButton(
+                  text: 'Add & Tag to Itinerary',
+                  icon: Icons.person_add,
+                  isPrimary: true,
+                  onTap: () => _showAddFriendDialog(
+                    title: 'Add & Tag Friend',
+                    onConfirm: _addAndTagFriend,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                _buildInviteButton(
+                  text: 'Add to Main Friends List',
+                  icon: Icons.list_alt,
+                  isPrimary: false,
+                  onTap: () => _showAddFriendDialog(
+                    title: 'Add Friend to Main List',
+                    onConfirm: _addFriendOnly,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Divider(),
+
+                // Section 2: Tagged Friends (READ-ONLY)
+                const SizedBox(height: 20),
+                const Text('Friends on this Itinerary',
+                    style: TextStyle(
+                      color: Color(0xFF191B1C),
+                      fontSize: 18,
+                      fontFamily: themeFontFamily2,
+                      fontWeight: FontWeight.w500,
+                    )),
+                const SizedBox(height: 10),
+                taggedFriendsList.isEmpty
+                    ? const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 20.0),
+                        child: Center(
+                            child: Text(
+                                'No friends are tagged to this trip yet.',
+                                style: TextStyle(color: Colors.grey))),
+                      )
+                    : ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: taggedFriendsList.length,
+                        itemBuilder: (context, index) {
+                          final friend = taggedFriendsList[index];
+                          return _buildFriendTile(
+                            img: 'traveler.png',
+                            name: friend['friendName'],
+                            email: friend['friendEmail'],
+                            actionWidget: const SizedBox.shrink(),
+                          );
                         },
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: ShapeDecoration(
-                            shape: RoundedRectangleBorder(
-                              side: const BorderSide(width: 1),
-                              borderRadius: BorderRadius.circular(32),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Text(
-                                'Add Friend',
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 16,
-                                  fontFamily: themeFontFamily,
-                                  fontWeight: FontWeight.w600,
+                      ),
+                const SizedBox(height: 20),
+                const Divider(),
+
+                // Section 3: User's Friend List (for adding or deleting)
+                const SizedBox(height: 20),
+                const Text('Your Friends List',
+                    style: TextStyle(
+                      color: Color(0xFF191B1C),
+                      fontSize: 18,
+                      fontFamily: themeFontFamily2,
+                      fontWeight: FontWeight.w500,
+                    )),
+                const SizedBox(height: 10),
+                mainFriendsList.isEmpty
+                    ? const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 20.0),
+                        child: Center(
+                            child: Text('Your friends list is empty.',
+                                style: TextStyle(color: Colors.grey))),
+                      )
+                    : ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: mainFriendsList.length,
+                        itemBuilder: (context, index) {
+                          final friend = mainFriendsList[index];
+                          // Check if this friend is already tagged in this itinerary
+                          final isTagged = taggedFriendsList.any(
+                              (taggedFriend) =>
+                                  taggedFriend['friendEmail'] ==
+                                  friend['friendEmail']);
+
+                          return _buildFriendTile(
+                            img: 'traveler.png',
+                            name: friend['friendName'],
+                            email: friend['friendEmail'],
+                            actionWidget: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // Conditionally show "Add" button or "Tagged" status
+                                isTagged
+                                    ? const Row(children: [
+                                        Icon(Icons.check_circle,
+                                            color: Colors.green, size: 20),
+                                        SizedBox(width: 4),
+                                        Text("Tagged",
+                                            style:
+                                                TextStyle(color: Colors.green))
+                                      ])
+                                    : TextButton(
+                                        onPressed: () =>
+                                            _tagFriend(friend['friendEmail']),
+                                        child: const Text('Add',
+                                            style: TextStyle(
+                                                color: Color(0xFF005CE7))),
+                                      ),
+                                // Always show the permanent delete button
+                                IconButton(
+                                  onPressed: () => _showPermanentDeleteDialog(
+                                      friend['friendEmail']),
+                                  icon: const Icon(Icons.delete_outline,
+                                      color: Color(0xFFCF0000)),
+                                  tooltip: 'Permanently delete friend',
                                 ),
-                              ),
-                              const SizedBox(width: 10),
-                              // SvgPicture.asset('assets/icons/copy.svg')
-                              IconButton(
-                                icon: const Icon(Icons.add),
-                                onPressed: showAddFriendDialog,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Visibility(
-                        visible: copied,
-                        child: const Row(
-                          children: [
-                            Icon(
-                              Icons.done,
-                              color: Color(0xFF54AB6A),
-                              size: 12,
+                              ],
                             ),
-                            SizedBox(width: 4),
-                            Text(
-                              'Link Copied',
-                              style: TextStyle(
-                                color: Color(0xFF54AB6A),
-                                fontSize: 12,
-                                fontFamily: 'IBM Plex Sans',
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
+                          );
+                        },
                       ),
-                      const SizedBox(height: 20),
-                      const Text(
-                        'Friends',
-                        style: TextStyle(
-                          color: Color(0xFF191B1C),
-                          fontSize: 18,
-                          fontFamily: themeFontFamily2,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      ...friendsList.map((friend) {
-                        return Column(
-                          children: [
-                            buildFriendList(
-                              'traveler.png', // You might want to change this based on actual data
-                              friend['friendName'],
-                              friend['friendEmail'],
-                              false, // Assuming all are friends, not owners
-                            ),
-                            const SizedBox(height: 10),
-                          ],
-                        );
-                      }).toList(),
-                    ],
-                  )
-                ],
-              ),
-      ),
-      //   bottomNavigationBar: InkWell(
-      //     onTap: () {
-      //       // Navigator.of(context).pushNamed('/account_setup');
-      //     },
-      //     child: Container(
-      //       margin: const EdgeInsets.all(15),
-      //       width: double.maxFinite,
-      //       height: 56,
-      //       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
-      //       decoration: ShapeDecoration(
-      //         gradient: const LinearGradient(
-      //           begin: Alignment(-1.00, 0.06),
-      //           end: Alignment(1, -0.06),
-      //           colors: [
-      //             Color(0xFF0099FF),
-      //             Color(0xFF54AB6A),
-      //           ],
-      //         ),
-      //         shape: RoundedRectangleBorder(
-      //           borderRadius: BorderRadius.circular(32),
-      //         ),
-      //       ),
-      //       child: const Center(
-      //         child: Text(
-      //           'Save',
-      //           style: TextStyle(
-      //             color: Colors.white,
-      //             fontSize: 16,
-      //             fontFamily: themeFontFamily,
-      //             fontWeight: FontWeight.w600,
-      //             height: 0.16,
-      //           ),
-      //         ),
-      //       ),
-      //     ),
-      //   ),
+              ],
+            ),
     );
   }
 
-  Widget buildFriendList(img, name, email, owner) {
-    String ownerString = 'Friend';
-    if (owner) {
-      ownerString = "Owner";
-    }
-    return Row(
-      children: [
+  // --- WIDGETS ---
+
+  Widget _buildInviteButton(
+      {required String text,
+      required IconData icon,
+      required bool isPrimary,
+      required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: ShapeDecoration(
+          color: isPrimary ? const Color(0xFF005CE7).withOpacity(0.1) : null,
+          shape: RoundedRectangleBorder(
+            side: BorderSide(
+                width: 1, color: isPrimary ? Colors.transparent : Colors.black),
+            borderRadius: BorderRadius.circular(32),
+          ),
+        ),
+        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Icon(icon, color: isPrimary ? const Color(0xFF005CE7) : Colors.black),
+          const SizedBox(width: 10),
+          Text(text,
+              style: TextStyle(
+                color: isPrimary ? const Color(0xFF005CE7) : Colors.black,
+                fontSize: 16,
+                fontFamily: themeFontFamily,
+                fontWeight: FontWeight.w600,
+              )),
+        ]),
+      ),
+    );
+  }
+
+  Widget _buildFriendTile(
+      {required String img,
+      required String name,
+      required String email,
+      required Widget actionWidget}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(children: [
         Container(
           width: 40,
           height: 40,
@@ -505,59 +495,49 @@ class _FriendsState extends State<Friends> {
             ),
           ),
         ),
-        const SizedBox(width: 10),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+        const SizedBox(width: 12),
+        Expanded(
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(
               name,
               style: const TextStyle(
                 color: Color(0xFF191B1C),
                 fontSize: 16,
                 fontFamily: themeFontFamily2,
-                fontWeight: FontWeight.w400,
+                fontWeight: FontWeight.w500,
               ),
+              overflow: TextOverflow.ellipsis,
             ),
             Text(
-              ownerString,
+              email,
               style: const TextStyle(
                 color: Color(0xFF888888),
                 fontSize: 12,
                 fontFamily: themeFontFamily2,
                 fontWeight: FontWeight.w400,
               ),
+              overflow: TextOverflow.ellipsis,
             ),
-          ],
+          ]),
         ),
-        const Spacer(),
-        owner
-            ? const Text('')
-            : TextButton(
-                onPressed: () {
-                  deleteFriend(email);
-                },
-                child: const Text(
-                  'Remove',
-                  style: TextStyle(
-                    color: Color(0xFFCF0000),
-                    fontSize: 14,
-                    fontFamily: themeFontFamily2,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-      ],
+        const SizedBox(width: 8),
+        actionWidget,
+      ]),
     );
   }
 
-  deleteFriend(String friendEmail) {
+  // --- DIALOGS ---
+
+  void _showAddFriendDialog(
+      {required String title, required Future<void> Function() onConfirm}) {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           contentPadding: EdgeInsets.zero,
           content: Container(
-            height: 260,
+            height: 300,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
             decoration: ShapeDecoration(
               color: Colors.white,
@@ -565,111 +545,139 @@ class _FriendsState extends State<Friends> {
                 borderRadius: BorderRadius.circular(32),
               ),
             ),
-            child: Column(
-              children: [
-                Container(
-                  width: 50,
-                  height: 50,
-                  clipBehavior: Clip.antiAlias,
-                  decoration: ShapeDecoration(
-                    color: const Color(0xFFFDF3F3),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(32),
-                    ),
-                  ),
-                  child: Center(
-                    child: SvgPicture.asset('assets/icons/remove_friend.svg'),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Remove friend?',
-                  style: TextStyle(
+            child: Column(children: [
+              Text(title,
+                  style: const TextStyle(
                     color: Color(0xFF030917),
                     fontSize: 16,
                     fontFamily: themeFontFamily2,
                     fontWeight: FontWeight.w600,
+                  )),
+              const SizedBox(height: 20),
+              TextField(
+                controller: _nameController,
+                decoration: InputDecoration(
+                  labelText: 'Friend Name',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(32),
                   ),
                 ),
-                const SizedBox(height: 20),
-                const Text(
-                  'You can re-add them later with an invite link.',
-                  style: TextStyle(
-                    color: Color(0xFF888888),
-                    fontSize: 12,
-                    fontFamily: themeFontFamily2,
-                    fontWeight: FontWeight.w400,
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _emailController,
+                decoration: InputDecoration(
+                  labelText: 'Friend Email',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(32),
                   ),
                 ),
-                const Spacer(),
-                Row(
-                  children: [
-                    Expanded(
-                      child: InkWell(
-                        onTap: () {
-                          Navigator.pop(context);
-                        },
-                        child: Container(
-                          height: 56,
-                          width: 70,
-                          decoration: ShapeDecoration(
-                            shape: RoundedRectangleBorder(
-                              side: const BorderSide(
-                                  width: 1, color: Color(0xFF005CE7)),
-                              borderRadius: BorderRadius.circular(32),
-                            ),
-                          ),
-                          child: const Center(
-                            child: Text(
-                              'Cancel',
-                              style: TextStyle(
-                                color: Color(0xFF005CE7),
-                                fontSize: 16,
-                                fontFamily: themeFontFamily,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: InkWell(
-                        onTap: () {
-                          removeFriend(friendEmail);
-                          Navigator.pop(context);
-                        },
-                        child: Container(
-                          height: 56,
-                          width: 70,
-                          decoration: ShapeDecoration(
-                            gradient: themeGradientColor,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(32),
-                            ),
-                          ),
-                          child: const Center(
-                            child: Text(
-                              'Delete',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontFamily: themeFontFamily,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+              ),
+              const Spacer(),
+              Row(children: [
+                Expanded(
+                    child: _buildDialogButton('Cancel',
+                        isPrimary: false, onTap: () => Navigator.pop(context))),
+                const SizedBox(width: 8),
+                Expanded(child: _buildDialogButton('Add', onTap: onConfirm)),
+              ]),
+            ]),
           ),
         );
       },
+    );
+  }
+
+  void _showPermanentDeleteDialog(String friendEmail) {
+    showDialog(
+        context: context,
+        builder: (context) => _buildConfirmationDialog(
+              title: 'Remove friend permanently?',
+              content:
+                  'This will remove them from all your itineraries. This action cannot be undone.',
+              confirmText: 'Delete',
+              onConfirm: () {
+                _permanentlyRemoveFriend(friendEmail);
+                Navigator.pop(context);
+              },
+            ));
+  }
+
+  Widget _buildConfirmationDialog(
+      {required String title,
+      required String content,
+      required String confirmText,
+      required VoidCallback onConfirm}) {
+    return AlertDialog(
+      contentPadding: EdgeInsets.zero,
+      content: Container(
+        height: 260,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        decoration: ShapeDecoration(
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(32),
+          ),
+        ),
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          SvgPicture.asset('assets/icons/remove_friend.svg', height: 50),
+          const SizedBox(height: 20),
+          Text(title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 16,
+                fontFamily: themeFontFamily2,
+                fontWeight: FontWeight.w600,
+              )),
+          const SizedBox(height: 8),
+          Text(
+            content,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Color(0xFF888888),
+              fontSize: 12,
+              fontFamily: themeFontFamily2,
+            ),
+          ),
+          const Spacer(),
+          Row(children: [
+            Expanded(
+                child: _buildDialogButton('Cancel',
+                    isPrimary: false, onTap: () => Navigator.pop(context))),
+            const SizedBox(width: 8),
+            Expanded(child: _buildDialogButton(confirmText, onTap: onConfirm)),
+          ]),
+        ]),
+      ),
+    );
+  }
+
+  Widget _buildDialogButton(String text,
+      {bool isPrimary = true, required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        height: 56,
+        decoration: ShapeDecoration(
+          gradient: isPrimary ? themeGradientColor : null,
+          color: isPrimary ? null : Colors.white,
+          shape: RoundedRectangleBorder(
+            side: isPrimary
+                ? BorderSide.none
+                : const BorderSide(width: 1, color: Color(0xFF005CE7)),
+            borderRadius: BorderRadius.circular(32),
+          ),
+        ),
+        child: Center(
+          child: Text(text,
+              style: TextStyle(
+                color: isPrimary ? Colors.white : const Color(0xFF005CE7),
+                fontSize: 16,
+                fontFamily: themeFontFamily,
+                fontWeight: FontWeight.w600,
+              )),
+        ),
+      ),
     );
   }
 }

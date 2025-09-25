@@ -1,6 +1,7 @@
 import 'package:xplorion_ai/views/about.dart';
 import 'package:xplorion_ai/views/edit_your_interests.dart';
 import 'package:xplorion_ai/views/privacy_policy.dart';
+import 'package:xplorion_ai/views/shared_itinerary.dart';
 import 'package:xplorion_ai/views/splash_screen.dart';
 import 'package:xplorion_ai/views/terms_and_condition.dart';
 import 'package:xplorion_ai/views/your_profile.dart';
@@ -159,6 +160,7 @@ class _MyAppState extends State<MyApp> {
         '/welcome_page': (context) => const WelcomePage(),
         '/home_page': (context) => HomePage(),
         '/continue_planning': (context) => const ContinuePlanning(),
+        '/shared_itinerarys': (context) => const SharedItinerary(),
         '/create_itinerary': (context) => const CreateItinerary(),
         '/itinerary_generating_screen': (context) =>
             const ItineraryGeneratingScreen(),
