@@ -180,7 +180,7 @@ class _ProfileState extends State<Profile> {
               height: 8,
             ),
             buildProfileRowWidget(
-                'ongoing.svg', 'Shared Itineraries', 'shared_itinerarys'),
+                'friends.svg', 'Shared Itineraries', 'shared_itinerarys'),
             const SizedBox(
               height: 15,
             ),

@@ -23,12 +23,25 @@ class _FriendsState extends State<Friends> {
   bool isLoading = true;
   List<dynamic> allFriendsList = [];
   List<dynamic> taggedFriendsList = [];
-  // This list will now hold ALL friends for the second list view.
   List<dynamic> mainFriendsList = [];
 
   final storage = const FlutterSecureStorage();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
+
+  // A list of predefined colors for the avatars
+  final List<Color> _avatarColors = [
+    Colors.red,
+    Colors.blue,
+    Colors.green,
+    Colors.purple,
+    Colors.orange,
+    Colors.teal,
+    Colors.pink,
+    Colors.indigo,
+    Colors.amber,
+    Colors.brown,
+  ];
 
   @override
   void initState() {
@@ -80,9 +93,6 @@ class _FriendsState extends State<Friends> {
       Uri.parse('$baseurl/app/friends/all/$token'),
     );
 
-    print("--- API RESPONSE: Get All Friends ---");
-    print(response.body);
-
     if (response.statusCode == 200) {
       if (mounted) allFriendsList = json.decode(response.body);
     } else {
@@ -99,9 +109,6 @@ class _FriendsState extends State<Friends> {
       Uri.parse('$baseurl/app/friends/${widget.resIterneryId}/$token'),
     );
 
-    print("--- API RESPONSE: Get Tagged Friends for Itinerary ---");
-    print(response.body);
-
     if (response.statusCode == 200) {
       if (mounted) taggedFriendsList = json.decode(response.body);
     } else {
@@ -109,7 +116,7 @@ class _FriendsState extends State<Friends> {
     }
   }
 
-  // UPDATED: Processes lists to show all friends in the second list.
+  // Processes lists to show all friends in the second list.
   void _processFriendLists() {
     final taggedEmails =
         taggedFriendsList.map((friend) => friend['friendEmail']).toSet();
@@ -121,7 +128,6 @@ class _FriendsState extends State<Friends> {
     if (mounted) {
       setState(() {
         taggedFriendsList = fullTaggedFriends;
-        // The main list now always shows all friends.
         mainFriendsList = allFriendsList;
       });
     }
@@ -141,9 +147,6 @@ class _FriendsState extends State<Friends> {
           'friendEmail': _emailController.text,
         },
       );
-
-      print("--- API RESPONSE: Add Friend ---");
-      print(response.body);
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -173,9 +176,6 @@ class _FriendsState extends State<Friends> {
           'friendEmail': _emailController.text,
         },
       );
-
-      print("--- API RESPONSE: Add Friend Only ---");
-      print(response.body);
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -208,9 +208,6 @@ class _FriendsState extends State<Friends> {
         },
       );
 
-      print("--- API RESPONSE: Tag Friend ---");
-      print(response.body);
-
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (showSnackbar) {
@@ -237,9 +234,6 @@ class _FriendsState extends State<Friends> {
         Uri.parse('$baseurl/app/friends/remove'),
         body: {'token': token, 'friendEmail': friendEmail},
       );
-
-      print("--- API RESPONSE: Remove Friend ---");
-      print(response.body);
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -268,6 +262,25 @@ class _FriendsState extends State<Friends> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
+  }
+
+  /// Extracts initials from a friend's name.
+  String _getInitials(String name) {
+    List<String> nameParts = name.split(' ');
+    if (nameParts.isEmpty || nameParts.first.isEmpty) {
+      return '?';
+    }
+    if (nameParts.length == 1) {
+      return nameParts[0][0].toUpperCase();
+    }
+    return (nameParts[0][0] + nameParts[1][0]).toUpperCase();
+  }
+
+  /// Generates a consistent color for an avatar based on the friend's name.
+  Color _getAvatarColor(String name) {
+    // Use the hashcode of the name to pick a color from the list
+    final index = name.hashCode % _avatarColors.length;
+    return _avatarColors[index];
   }
 
   @override
@@ -322,11 +335,11 @@ class _FriendsState extends State<Friends> {
                 ),
                 const SizedBox(height: 10),
                 _buildInviteButton(
-                  text: 'Add to Main Friends List',
+                  text: 'Add Friends',
                   icon: Icons.list_alt,
                   isPrimary: false,
                   onTap: () => _showAddFriendDialog(
-                    title: 'Add Friend to Main List',
+                    title: 'Add Friend',
                     onConfirm: _addFriendOnly,
                   ),
                 ),
@@ -358,7 +371,6 @@ class _FriendsState extends State<Friends> {
                         itemBuilder: (context, index) {
                           final friend = taggedFriendsList[index];
                           return _buildFriendTile(
-                            img: 'traveler.png',
                             name: friend['friendName'],
                             email: friend['friendEmail'],
                             actionWidget: const SizedBox.shrink(),
@@ -398,7 +410,6 @@ class _FriendsState extends State<Friends> {
                                   friend['friendEmail']);
 
                           return _buildFriendTile(
-                            img: 'traveler.png',
                             name: friend['friendName'],
                             email: friend['friendEmail'],
                             actionWidget: Row(
@@ -473,28 +484,30 @@ class _FriendsState extends State<Friends> {
     );
   }
 
+  /// NEW WIDGET: Builds a dynamic avatar with initials and a unique color.
+  Widget _buildFriendAvatar({required String name}) {
+    return CircleAvatar(
+      radius: 20,
+      backgroundColor: _getAvatarColor(name),
+      child: Text(
+        _getInitials(name),
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+        ),
+      ),
+    );
+  }
+
   Widget _buildFriendTile(
-      {required String img,
-      required String name,
+      {required String name,
       required String email,
       required Widget actionWidget}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(children: [
-        Container(
-          width: 40,
-          height: 40,
-          clipBehavior: Clip.antiAlias,
-          decoration: ShapeDecoration(
-            image: DecorationImage(
-              image: AssetImage("assets/images/$img"),
-              fit: BoxFit.cover,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(32),
-            ),
-          ),
-        ),
+        _buildFriendAvatar(name: name), // UPDATED: Use the new avatar widget
         const SizedBox(width: 12),
         Expanded(
           child:
