@@ -67,6 +67,34 @@ class _HomePageTripState extends State<HomePageTrip> {
   late final responseData;
   String? itinerarySavedFlag;
 
+  String formatWeatherString(String weatherData) {
+    try {
+      // 1. Split the string into description and temperature parts
+      // Example: "Sunny - 30°C" becomes ["Sunny", "30°C"]
+      final parts = weatherData.split(' - ');
+      if (parts.length != 2)
+        return weatherData; // Return original if format is wrong
+
+      final description = parts[0];
+      final celsiusText = parts[1];
+
+      // 2. Extract the number from the temperature part
+      // Example: "30°C" becomes "30"
+      final celsiusValueString = celsiusText.replaceAll('°C', '').trim();
+      final temperatureCelsius = double.parse(celsiusValueString);
+
+      // 3. Convert Celsius to Fahrenheit
+      final temperatureFahrenheit = (temperatureCelsius * 9 / 5) + 32;
+
+      // 4. Format and return the new string
+      return '$description - ${temperatureCelsius.round()}°C / ${temperatureFahrenheit.round()}°F';
+    } catch (e) {
+      // If there's any error in parsing, return the original string to avoid a crash
+      print("Error formatting weather string: $e");
+      return weatherData;
+    }
+  }
+
   int getDaysBetween(String fromDateStr, String toDateStr) {
     DateTime parseDate(String dateStr, [int? baseYear]) {
       // Format: "9 Apr"
@@ -200,7 +228,9 @@ class _HomePageTripState extends State<HomePageTrip> {
             retryCount++;
           } else {
             // Data is ready - process it
-            weatherInfoData[dayNo - 1] = data['weather_info'];
+            // weatherInfoData[dayNo - 1] = data['weather_info'];
+            weatherInfoData[dayNo - 1] =
+                formatWeatherString(data['weather_info']);
             setState(() {
               if (daysDataDisplay.length < dayNo) {
                 daysDataDisplay.length = dayNo;
@@ -708,7 +738,9 @@ class _HomePageTripState extends State<HomePageTrip> {
               // }
               // r++;
               if (daysData != null && d - 1 >= 0 && d - 1 < daysData.length) {
-                weatherInfoData.insert(0, daysData[d - 1]['weather_info']);
+                // weatherInfoData.insert(0, daysData[d - 1]['weather_info']);
+                weatherInfoData.insert(
+                    0, formatWeatherString(daysData[d - 1]['weather_info']));
               } else {
                 weatherInfoData.insert(0, 'No data available');
               }
@@ -811,7 +843,9 @@ class _HomePageTripState extends State<HomePageTrip> {
             }
 
             if (daysData != null && d - 1 >= 0 && d - 1 < daysData.length) {
-              weatherInfoData.insert(0, daysData[d - 1]['weather_info']);
+              // weatherInfoData.insert(0, daysData[d - 1]['weather_info']);
+              weatherInfoData.insert(
+                  0, formatWeatherString(daysData[d - 1]['weather_info']));
             } else {
               weatherInfoData.insert(0, 'No data available');
             }

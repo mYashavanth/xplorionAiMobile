@@ -144,7 +144,7 @@ class TermsAndConditionsPage extends StatelessWidget {
             const SizedBox(height: 20),
             _buildSectionTitle('10. Governing Law'),
             const Text(
-              'These Terms are governed by the laws of [Your Country/State], and any disputes will be resolved under its jurisdiction.',
+              'These Terms are governed by the laws of Karnataka, India, and any disputes will be resolved under its jurisdiction.',
               style: TextStyle(
                 height: 1.5,
                 color: Color(0xFF333333),
@@ -154,7 +154,7 @@ class TermsAndConditionsPage extends StatelessWidget {
             const SizedBox(height: 20),
             _buildSectionTitle('Contact Us'),
             const Text(
-              'If you have any questions or concerns about these Terms, please reach out to us at:\nEmail: [your email address]',
+              'If you have any questions or concerns about these Terms, please reach out to us at:\nEmail: support@xplorionai.com',
               style: TextStyle(
                 height: 1.5,
                 color: Color(0xFF333333),

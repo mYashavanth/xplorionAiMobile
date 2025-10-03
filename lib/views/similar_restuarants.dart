@@ -774,70 +774,100 @@ class _SeeHoursWidgetState extends State<SeeHoursWidget> {
     }
   }
 
-  void showOpenCloseInfoBottomSheet(
-      BuildContext context, List<String> weekdayText) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(12),
-          topRight: Radius.circular(12),
-        ),
-      ),
-      builder: (BuildContext context) {
-        return Container(
-          padding: const EdgeInsets.all(16),
+void showOpenCloseInfoBottomSheet(
+  BuildContext context,
+  List<String> weekdayText,
+) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true, // <-- 1. ADD THIS LINE
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (BuildContext context) {
+      final int todayIndex = DateTime.now().weekday - 1;
+
+      // 2. WRAP THE CONTAINER WITH SingleChildScrollView
+      return SingleChildScrollView(
+        child: Container(
+          // Added padding at the bottom to account for system navigation
+          padding: EdgeInsets.fromLTRB(
+              20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Handle for the bottom sheet
               Center(
                 child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
+                  width: 48,
+                  height: 5,
                   decoration: BoxDecoration(
-                    color: Colors.grey[400],
-                    borderRadius: BorderRadius.circular(2),
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(10),
                   ),
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 24),
+
+              // Title
               const Text(
                 'Opening Hours',
                 style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
                   fontFamily: 'Sora',
                 ),
               ),
-              const SizedBox(height: 8),
-              const Divider(),
-              const SizedBox(height: 4),
+              const SizedBox(height: 16),
+
+              // List of hours
               ListView.builder(
                 shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(), // This is correct here
                 itemCount: weekdayText.length,
                 itemBuilder: (context, index) {
                   final parts = weekdayText[index].split(': ');
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
+                  final day = parts[0];
+                  final time = parts.length > 1 ? parts[1].trim() : '';
+
+                  final bool isToday = (index == todayIndex);
+                  final bool isClosed = time.toLowerCase() == 'closed';
+
+                  final dayTextStyle = TextStyle(
+                    fontSize: 16,
+                    fontFamily: 'Sora',
+                    fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+                    color: isToday
+                        ? Theme.of(context).primaryColor
+                        : Colors.black87,
+                  );
+
+                  final timeTextStyle = TextStyle(
+                    fontSize: 16,
+                    fontFamily: 'Sora',
+                    fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+                    color: isClosed
+                        ? Colors.red[700]
+                        : (isToday
+                            ? Theme.of(context).primaryColor
+                            : Colors.grey[600]),
+                  );
+
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: isToday
+                          ? Theme.of(context).primaryColor.withOpacity(0.1)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          parts[0],
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontFamily: 'Sora',
-                          ),
-                        ),
-                        Text(
-                          parts.length > 1 ? parts[1] : '',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontFamily: 'Sora',
-                          ),
-                        ),
+                        Text(day, style: dayTextStyle),
+                        Text(time, style: timeTextStyle),
                       ],
                     ),
                   );
@@ -845,10 +875,11 @@ class _SeeHoursWidgetState extends State<SeeHoursWidget> {
               ),
             ],
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
 
   Future<void> _loadHours() async {
     setState(() {

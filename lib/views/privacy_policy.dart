@@ -100,7 +100,7 @@ class PrivacyPolicyPage extends StatelessWidget {
               'Opt out of location tracking or notifications.',
             ]),
             const Text(
-              'Just drop us a line at [your email address].',
+              'Just drop us a line at support@xplorionai.com.',
               style: TextStyle(
                 height: 1.5,
                 color: Color(0xFF333333),
@@ -137,7 +137,7 @@ class PrivacyPolicyPage extends StatelessWidget {
             const SizedBox(height: 20),
             _buildSectionTitle('8. Contact Us'),
             const Text(
-              'Questions? Feedback? Found a hidden waterfall you want to share?\nEmail us at: [your email address]',
+              'Questions? Feedback? Found a hidden waterfall you want to share?\nEmail us at: support@xplorionai.com',
               style: TextStyle(
                 height: 1.5,
                 color: Color(0xFF333333),

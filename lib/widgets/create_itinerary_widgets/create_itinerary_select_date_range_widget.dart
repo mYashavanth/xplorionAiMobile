@@ -1,18 +1,35 @@
-import 'dart:async'; // for Timer
+import 'dart:async';
 import 'dart:convert';
-import 'package:calendar_date_picker2/calendar_date_picker2.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart'; // Import the uuid package
+
+// (Keep your other imports like colors, fonts, providers, etc.)
+import 'package:calendar_date_picker2/calendar_date_picker2.dart';
 import 'package:xplorion_ai/lib_assets/colors.dart';
 import 'package:xplorion_ai/lib_assets/fonts.dart';
 import 'package:xplorion_ai/providers/ci_date_provider.dart';
-import 'package:xplorion_ai/views/create_itinerary.dart';
-import 'package:http/http.dart' as http;
-import 'package:intl/intl.dart';
 import '../../views/urlconfig.dart';
+
+// A placeholder for your Google Maps API Key
+const String _googleApiKey = 'AIzaSyDEJx-EbYbqRixjZ0DvwuPd3FKVKtvv_OY';
+
+/// A helper class to hold suggestion data and its source.
+class LocationSuggestion {
+  final String
+      description; // The text to display (e.g., "Bengaluru, Karnataka, India")
+  final bool isFromGoogle; // Flag to check the source of the suggestion
+  final String? placeId; // Google's unique ID for a place
+
+  LocationSuggestion({
+    required this.description,
+    this.isFromGoogle = false,
+    this.placeId,
+  });
+}
 
 class SelectDateRange extends StatefulWidget {
   final PageController pageController;
@@ -23,7 +40,6 @@ class SelectDateRange extends StatefulWidget {
 }
 
 class _SelectDateRangeState extends State<SelectDateRange> {
-  TextEditingController locationController = TextEditingController();
   final FlutterSecureStorage storage = const FlutterSecureStorage();
   TextEditingController preLoadLocation = TextEditingController();
 
@@ -33,9 +49,10 @@ class _SelectDateRangeState extends State<SelectDateRange> {
   bool tripLength = false;
   int tripDays = 0;
 
-  List<String> cityList = [];
-  String lastQuery = ""; // to avoid duplicate API calls
   Timer? _debounce;
+  // Session token for Google Places API billing
+  String? _googleSessionToken;
+  final Uuid _uuid = const Uuid();
 
   DateTime? selectedStartDate;
 
@@ -43,6 +60,8 @@ class _SelectDateRangeState extends State<SelectDateRange> {
   void initState() {
     super.initState();
     _loadPreSelectedLocationOrDate();
+    // Generate a new session token when the widget is initialized
+    _googleSessionToken = _uuid.v4();
   }
 
   @override
@@ -62,37 +81,164 @@ class _SelectDateRangeState extends State<SelectDateRange> {
     });
   }
 
-  // Debounced fetch
-  Future<void> fetchCities(String query) async {
-    print("Fetching cities for query: $query");
-    if (query == lastQuery) return; // skip duplicate query
-    lastQuery = query;
+  Future<List<LocationSuggestion>> _fetchCustomCities(String query) async {
+    try {
+      String? userToken = await storage.read(key: 'userToken');
+      final String url = "$baseurl/app/city-name/$query/$userToken";
+      final response = await http.get(Uri.parse(url));
 
-    String? userToken = await storage.read(key: 'userToken');
-    final String url = "$baseurl/app/city-name/$query/$userToken";
-    print("API URL: $url");
-    final response = await http.get(Uri.parse(url));
-
-    if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
-      print("City data fetched successfully: $data");
-      setState(() {
-        cityList = data.map((city) {
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((city) {
           final cityName = city['city'] as String;
           final stateName = city['state'] as String;
           final countryName = city['country'] as String;
-          return '$cityName, $stateName, $countryName';
+          return LocationSuggestion(
+            description: '$cityName, $stateName, $countryName',
+            isFromGoogle: false,
+          );
         }).toList();
-      });
-    } else {
-      print("Failed to load city data");
+      }
+    } catch (e) {
+      print("Error fetching from custom backend: $e");
     }
+    return []; // Return empty list on failure
+  }
+
+  
+  Future<List<LocationSuggestion>> _fetchGooglePlaces(String query) async {
+    if (_googleApiKey == 'YOUR_GOOGLE_MAPS_API_KEY') {
+      print("Google API Key is not set. Skipping Google Places search.");
+      return [];
+    }
+
+    final String url =
+        'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$query&key=$_googleApiKey&sessiontoken=$_googleSessionToken&types=(cities)';
+
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        if (data['status'] == 'OK') {
+          final List<dynamic> predictions = data['predictions'];
+          return predictions.map((prediction) {
+            return LocationSuggestion(
+              description: prediction['description'] as String,
+              placeId: prediction['place_id'] as String,
+              isFromGoogle: true,
+            );
+          }).toList();
+        }
+      }
+    } catch (e) {
+      print("Error fetching from Google Places API: $e");
+    }
+    return [];
+  }
+
+  
+  Future<Map<String, dynamic>?> _getGooglePlaceDetails(String placeId) async {
+    if (_googleApiKey == 'YOUR_GOOGLE_MAPS_API_KEY') return null;
+
+    final String url =
+        'https://maps.googleapis.com/maps/api/place/details/json?place_id=$placeId&key=$_googleApiKey&sessiontoken=$_googleSessionToken&fields=address_components,geometry';
+
+    // Invalidate the session token after use
+    setState(() {
+      _googleSessionToken = null;
+    });
+
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        if (data['status'] == 'OK') {
+          return data['result'] as Map<String, dynamic>;
+        }
+      }
+    } catch (e) {
+      print("Error fetching place details: $e");
+    }
+    return null;
+  }
+
+  
+  Future<void> _sendGooglePlaceToBackend(Map<String, dynamic> placeData) async {
+    print("--- Sending Google Place Data to Backend (Simulation) ---");
+    print("City: ${placeData['city']}");
+    print("State: ${placeData['state']}");
+    print("Country: ${placeData['country']}");
+    print("Latitude: ${placeData['latitude']}");
+    print("Longitude: ${placeData['longitude']}");
+    print("---------------------------------------------------------");
+
+    try {
+      String? userToken = await storage.read(key: 'userToken');
+      final String url =
+          "$baseurl/app/add-city-name/${placeData['city']}/${placeData['state']}/${placeData['country']}/$userToken";
+      print("+++++++++++++++++++++++++URL: $url");
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        print("+++++++++++++++++++++++++Backend response: $data");
+      } else {
+        print(
+            "+++++++++++++++++++++++++Failed to send data to backend. Status code: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("+++++++++++++++++++++++++Error fetching from custom backend: $e");
+    }
+  }
+
+  /// Handles the selection of a Google Place suggestion.
+  Future<void> _handleGooglePlaceSelection(LocationSuggestion selection) async {
+    final details = await _getGooglePlaceDetails(selection.placeId!);
+    if (details == null) return;
+
+    // Extract city, state, country from address components
+    String city = '';
+    String state = '';
+    String country = '';
+
+    if (details['address_components'] is List) {
+      for (var component in details['address_components']) {
+        if (component['types'] is List) {
+          List types = component['types'];
+          if (types.contains('locality')) {
+            city = component['long_name'];
+          }
+          if (types.contains('administrative_area_level_1')) {
+            state = component['long_name'];
+          }
+          if (types.contains('country')) {
+            country = component['long_name'];
+          }
+        }
+      }
+    }
+
+    // Extract geometry
+    double lat = details['geometry']?['location']?['lat'] ?? 0.0;
+    double lng = details['geometry']?['location']?['lng'] ?? 0.0;
+
+    final placeData = {
+      'city': city.isNotEmpty ? city : selection.description.split(',')[0],
+      'state': state,
+      'country': country,
+      'latitude': lat,
+      'longitude': lng,
+    };
+
+    // Call the dummy function to "send" data
+    await _sendGooglePlaceToBackend(placeData);
+
+    // Save the user-friendly description to storage
+    await storage.write(key: 'selectedPlace', value: selection.description);
   }
 
   @override
   Widget build(BuildContext context) {
-    double mediaWidth = MediaQuery.of(context).size.width;
-
     return ListView(
       children: [
         Container(
@@ -100,37 +246,56 @@ class _SelectDateRangeState extends State<SelectDateRange> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Autocomplete<String>(
+              Autocomplete<LocationSuggestion>(
+                displayStringForOption: (option) => option.description,
                 optionsBuilder: (TextEditingValue textEditingValue) async {
-                  final query = textEditingValue.text.trim();
+                  final String query = textEditingValue.text.trim();
 
-                  if (query.isEmpty || query.length < 2) {
-                    return const Iterable<String>.empty();
+                  if (_googleSessionToken == null) {
+                    setState(() {
+                      _googleSessionToken = _uuid.v4();
+                    });
                   }
 
-                  // debounce API call
-                  _debounce?.cancel();
-                  final completer = Completer<List<String>>();
-                  _debounce =
-                      Timer(const Duration(milliseconds: 500), () async {
-                    await fetchCities(query);
-                    completer.complete(cityList);
-                  });
+                  if (query.length < 3) {
+                    return const Iterable<LocationSuggestion>.empty();
+                  }
 
+                  _debounce?.cancel();
+                  final completer = Completer<Iterable<LocationSuggestion>>();
+                  _debounce =
+                      Timer(const Duration(milliseconds: 600), () async {
+                    List<LocationSuggestion> customResults =
+                        await _fetchCustomCities(query);
+                    if (customResults.isNotEmpty) {
+                      completer.complete(customResults);
+                    } else {
+                      List<LocationSuggestion> googleResults =
+                          await _fetchGooglePlaces(query);
+                      completer.complete(googleResults);
+                    }
+                  });
                   return completer.future;
                 },
-                onSelected: (String selectedCity) async {
-                  await storage.write(
-                      key: 'selectedPlace', value: selectedCity);
+                onSelected: (LocationSuggestion selection) {
+                  if (selection.isFromGoogle) {
+                    _handleGooglePlaceSelection(selection);
+                  } else {
+                    storage.write(
+                        key: 'selectedPlace', value: selection.description);
+                  }
                 },
                 fieldViewBuilder: (BuildContext context,
                     TextEditingController textEditingController,
                     FocusNode focusNode,
                     VoidCallback onFieldSubmitted) {
-                  textEditingController.text =
-                      textEditingController.text.isEmpty
-                          ? preLoadLocation.text
-                          : textEditingController.text;
+                  if (preLoadLocation.text.isNotEmpty &&
+                      textEditingController.text.isEmpty) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      textEditingController.text = preLoadLocation.text;
+                      preLoadLocation.clear();
+                    });
+                  }
 
                   return Container(
                     margin: const EdgeInsets.only(bottom: 20),
@@ -146,10 +311,8 @@ class _SelectDateRangeState extends State<SelectDateRange> {
                       style: const TextStyle(color: Colors.black, fontSize: 18),
                       keyboardType: TextInputType.text,
                       decoration: const InputDecoration(
-                        prefixIcon: Icon(
-                          Icons.location_on,
-                          color: Color(0xFF888888),
-                        ),
+                        prefixIcon:
+                            Icon(Icons.location_on, color: Color(0xFF888888)),
                         hintText: 'Search your destination...',
                         hintStyle: TextStyle(
                           color: Color(0xFF888888),
@@ -165,8 +328,8 @@ class _SelectDateRangeState extends State<SelectDateRange> {
                   );
                 },
                 optionsViewBuilder: (BuildContext context,
-                    AutocompleteOnSelected<String> onSelected,
-                    Iterable<String> options) {
+                    AutocompleteOnSelected<LocationSuggestion> onSelected,
+                    Iterable<LocationSuggestion> options) {
                   final optionCount = options.length;
                   return Align(
                     alignment: Alignment.topLeft,
@@ -175,8 +338,9 @@ class _SelectDateRangeState extends State<SelectDateRange> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 0),
                         width: MediaQuery.of(context).size.width - 40,
-                        height:
-                            optionCount * 50.0 < 500 ? optionCount * 50.0 : 500,
+                        height: optionCount * 65.0 < 300
+                            ? optionCount * 65.0
+                            : 300, // Adjusted height
                         decoration: BoxDecoration(
                           color: Colors.white,
                           border: Border.all(color: const Color(0xFFCDCED7)),
@@ -190,21 +354,19 @@ class _SelectDateRangeState extends State<SelectDateRange> {
                             return Column(
                               children: [
                                 ListTile(
-                                  title: Text(
-                                    option,
-                                    style: const TextStyle(fontSize: 16),
-                                  ),
-                                  onTap: () async {
+                                  title: Text(option.description,
+                                      style: const TextStyle(fontSize: 16)),
+                                  trailing: option.isFromGoogle
+                                      ? const Icon(Icons.public,
+                                          color: Colors.grey, size: 18)
+                                      : null,
+                                  onTap: () {
                                     onSelected(option);
-                                    await storage.write(
-                                        key: 'selectedPlace', value: option);
                                   },
                                 ),
                                 if (index != optionCount - 1)
                                   const Divider(
-                                    height: 1,
-                                    color: Color(0xFFCDCED7),
-                                  ),
+                                      height: 1, color: Color(0xFFCDCED7)),
                               ],
                             );
                           },
@@ -299,7 +461,7 @@ class _SelectDateRangeState extends State<SelectDateRange> {
     );
   }
 
-  // ================= Date Modal ====================
+  // ================= Date Modal (Restored to Original) ====================
   Widget dateModal(StateSetter modalSetState) {
     final dateProvider = context.watch<CIDateProvider>();
     final config = CalendarDatePicker2Config(
@@ -450,7 +612,8 @@ class _SelectDateRangeState extends State<SelectDateRange> {
                         );
                         await storage.write(key: 'startDate', value: startDate);
                         await storage.write(key: 'endDate', value: endDate);
-                      } else {
+                      } else if (dateProvider
+                          .rangeDatePickerValueWithDefaultValue.isNotEmpty) {
                         startDate = DateFormat('yyyy-MM-dd').format(
                           dateProvider.rangeDatePickerValueWithDefaultValue[0]!,
                         );
@@ -499,7 +662,7 @@ class _SelectDateRangeState extends State<SelectDateRange> {
     );
   }
 
-  // ================= Date Helper ====================
+  // ================= Original Helper Functions ====================
   String splitDate(String dates) {
     var totalDateWithTime = dates.split(' ');
     var totalDate = totalDateWithTime[0].split('-');

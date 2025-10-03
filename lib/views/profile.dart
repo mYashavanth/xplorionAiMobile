@@ -135,16 +135,16 @@ class _ProfileState extends State<Profile> {
                     ],
                   ),
                   const Spacer(),
-                  // IconButton(
-                  //   onPressed: () {
-                  //     Navigator.of(context).pushNamed('/your_profile');
-                  //   },
-                  //   icon: const Icon(
-                  //     Icons.arrow_forward_ios_rounded,
-                  //     size: 20,
-                  //     color: Color(0xFF000000),
-                  //   ),
-                  // ),
+                  IconButton(
+                    onPressed: () {
+                      Navigator.of(context).pushNamed('/your_profile');
+                    },
+                    icon: const Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 20,
+                      color: Color(0xFF000000),
+                    ),
+                  ),
                 ],
               ),
             ),
