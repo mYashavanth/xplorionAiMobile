@@ -548,6 +548,8 @@ Widget buildDayActivity(
     }
   }
 
+  print('++++++++++++++++currentlyOpen: $currentlyOpen');
+
   if (currentlyOpen == 'true') {
     open = true;
   } else {
@@ -983,45 +985,16 @@ Widget buildDayActivity(
                     Row(
                       children: [
                         SvgPicture.asset('assets/icons/clock_fill.svg'),
-                        const SizedBox(
-                          width: 10,
-                        ),
-                        Expanded(
-                          child: Row(
-                            children: [
-                              Text.rich(
-                                TextSpan(
-                                  children: [
-                                    TextSpan(
-                                      text: open ? 'Open' : 'Closed',
-                                      style: TextStyle(
-                                        color: open
-                                            ? Color(0xFF54AB6A)
-                                            : Color(0xFFD93025),
-                                        fontSize: 14,
-                                        fontFamily: themeFontFamily2,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    const TextSpan(
-                                      text: ' • ',
-                                      style: TextStyle(
-                                        color: Color(0xFF0A0A0A),
-                                        fontSize: 14,
-                                        fontFamily: themeFontFamily2,
-                                        fontWeight: FontWeight.w400,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(
-                                width: 10,
-                              ),
-                              SeeHoursWidget(placeName: data[4]),
-                            ],
-                          ),
-                        ),
+                        // const SizedBox(width: 10),
+                        // OpenStatusWidget(placeName: data[4]), // <-- New Widget
+                        // const Text(' • ',
+                        //     style: TextStyle(
+                        //         color: Color(0xFF0A0A0A),
+                        //         fontSize: 14,
+                        //         fontFamily: themeFontFamily2,
+                        //         fontWeight: FontWeight.w400)),
+                        const SizedBox(width: 10),
+                        SeeHoursWidget(placeName: data[4]),
                       ],
                     ),
                     const SizedBox(
@@ -1304,6 +1277,81 @@ class _SeeHoursWidgetState extends State<SeeHoursWidget> {
                 decorationColor: Color(0xFF214EB0),
               ),
             ),
+    );
+  }
+}
+
+class OpenStatusWidget extends StatefulWidget {
+  final String placeName;
+  const OpenStatusWidget({Key? key, required this.placeName}) : super(key: key);
+
+  @override
+  _OpenStatusWidgetState createState() => _OpenStatusWidgetState();
+}
+
+class _OpenStatusWidgetState extends State<OpenStatusWidget> {
+  bool? _isOpen;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchStatus();
+  }
+
+  /// This method is called whenever the parent widget rebuilds and passes new data.
+  @override
+  void didUpdateWidget(covariant OpenStatusWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // If the new placeName is different from the old one, fetch the status again.
+    if (widget.placeName != oldWidget.placeName) {
+      _fetchStatus();
+    }
+  }
+
+  Future<void> _fetchStatus() async {
+    // Set loading to true to show the indicator while fetching new data.
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
+
+    final info = await fetchOpenCloseInfo(widget.placeName);
+
+    // Check if the widget is still on screen before updating the state.
+    if (mounted) {
+      setState(() {
+        _isOpen = info?['open_now'];
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const SizedBox(
+        width: 14,
+        height: 14,
+        child:
+            CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF005CE7)),
+      );
+    }
+
+    if (_isOpen == null) {
+      return const Text("N/A",
+          style: TextStyle(fontSize: 14, color: Colors.grey));
+    }
+
+    return Text(
+      _isOpen! ? 'Open' : 'Closed',
+      style: TextStyle(
+        color: _isOpen! ? const Color(0xFF54AB6A) : const Color(0xFFD93025),
+        fontSize: 14,
+        fontFamily: themeFontFamily2,
+        fontWeight: FontWeight.w500,
+      ),
     );
   }
 }
@@ -2607,19 +2655,18 @@ void showOpenCloseInfoBottomSheet(
 ) {
   showModalBottomSheet(
     context: context,
-    isScrollControlled: true, // <-- 1. ADD THIS LINE
+    isScrollControlled: true,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
     builder: (BuildContext context) {
+      // We use Monday as a reference for today (since DateTime.now().weekday is 1 for Monday)
       final int todayIndex = DateTime.now().weekday - 1;
 
-      // 2. WRAP THE CONTAINER WITH SingleChildScrollView
       return SingleChildScrollView(
         child: Container(
-          // Added padding at the bottom to account for system navigation
           padding: EdgeInsets.fromLTRB(
-              20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 16),
+              20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -2651,13 +2698,18 @@ void showOpenCloseInfoBottomSheet(
               // List of hours
               ListView.builder(
                 shrinkWrap: true,
-                physics:
-                    const NeverScrollableScrollPhysics(), // This is correct here
+                physics: const NeverScrollableScrollPhysics(),
                 itemCount: weekdayText.length,
                 itemBuilder: (context, index) {
                   final parts = weekdayText[index].split(': ');
                   final day = parts[0];
-                  final time = parts.length > 1 ? parts[1].trim() : '';
+                  final time =
+                      parts.length > 1 ? parts[1].trim() : 'Not available';
+
+                  // --- CHANGE START ---
+                  // 1. Split the time string by the comma to handle multiple entries.
+                  final timeSlots = time.split(', ');
+                  // --- CHANGE END ---
 
                   final bool isToday = (index == todayIndex);
                   final bool isClosed = time.toLowerCase() == 'closed';
@@ -2691,13 +2743,27 @@ void showOpenCloseInfoBottomSheet(
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(8),
                     ),
+                    // --- CHANGE START ---
+                    // 2. Use a Row that aligns its children to the top.
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment:
+                          CrossAxisAlignment.start, // This is important
                       children: [
+                        // Day of the week (stays the same)
                         Text(day, style: dayTextStyle),
-                        Text(time, style: timeTextStyle),
+
+                        // 3. Use a Column to stack the time slots vertically.
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment
+                              .end, // Aligns time to the right
+                          children: timeSlots.map((slot) {
+                            return Text(slot, style: timeTextStyle);
+                          }).toList(),
+                        ),
                       ],
                     ),
+                    // --- CHANGE END ---
                   );
                 },
               ),
@@ -2714,10 +2780,10 @@ Future<Map<String, dynamic>> fetchOpenCloseInfo(String placeName) async {
   String? userToken = await storage.read(key: 'userToken');
 
   final String apiUrl = '$baseurl/get-open-close-info/$placeName/$userToken';
-  print('API URL: $apiUrl');
+  print('++++++++++++++++++API URL: $apiUrl');
   try {
     final response = await http.get(Uri.parse(apiUrl));
-    print('Response: ${response.body}');
+    // print('+++++++++++++++Response: ${response.body}');
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {

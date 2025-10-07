@@ -421,28 +421,28 @@ class _ExploreRoadMapState extends State<ExploreRoadMap>
             markers: points.asMap().entries.map((entry) {
               final index = entry.key;
               final point = entry.value;
-              return Marker(
-                markerId: MarkerId(point.toString()),
-                position: point,
-                infoWindow: InfoWindow(
-                  title: locations[index],
-                  snippet: 'Point ${index + 1}',
-                ),
-                // Highlight the active marker
-                icon: selectedMarkerIndex == index
-                    ? BitmapDescriptor.defaultMarkerWithHue(
-                        BitmapDescriptor.hueCyan,
-                      )
-                    : BitmapDescriptor.defaultMarker,
-                onTap: () {
-                  // Snap to card when marker is clicked
-                  _pageController.animateToPage(
-                    index,
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                  );
-                },
-              );
+                return Marker(
+                  markerId: MarkerId(point.toString()),
+                  position: point,
+                  infoWindow: InfoWindow(
+                    title: locations[index],
+                    snippet: 'Point ${index + 1}',
+                  ),
+                  // Highlight the active marker
+                  icon: selectedMarkerIndex == index
+                      ? BitmapDescriptor.defaultMarkerWithHue(
+                          BitmapDescriptor.hueCyan,
+                        )
+                      : BitmapDescriptor.defaultMarker,
+                  onTap: () {
+                    // Snap to card when marker is clicked
+                    _pageController.animateToPage(
+                      index,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    );
+                  },
+                );
             }).toSet(),
             polylines: polylines,
           ),

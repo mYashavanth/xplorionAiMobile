@@ -247,31 +247,29 @@ Widget sharedItineraryCard(
                       icon: Icons.person_outline,
                       text: 'Shared by: $friendName',
                     ),
-                    const Spacer(), // Pushes the button to the bottom
-                    Align(
-                      alignment: Alignment.bottomRight,
-                      child: Container(
-                        width: 60,
-                        height: 30,
-                        decoration: ShapeDecoration(
-                          color: const Color(0xFFECF2FF),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(32),
-                          ),
-                        ),
-                        child: const Center(
-                          child: Text(
-                            'View',
-                            style: TextStyle(
-                              color: Color(0xFF005CE7),
-                              fontSize: 12,
-                              fontFamily: 'Sora',
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+                    // const SizedBox(height: 12),
+                    // Full-width View Button
+                    // Container(
+                    //   width: double.infinity, // Make the button full-width
+                    //   height: 44, // Increased height for better proportions
+                    //   decoration: ShapeDecoration(
+                    //     color: const Color(0xFFECF2FF),
+                    //     shape: RoundedRectangleBorder(
+                    //       borderRadius: BorderRadius.circular(32),
+                    //     ),
+                    //   ),
+                    //   child: const Center(
+                    //     child: Text(
+                    //       'View',
+                    //       style: TextStyle(
+                    //         color: Color(0xFF005CE7),
+                    //         fontSize: 14, // Slightly larger font
+                    //         fontFamily: 'Sora',
+                    //         fontWeight: FontWeight.w600,
+                    //       ),
+                    //     ),
+                    //   ),
+                    // ),
                   ],
                 ),
               ),

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:xplorion_ai/lib_assets/colors.dart';
 import 'package:xplorion_ai/lib_assets/fonts.dart';
 import 'package:xplorion_ai/lib_assets/input_decoration.dart';
@@ -172,6 +173,74 @@ class _LogInState extends State<LogIn> {
       );
     }
   }
+
+  Future<void> _signInWithApple() async {
+    try {
+      final AuthorizationCredentialAppleID appleCredential =
+      await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+      );
+
+      final OAuthCredential credential = OAuthProvider("apple.com").credential(
+        idToken: appleCredential.identityToken,
+        accessToken: appleCredential.authorizationCode,
+      );
+
+      final UserCredential userCredential =
+      await FirebaseAuth.instance.signInWithCredential(credential);
+      final User? user = userCredential.user;
+
+      print('🍎 Apple Sign-In successful: $userCredential');
+
+      if (user != null) {
+        final String? email = user.email ?? appleCredential.email;
+        final String? appleToken = appleCredential.identityToken;
+
+        // Try multiple ways to get username
+        String? username = user.displayName ??
+            "${appleCredential.givenName ?? ''} ${appleCredential.familyName ?? ''}".trim();
+
+        // Fallback if username is still empty
+        if (username == null || username.isEmpty) {
+          if (email != null && email.contains('@')) {
+            username = email.split('@')[0];
+          } else {
+            username = "AppleUser"; // final fallback
+          }
+        }
+
+        print('email: $email username: $username appleToken: $appleToken');
+
+        if (email != null && appleToken != null) {
+          await FirebaseAnalytics.instance.logLogin(
+            loginMethod: 'apple',
+            parameters: {
+              'email': email,
+              'appleToken': appleToken,
+              'username': username,
+            },
+          );
+
+          await _sendLoginDataToBackend(email, appleToken, username);
+        } else {
+          print("⚠️ Missing required user details");
+        }
+      }
+    } catch (e) {
+      print("❌ Error during Apple Sign-In: $e");
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   SnackBar(
+      //     content: Text('Failed to sign in with Apple: $e'),
+      //     showCloseIcon: true,
+      //   ),
+      // );
+    }
+  }
+
+
 
   Future<void> _sendLoginDataToBackend(
       String email, String googleToken, String username) async {
@@ -612,42 +681,45 @@ class _LogInState extends State<LogIn> {
 
             //apple sign in
             Platform.isIOS
-                ? Container(
-                    margin: const EdgeInsets.only(bottom: 30),
-                    width: 358,
-                    height: 56,
-                    padding: const EdgeInsets.all(16),
-                    decoration: ShapeDecoration(
-                      color: Colors.black,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(32)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        SizedBox(
-                            width: 24,
-                            height: 24,
-                            // clipBehavior: Clip.antiAlias,
-                            // decoration: BoxDecoration(),
-                            child:
-                                SvgPicture.asset('assets/icons/AppleLogo.svg')),
-                        const SizedBox(width: 12),
-                        const Text(
-                          'Continue with Apple',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontFamily: themeFontFamily,
-                            fontWeight: FontWeight.w400,
-                            height: 0,
+                ? InkWell(
+                  onTap: _signInWithApple,
+                  child: Container(
+                      margin: const EdgeInsets.only(bottom: 30),
+                      width: 358,
+                      height: 56,
+                      padding: const EdgeInsets.all(16),
+                      decoration: ShapeDecoration(
+                        color: Colors.black,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(32)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                              width: 24,
+                              height: 24,
+                              // clipBehavior: Clip.antiAlias,
+                              // decoration: BoxDecoration(),
+                              child:
+                                  SvgPicture.asset('assets/icons/AppleLogo.svg')),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Continue with Apple',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontFamily: themeFontFamily,
+                              fontWeight: FontWeight.w400,
+                              height: 0,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  )
+                )
                 : Text(''),
 
             //new to tripssist
