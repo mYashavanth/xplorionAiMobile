@@ -1919,7 +1919,7 @@ class _HomePageTripState extends State<HomePageTrip> {
               dismissible: false, // Make it undismissible by clicking
             ),
           Positioned(
-            bottom: 20,
+            top: 240,
             right: 0,
             child: MenuAnchor(
               onClose: () {
