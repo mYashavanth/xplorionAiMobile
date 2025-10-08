@@ -516,69 +516,69 @@ class _SimilarRestuarantsState extends State<SimilarRestuarants> {
                   visible: restuarantCurrentPos[index] == 0,
                   child: const SizedBox(height: 10),
                 ),
-                Visibility(
-                  visible: restuarantCurrentPos[index] == 0,
-                  // child: Row(
-                  //   children: [
-                  //     SvgPicture.asset('assets/icons/clock_fill.svg'),
-                  //     const SizedBox(width: 10),
-                  //     Expanded(
-                  //       child: Row(
-                  //         children: [
-                  //           Text.rich(
-                  //             TextSpan(
-                  //               children: [
-                  //                 TextSpan(
-                  //                   text: restaurant['currently_open'] == true
-                  //                       ? 'Open'
-                  //                       : 'Closed',
-                  //                   style: TextStyle(
-                  //                     color:
-                  //                         restaurant['currently_open'] == true
-                  //                             ? const Color(0xFF54AB6A)
-                  //                             : const Color(0xFFD93025),
-                  //                     fontSize: 14,
-                  //                     fontFamily: themeFontFamily2,
-                  //                     fontWeight: FontWeight.w500,
-                  //                   ),
-                  //                 ),
-                  //                 const TextSpan(
-                  //                   text: ' • Closes 10:00 pm',
-                  //                   style: TextStyle(
-                  //                     color: Color(0xFF0A0A0A),
-                  //                     fontSize: 14,
-                  //                     fontFamily: themeFontFamily2,
-                  //                     fontWeight: FontWeight.w400,
-                  //                   ),
-                  //                 ),
-                  //               ],
-                  //             ),
-                  //           ),
-                  //           const SizedBox(width: 10),
-                  //           SeeHoursWidget(placeName: restaurant['name']),
-                  //         ],
-                  //       ),
-                  //     ),
-                  //   ],
-                  // ),
-                  child: Row(
-                    children: [
-                      SvgPicture.asset('assets/icons/clock_fill.svg'),
-                      // const SizedBox(width: 10),
-                      // OpenStatusWidget(
-                      //     placeName: restaurant['name']), // <-- New Widget
-                      // const Text(' • ',
-                      //     style: TextStyle(
-                      //         color: Color(0xFF0A0A0A),
-                      //         fontSize: 14,
-                      //         fontFamily: themeFontFamily2,
-                      //         fontWeight: FontWeight.w400)),
-                      const SizedBox(width: 10),
-                      SeeHoursWidget(placeName: restaurant['name']),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 10),
+                // Visibility(
+                //   visible: restuarantCurrentPos[index] == 0,
+                //   // child: Row(
+                //   //   children: [
+                //   //     SvgPicture.asset('assets/icons/clock_fill.svg'),
+                //   //     const SizedBox(width: 10),
+                //   //     Expanded(
+                //   //       child: Row(
+                //   //         children: [
+                //   //           Text.rich(
+                //   //             TextSpan(
+                //   //               children: [
+                //   //                 TextSpan(
+                //   //                   text: restaurant['currently_open'] == true
+                //   //                       ? 'Open'
+                //   //                       : 'Closed',
+                //   //                   style: TextStyle(
+                //   //                     color:
+                //   //                         restaurant['currently_open'] == true
+                //   //                             ? const Color(0xFF54AB6A)
+                //   //                             : const Color(0xFFD93025),
+                //   //                     fontSize: 14,
+                //   //                     fontFamily: themeFontFamily2,
+                //   //                     fontWeight: FontWeight.w500,
+                //   //                   ),
+                //   //                 ),
+                //   //                 const TextSpan(
+                //   //                   text: ' • Closes 10:00 pm',
+                //   //                   style: TextStyle(
+                //   //                     color: Color(0xFF0A0A0A),
+                //   //                     fontSize: 14,
+                //   //                     fontFamily: themeFontFamily2,
+                //   //                     fontWeight: FontWeight.w400,
+                //   //                   ),
+                //   //                 ),
+                //   //               ],
+                //   //             ),
+                //   //           ),
+                //   //           const SizedBox(width: 10),
+                //   //           SeeHoursWidget(placeName: restaurant['name']),
+                //   //         ],
+                //   //       ),
+                //   //     ),
+                //   //   ],
+                //   // ),
+                //   child: Row(
+                //     children: [
+                //       SvgPicture.asset('assets/icons/clock_fill.svg'),
+                //       // const SizedBox(width: 10),
+                //       // OpenStatusWidget(
+                //       //     placeName: restaurant['name']), // <-- New Widget
+                //       // const Text(' • ',
+                //       //     style: TextStyle(
+                //       //         color: Color(0xFF0A0A0A),
+                //       //         fontSize: 14,
+                //       //         fontFamily: themeFontFamily2,
+                //       //         fontWeight: FontWeight.w400)),
+                //       const SizedBox(width: 10),
+                //       SeeHoursWidget(placeName: restaurant['name']),
+                //     ],
+                //   ),
+                // ),
+                // const SizedBox(height: 10),
                 Row(
                   children: [
                     SvgPicture.asset('assets/icons/wallet.svg'),

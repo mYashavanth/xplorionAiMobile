@@ -101,7 +101,7 @@ class _TripssistNavigationBarState extends State<TripssistNavigationBar> {
                         BlendMode.srcIn),
                   ),
                   const SizedBox(
-                    height: 6,
+                    height: 4,
                   ),
                   Text(
                     'Home',
@@ -199,42 +199,71 @@ class _TripssistNavigationBarState extends State<TripssistNavigationBar> {
             onTap: () {
               _onItemTapped(1);
             },
-            child: SizedBox(
-              height: 70,
-              child: Column(
-                children: [
-                  const SizedBox(
-                    height: 9,
+            child: Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.center,
+              children: [
+                const SizedBox(
+                  width: 70,
+                  height: 70,
+                ),
+                Positioned(
+                  top: -32,
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: const LinearGradient(
+                            colors: [
+                              Color(0xFF0099FF),
+                              Color(0xFF54AB6A),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.15),
+                              spreadRadius: 2,
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            )
+                          ],
+                        ),
+                        child: Center(
+                          // child: SvgPicture.asset(
+                          //   'assets/icons/logo.svg',
+                          //   height: 25,
+                          //   width: 25,
+                          //   colorFilter: const ColorFilter.mode(
+                          //     Colors.white,
+                          //     BlendMode.srcIn,
+                          //   ),
+                          // ),
+                          child: Icon(
+                            Icons.add,
+                            size: 32,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        "New Trip",
+                        style: TextStyle(
+                          color: Color(0xFF888888),
+                          fontSize: 12,
+                          fontFamily: themeFontFamily,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ],
                   ),
-                  SvgPicture.asset(
-                    'assets/icons/logo.svg',
-                    // colorFilter: ColorFilter.mode(
-                    //     _selectedIndex != 0
-                    //         ? const Color(0xFF8B8D98)
-                    //         : const Color(0xFF2C64E3),
-                    //     BlendMode.srcIn),
-                    height: 25, // Set the desired height
-                    width: 25, // Set the desired width
-                    colorFilter: const ColorFilter.mode(
-                      Color(0xFF8B8D98),
-                      BlendMode.srcIn,
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 6,
-                  ),
-                  const Text(
-                    'Create Itinerary',
-                    style: TextStyle(
-                      color: Color(0xFF888888),
-                      fontSize: 12,
-                      fontFamily: themeFontFamily,
-                      fontWeight: FontWeight.w400,
-                      // height: 0.11,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
 
@@ -273,7 +302,7 @@ class _TripssistNavigationBarState extends State<TripssistNavigationBar> {
                         BlendMode.srcIn),
                   ),
                   const SizedBox(
-                    height: 6,
+                    height: 4,
                   ),
                   Text(
                     'Profile',

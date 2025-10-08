@@ -979,24 +979,24 @@ Widget buildDayActivity(
                         ),
                       ],
                     ),
-                    const SizedBox(
-                      height: 10,
-                    ),
-                    Row(
-                      children: [
-                        SvgPicture.asset('assets/icons/clock_fill.svg'),
-                        // const SizedBox(width: 10),
-                        // OpenStatusWidget(placeName: data[4]), // <-- New Widget
-                        // const Text(' • ',
-                        //     style: TextStyle(
-                        //         color: Color(0xFF0A0A0A),
-                        //         fontSize: 14,
-                        //         fontFamily: themeFontFamily2,
-                        //         fontWeight: FontWeight.w400)),
-                        const SizedBox(width: 10),
-                        SeeHoursWidget(placeName: data[4]),
-                      ],
-                    ),
+                    // const SizedBox(
+                    //   height: 10,
+                    // ),
+                    // Row(
+                    //   children: [
+                    //     SvgPicture.asset('assets/icons/clock_fill.svg'),
+                    //     // const SizedBox(width: 10),
+                    //     // OpenStatusWidget(placeName: data[4]), // <-- New Widget
+                    //     // const Text(' • ',
+                    //     //     style: TextStyle(
+                    //     //         color: Color(0xFF0A0A0A),
+                    //     //         fontSize: 14,
+                    //     //         fontFamily: themeFontFamily2,
+                    //     //         fontWeight: FontWeight.w400)),
+                    //     const SizedBox(width: 10),
+                    //     SeeHoursWidget(placeName: data[4]),
+                    //   ],
+                    // ),
                     const SizedBox(
                       height: 10,
                     ),
