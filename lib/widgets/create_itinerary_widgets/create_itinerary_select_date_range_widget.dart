@@ -5,7 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:uuid/uuid.dart'; // Import the uuid package
+import 'package:uuid/uuid.dart';
 
 // (Keep your other imports like colors, fonts, providers, etc.)
 import 'package:calendar_date_picker2/calendar_date_picker2.dart';
@@ -105,7 +105,56 @@ class _SelectDateRangeState extends State<SelectDateRange> {
     return []; // Return empty list on failure
   }
 
-  
+  /// Checks with the backend if the user is allowed to perform a Google Places search.
+  Future<bool> _canSearchWithGoogle() async {
+    try {
+      String? userToken = await storage.read(key: 'userToken');
+      // If there's no token, the user can't be authenticated for this check.
+      if (userToken == null) return false;
+
+      final String url =
+          "$baseurl/iternary-config/app-users/update-google-places-search-count/$userToken";
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        final int errorFlag = data['errFlag'];
+        final String message = data['message'];
+
+        if (errorFlag == 0) {
+          // Success: Limit is not reached. Allow Google search.
+          print("Google Places search is allowed: $message");
+          return true;
+        } else if (errorFlag == 2) {
+          // Limit reached: Show a message and disallow Google search.
+          print("Google Places search limit reached: $message");
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                    'Google Places search limit reached, You can continue with normal search'),
+                backgroundColor: Colors.orange[800],
+              ),
+            );
+          }
+          return false;
+        } else {
+          // Handle any other error flags from the backend
+          print("Received an unknown error flag from the backend: $errorFlag");
+          return false;
+        }
+      } else {
+        // Handle HTTP errors (e.g., 404, 500)
+        print(
+            "Failed to check Google search limit. Status: ${response.statusCode}");
+        return false;
+      }
+    } catch (e) {
+      print("Exception while checking Google search limit: $e");
+      return false; // On any exception, default to not allowing the search.
+    }
+  }
+
   Future<List<LocationSuggestion>> _fetchGooglePlaces(String query) async {
     if (_googleApiKey == 'YOUR_GOOGLE_MAPS_API_KEY') {
       print("Google API Key is not set. Skipping Google Places search.");
@@ -136,7 +185,6 @@ class _SelectDateRangeState extends State<SelectDateRange> {
     return [];
   }
 
-  
   Future<Map<String, dynamic>?> _getGooglePlaceDetails(String placeId) async {
     if (_googleApiKey == 'YOUR_GOOGLE_MAPS_API_KEY') return null;
 
@@ -162,7 +210,6 @@ class _SelectDateRangeState extends State<SelectDateRange> {
     return null;
   }
 
-  
   Future<void> _sendGooglePlaceToBackend(Map<String, dynamic> placeData) async {
     print("--- Sending Google Place Data to Backend (Simulation) ---");
     print("City: ${placeData['city']}");
@@ -239,6 +286,8 @@ class _SelectDateRangeState extends State<SelectDateRange> {
 
   @override
   Widget build(BuildContext context) {
+    // Note: To show a SnackBar, this widget needs a Scaffold ancestor.
+    // Assuming one exists in the parent widget tree.
     return ListView(
       children: [
         Container(
@@ -265,14 +314,31 @@ class _SelectDateRangeState extends State<SelectDateRange> {
                   final completer = Completer<Iterable<LocationSuggestion>>();
                   _debounce =
                       Timer(const Duration(milliseconds: 600), () async {
+                    // Step 1: Always fetch from your custom backend first.
                     List<LocationSuggestion> customResults =
                         await _fetchCustomCities(query);
+
+                    // If custom results are found, return them immediately.
                     if (customResults.isNotEmpty) {
                       completer.complete(customResults);
-                    } else {
+                      return;
+                    }
+
+                    // =========================================================
+                    // ================= MODIFIED LOGIC HERE ===================
+                    // =========================================================
+                    // Step 2: If no custom results, check if user can search via Google.
+                    bool canUseGoogle = await _canSearchWithGoogle();
+
+                    if (canUseGoogle) {
+                      // Step 3a: If allowed, fetch from Google Places.
                       List<LocationSuggestion> googleResults =
                           await _fetchGooglePlaces(query);
                       completer.complete(googleResults);
+                    } else {
+                      // Step 3b: If not allowed, return the empty list from the custom search.
+                      completer
+                          .complete(const Iterable<LocationSuggestion>.empty());
                     }
                   });
                   return completer.future;
@@ -461,7 +527,7 @@ class _SelectDateRangeState extends State<SelectDateRange> {
     );
   }
 
-  // ================= Date Modal (Restored to Original) ====================
+  // ================= Date Modal (Unchanged) ====================
   Widget dateModal(StateSetter modalSetState) {
     final dateProvider = context.watch<CIDateProvider>();
     final config = CalendarDatePicker2Config(
@@ -662,7 +728,7 @@ class _SelectDateRangeState extends State<SelectDateRange> {
     );
   }
 
-  // ================= Original Helper Functions ====================
+  // ================= Helper Functions (Unchanged) ====================
   String splitDate(String dates) {
     var totalDateWithTime = dates.split(' ');
     var totalDate = totalDateWithTime[0].split('-');
